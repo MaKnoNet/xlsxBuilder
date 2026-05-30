@@ -1,18 +1,20 @@
 package com.xlsbuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import com.xlsbuilder.XlsxTestReader.Grid;
 
 import de.makno.xlsbuilder.ColumnType;
 import de.makno.xlsbuilder.DataProviders;
@@ -44,25 +46,31 @@ class ExcelBuilderTest {
                 .column("Aktiv", ColumnType.BOOLEAN, Person::active)
                 .write(DataProviders.ofIterable(data), out);
 
-        List<List<XlsxTestReader.Cell>> rows = XlsxTestReader.readAll(out);
-        assertEquals(3, rows.size(), "Kopfzeile + 2 Datenzeilen");
-        assertEquals(List.of("Name", "Alter", "Aktiv"), values(rows.get(0)));
-        assertEquals(List.of("Alice", "30", "1"), values(rows.get(1)));
-        assertEquals(List.of("Bob", "25", "0"), values(rows.get(2)));
+        Grid g = XlsxTestReader.read(out);
+        assertEquals("Leute", g.sheetName());
+        assertEquals(3, g.rowCount(), "Kopfzeile + 2 Datenzeilen");
+        assertEquals(List.of("Name", "Alter", "Aktiv"), g.strings(0));
+
+        assertEquals("Alice", g.string(1, 0));
+        assertEquals(30, g.number(1, 1));
+        assertTrue(g.bool(1, 2));
+
+        assertEquals("Bob", g.string(2, 0));
+        assertEquals(25, g.number(2, 1));
+        assertFalse(g.bool(2, 2));
     }
 
     @Test
-    void producesStructurallyValidXlsx() throws Exception {
+    void producesReadableXlsx() throws Exception {
         Path out = tempDir.resolve("struct.xlsx");
         ExcelBuilder.<Person>create()
                 .column("Name", ColumnType.STRING, Person::name)
                 .write(DataProviders.ofIterable(List.of(new Person("X", 1, true))), out);
 
-        var entries = XlsxTestReader.entryNames(out);
-        assertTrue(entries.contains("[Content_Types].xml"));
-        assertTrue(entries.contains("xl/workbook.xml"));
-        assertTrue(entries.contains("xl/worksheets/sheet1.xml"));
-        assertTrue(entries.contains("xl/styles.xml"));
+        Grid g = XlsxTestReader.read(out);
+        assertEquals("Sheet1", g.sheetName(), "Default-Blattname");
+        assertEquals(2, g.rowCount());
+        assertEquals("X", g.string(1, 0));
     }
 
     @Test
@@ -79,12 +87,12 @@ class ExcelBuilderTest {
                 .sortBy("Alter", SortOrder.DESC)
                 .write(DataProviders.ofIterable(data), out);
 
-        List<List<XlsxTestReader.Cell>> rows = XlsxTestReader.readAll(out);
-        List<String> ages = new ArrayList<>();
-        for (int i = 1; i < rows.size(); i++) {
-            ages.add(rows.get(i).get(1).value());
+        Grid g = XlsxTestReader.read(out);
+        List<Long> ages = new ArrayList<>();
+        for (int i = 1; i < g.rowCount(); i++) {
+            ages.add(g.number(i, 1));
         }
-        assertEquals(List.of("40", "30", "25"), ages);
+        assertEquals(List.of(40L, 30L, 25L), ages);
     }
 
     @Test
@@ -103,10 +111,10 @@ class ExcelBuilderTest {
                 .sortBy("Gehalt", SortOrder.DESC)
                 .write(DataProviders.ofIterable(data), out);
 
-        List<List<XlsxTestReader.Cell>> rows = XlsxTestReader.readAll(out);
+        Grid g = XlsxTestReader.read(out);
         List<String> ordered = new ArrayList<>();
-        for (int i = 1; i < rows.size(); i++) {
-            ordered.add(rows.get(i).get(0).value() + ":" + rows.get(i).get(1).value());
+        for (int i = 1; i < g.rowCount(); i++) {
+            ordered.add(g.string(i, 0) + ":" + g.number(i, 1));
         }
         assertEquals(List.of("A:80", "A:50", "B:100", "B:90"), ordered);
     }
@@ -127,14 +135,15 @@ class ExcelBuilderTest {
                 .sortChunkSize(100)
                 .write(DataProviders.ofIterable(shuffled), out);
 
-        long[] previous = {Long.MIN_VALUE};
-        long count = XlsxTestReader.forEachDataRow(out, (rowNum, cells) -> {
-            long v = Long.parseLong(cells.get(0));
-            assertTrue(v > previous[0], "Werte müssen streng aufsteigend sein");
-            previous[0] = v;
-        });
-        assertEquals(1000, count);
-        assertEquals(999, previous[0]);
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(1001, g.rowCount(), "Kopfzeile + 1000 Datenzeilen");
+        long previous = Long.MIN_VALUE;
+        for (int i = 1; i < g.rowCount(); i++) {
+            long v = g.number(i, 0);
+            assertTrue(v > previous, "Werte müssen streng aufsteigend sein");
+            previous = v;
+        }
+        assertEquals(999, previous);
     }
 
     @Test
@@ -149,10 +158,11 @@ class ExcelBuilderTest {
                 .column("n", ColumnType.INTEGER, i -> i)
                 .write(DataProviders.ofIterable(data), out);
 
-        long[] expected = {0};
-        long count = XlsxTestReader.forEachDataRow(out, (rowNum, cells) ->
-                assertEquals(expected[0]++, Long.parseLong(cells.get(0))));
-        assertEquals(500, count);
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(501, g.rowCount());
+        for (int i = 1; i < g.rowCount(); i++) {
+            assertEquals(i - 1, g.number(i, 0));
+        }
     }
 
     @Test
@@ -167,16 +177,10 @@ class ExcelBuilderTest {
                 .column("Betrag", ColumnType.DECIMAL, Sale::amount)
                 .write(DataProviders.ofIterable(List.of(new Sale(date, new BigDecimal("1234.56")))), out);
 
-        List<List<XlsxTestReader.Cell>> rows = XlsxTestReader.readAll(out);
-        XlsxTestReader.Cell dateCell = rows.get(1).get(0);
-        XlsxTestReader.Cell amountCell = rows.get(1).get(1);
-
-        long expectedSerial = ChronoUnit.DAYS.between(LocalDate.of(1899, 12, 30), date);
-        assertEquals(1, dateCell.styleIndex(), "Datumszelle muss den Datums-Style referenzieren");
-        assertEquals(expectedSerial, (long) Double.parseDouble(dateCell.value()));
-
-        assertEquals("", amountCell.type(), "Dezimalzelle ist numerisch (kein t-Attribut)");
-        assertEquals("1234.56", amountCell.value());
+        Grid g = XlsxTestReader.read(out);
+        assertTrue(g.isDateFormatted(1, 0), "Datumszelle muss ein Datumsformat haben");
+        assertEquals(date, g.dateTime(1, 0).toLocalDate());
+        assertEquals(1234.56, g.dbl(1, 1), 0.0001);
     }
 
     @Test
@@ -198,9 +202,11 @@ class ExcelBuilderTest {
                 .summaryLabel("Name", "Summe")
                 .write(DataProviders.ofIterable(data), out);
 
-        List<List<XlsxTestReader.Cell>> rows = XlsxTestReader.readAll(out);
-        assertEquals(5, rows.size(), "Kopf + 3 Daten + 1 Summenzeile");
-        assertEquals(List.of("Summe", "6", "20.00"), values(rows.get(4)));
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(5, g.rowCount(), "Kopf + 3 Daten + 1 Summenzeile");
+        assertEquals("Summe", g.string(4, 0));
+        assertEquals(6, g.number(4, 1));
+        assertEquals(20.00, g.dbl(4, 2), 0.0001);
     }
 
     @Test
@@ -222,9 +228,9 @@ class ExcelBuilderTest {
                 .sumColumn("n")
                 .write(DataProviders.ofIterable(data), out);
 
-        List<List<XlsxTestReader.Cell>> rows = XlsxTestReader.readAll(out);
-        assertEquals(1002, rows.size(), "Kopf + 1000 Daten + Summenzeile");
-        assertEquals(Long.toString(expectedSum), rows.get(1001).get(0).value());
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(1002, g.rowCount(), "Kopf + 1000 Daten + Summenzeile");
+        assertEquals(expectedSum, g.number(1001, 0));
     }
 
     @Test
@@ -239,17 +245,19 @@ class ExcelBuilderTest {
                 .column("Aktiv", ColumnType.BOOLEAN, Person::active)
                 .write(DataProviders.ofIterable(data), out);
 
-        List<List<XlsxTestReader.Cell>> rows = XlsxTestReader.readAll(out);
+        Grid g = XlsxTestReader.read(out);
         // 2 Titelzeilen + Spaltenüberschriften + 1 Datenzeile
-        assertEquals(4, rows.size());
-        assertEquals("Mitarbeiterbericht", rows.get(0).get(0).value());
-        assertEquals(3, rows.get(0).get(0).styleIndex(), "Titel nutzt den Titel-Style");
-        assertEquals("Stand: Mai 2026", rows.get(1).get(0).value());
-        assertEquals(List.of("Name", "Alter", "Aktiv"), values(rows.get(2)));
-        assertEquals(List.of("Alice", "30", "1"), values(rows.get(3)));
+        assertEquals(4, g.rowCount());
+        assertEquals("Mitarbeiterbericht", g.string(0, 0));
+        assertTrue(g.bold(0, 0), "Titel ist fett formatiert");
+        assertEquals("Stand: Mai 2026", g.string(1, 0));
+        assertEquals(List.of("Name", "Alter", "Aktiv"), g.strings(2));
+        assertEquals("Alice", g.string(3, 0));
+        assertEquals(30, g.number(3, 1));
+        assertTrue(g.bool(3, 2));
 
         // Titel über die volle Breite (3 Spalten -> A..C) zusammengeführt.
-        assertEquals(List.of("A1:C1", "A2:C2"), XlsxTestReader.mergeRefs(out));
+        assertEquals(List.of("A1:C1", "A2:C2"), g.mergeRefs());
     }
 
     @Test
@@ -271,22 +279,18 @@ class ExcelBuilderTest {
                 .summaryLabel("Name", "Summe")
                 .write(DataProviders.ofIterable(data), out);
 
-        List<List<XlsxTestReader.Cell>> rows = XlsxTestReader.readAll(out);
+        Grid g = XlsxTestReader.read(out);
         // Titel + Spaltenüberschriften + 3 Daten + Summenzeile
-        assertEquals(6, rows.size());
-        assertEquals("Bericht", rows.get(0).get(0).value());
-        assertEquals(List.of("Name", "Wert"), values(rows.get(1)));
-        assertEquals(List.of("B", "30"), values(rows.get(2)));
-        assertEquals(List.of("C", "20"), values(rows.get(3)));
-        assertEquals(List.of("A", "10"), values(rows.get(4)));
-        assertEquals(List.of("Summe", "60"), values(rows.get(5)));
-    }
-
-    private static List<String> values(List<XlsxTestReader.Cell> cells) {
-        List<String> out = new ArrayList<>();
-        for (XlsxTestReader.Cell c : cells) {
-            out.add(c.value());
-        }
-        return out;
+        assertEquals(6, g.rowCount());
+        assertEquals("Bericht", g.string(0, 0));
+        assertEquals(List.of("Name", "Wert"), g.strings(1));
+        assertEquals("B", g.string(2, 0));
+        assertEquals(30, g.number(2, 1));
+        assertEquals("C", g.string(3, 0));
+        assertEquals(20, g.number(3, 1));
+        assertEquals("A", g.string(4, 0));
+        assertEquals(10, g.number(4, 1));
+        assertEquals("Summe", g.string(5, 0));
+        assertEquals(60, g.number(5, 1));
     }
 }

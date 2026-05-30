@@ -1,154 +1,155 @@
 package com.xlsbuilder;
 
-import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamReader;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.CellRangeAddress;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-/** Liest erzeugte {@code .xlsx}-Dateien mit reinem JDK zurück (zur Verifikation in den Tests). */
+/**
+ * Liest erzeugte {@code .xlsx}-Dateien mit Apache POI zurück und stellt sie als in-memory
+ * {@link Grid} bereit (Workbook wird sofort wieder geschlossen). Zur Verifikation in den Tests.
+ */
 final class XlsxTestReader {
-
-    record Cell(String value, int styleIndex, String type) {
-    }
 
     private XlsxTestReader() {
     }
 
-    /** Namen aller ZIP-Einträge (zur Strukturprüfung). */
-    static Set<String> entryNames(Path xlsx) throws Exception {
-        Set<String> names = new HashSet<>();
-        try (ZipFile zf = new ZipFile(xlsx.toFile())) {
-            zf.stream().map(ZipEntry::getName).forEach(names::add);
-        }
-        return names;
+    /** Eine einzelne Zelle, typisiert eingelesen. */
+    record CellData(CellType type, String string, double number, boolean bool,
+                    boolean dateFormatted, LocalDateTime dateTime, boolean bold) {
     }
 
-    /** Liest die {@code mergeCell}-Referenzen (z. B. "A1:C1") der erzeugten Datei. */
-    static List<String> mergeRefs(Path xlsx) throws Exception {
-        try (ZipFile zf = new ZipFile(xlsx.toFile());
-             InputStream in = zf.getInputStream(zf.getEntry("xl/worksheets/sheet1.xml"))) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(false);
-            Document doc = factory.newDocumentBuilder().parse(in);
-            List<String> refs = new ArrayList<>();
-            NodeList nodes = doc.getElementsByTagName("mergeCell");
-            for (int i = 0; i < nodes.getLength(); i++) {
-                refs.add(((Element) nodes.item(i)).getAttribute("ref"));
+    /** Komplettes Blatt als Zeilen/Spalten plus Metadaten. */
+    static final class Grid {
+        private final List<List<CellData>> rows;
+        private final List<String> mergeRefs;
+        private final String sheetName;
+
+        private Grid(List<List<CellData>> rows, List<String> mergeRefs, String sheetName) {
+            this.rows = rows;
+            this.mergeRefs = mergeRefs;
+            this.sheetName = sheetName;
+        }
+
+        int rowCount() {
+            return rows.size();
+        }
+
+        String sheetName() {
+            return sheetName;
+        }
+
+        List<String> mergeRefs() {
+            return mergeRefs;
+        }
+
+        private CellData cell(int r, int c) {
+            List<CellData> row = rows.get(r);
+            return c < row.size() ? row.get(c) : null;
+        }
+
+        String string(int r, int c) {
+            return cell(r, c).string();
+        }
+
+        /** Numerischer Wert als long (für INTEGER/LONG-Spalten und ganzzahlige Summen). */
+        long number(int r, int c) {
+            return (long) cell(r, c).number();
+        }
+
+        double dbl(int r, int c) {
+            return cell(r, c).number();
+        }
+
+        boolean bool(int r, int c) {
+            return cell(r, c).bool();
+        }
+
+        LocalDateTime dateTime(int r, int c) {
+            return cell(r, c).dateTime();
+        }
+
+        boolean isDateFormatted(int r, int c) {
+            return cell(r, c).dateFormatted();
+        }
+
+        boolean bold(int r, int c) {
+            return cell(r, c).bold();
+        }
+
+        /** Alle Zellen einer Zeile als String-Werte (für Kopf-/Überschriftszeilen). */
+        List<String> strings(int r) {
+            List<String> out = new ArrayList<>();
+            for (CellData cd : rows.get(r)) {
+                out.add(cd == null ? null : cd.string());
             }
-            return refs;
+            return out;
         }
     }
 
-    /** DOM-Lesung (für kleine Dateien): alle Zeilen inkl. Kopfzeile als Liste von Zellen. */
-    static List<List<Cell>> readAll(Path xlsx) throws Exception {
-        try (ZipFile zf = new ZipFile(xlsx.toFile());
-             InputStream in = zf.getInputStream(zf.getEntry("xl/worksheets/sheet1.xml"))) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(false);
-            Document doc = factory.newDocumentBuilder().parse(in);
+    static Grid read(Path xlsx) throws Exception {
+        try (Workbook wb = WorkbookFactory.create(Files.newInputStream(xlsx))) {
+            Sheet sheet = wb.getSheetAt(0);
 
-            List<List<Cell>> rows = new ArrayList<>();
-            NodeList rowNodes = doc.getElementsByTagName("row");
-            for (int i = 0; i < rowNodes.getLength(); i++) {
-                Element rowEl = (Element) rowNodes.item(i);
-                List<Cell> cells = new ArrayList<>();
-                NodeList cNodes = rowEl.getElementsByTagName("c");
-                for (int j = 0; j < cNodes.getLength(); j++) {
-                    Element c = (Element) cNodes.item(j);
-                    String type = c.getAttribute("t");
-                    String s = c.getAttribute("s");
-                    int style = s.isEmpty() ? -1 : Integer.parseInt(s);
-                    String value;
-                    if ("inlineStr".equals(type)) {
-                        NodeList ts = c.getElementsByTagName("t");
-                        value = ts.getLength() > 0 ? ts.item(0).getTextContent() : "";
-                    } else {
-                        NodeList vs = c.getElementsByTagName("v");
-                        value = vs.getLength() > 0 ? vs.item(0).getTextContent() : null;
-                    }
-                    cells.add(new Cell(value, style, type));
+            int maxCols = 0;
+            for (org.apache.poi.ss.usermodel.Row row : sheet) {
+                maxCols = Math.max(maxCols, row.getLastCellNum());
+            }
+
+            List<List<CellData>> rows = new ArrayList<>();
+            for (int r = 0; r <= sheet.getLastRowNum(); r++) {
+                org.apache.poi.ss.usermodel.Row row = sheet.getRow(r);
+                List<CellData> cells = new ArrayList<>();
+                for (int c = 0; c < maxCols; c++) {
+                    Cell cell = row == null ? null : row.getCell(c);
+                    cells.add(parse(wb, cell));
                 }
                 rows.add(cells);
             }
-            return rows;
+
+            List<String> mergeRefs = new ArrayList<>();
+            for (CellRangeAddress region : sheet.getMergedRegions()) {
+                mergeRefs.add(region.formatAsString());
+            }
+
+            return new Grid(rows, mergeRefs, wb.getSheetName(0));
         }
     }
 
-    /** StAX-Streaming (für große Dateien): ruft den Consumer je Datenzeile (ohne Kopfzeile) auf. */
-    static long forEachDataRow(Path xlsx, BiConsumer<Long, List<String>> consumer) throws Exception {
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        factory.setProperty(XMLInputFactory.IS_COALESCING, true);
-        try (ZipFile zf = new ZipFile(xlsx.toFile());
-             InputStream in = zf.getInputStream(zf.getEntry("xl/worksheets/sheet1.xml"))) {
-            XMLStreamReader r = factory.createXMLStreamReader(in);
-            long dataRows = 0;
-            boolean firstRow = true;
-            List<String> current = null;
-            String pending = null;
-            StringBuilder text = new StringBuilder();
-            boolean capturing = false;
+    static String sheetName(Path xlsx) throws Exception {
+        return read(xlsx).sheetName();
+    }
 
-            while (r.hasNext()) {
-                int event = r.next();
-                switch (event) {
-                    case XMLStreamConstants.START_ELEMENT -> {
-                        switch (r.getLocalName()) {
-                            case "row" -> current = new ArrayList<>();
-                            case "c" -> pending = null;
-                            case "v", "t" -> {
-                                capturing = true;
-                                text.setLength(0);
-                            }
-                            default -> {
-                            }
-                        }
-                    }
-                    case XMLStreamConstants.CHARACTERS -> {
-                        if (capturing) {
-                            text.append(r.getText());
-                        }
-                    }
-                    case XMLStreamConstants.END_ELEMENT -> {
-                        switch (r.getLocalName()) {
-                            case "v", "t" -> {
-                                if (capturing) {
-                                    pending = text.toString();
-                                    capturing = false;
-                                }
-                            }
-                            case "c" -> current.add(pending);
-                            case "row" -> {
-                                if (firstRow) {
-                                    firstRow = false;
-                                } else {
-                                    dataRows++;
-                                    consumer.accept(dataRows, current);
-                                }
-                            }
-                            default -> {
-                            }
-                        }
-                    }
-                    default -> {
-                    }
-                }
-            }
-            r.close();
-            return dataRows;
+    private static CellData parse(Workbook wb, Cell cell) {
+        if (cell == null) {
+            return new CellData(CellType.BLANK, null, 0, false, false, null, false);
         }
+        boolean bold = false;
+        if (cell.getCellStyle() != null) {
+            Font font = wb.getFontAt(cell.getCellStyle().getFontIndex());
+            bold = font != null && font.getBold();
+        }
+        return switch (cell.getCellType()) {
+            case STRING -> new CellData(CellType.STRING, cell.getStringCellValue(),
+                    0, false, false, null, bold);
+            case BOOLEAN -> new CellData(CellType.BOOLEAN, null,
+                    0, cell.getBooleanCellValue(), false, null, bold);
+            case NUMERIC -> {
+                boolean dateFmt = DateUtil.isCellDateFormatted(cell);
+                yield new CellData(CellType.NUMERIC, null, cell.getNumericCellValue(), false,
+                        dateFmt, dateFmt ? cell.getLocalDateTimeCellValue() : null, bold);
+            }
+            default -> new CellData(cell.getCellType(), null, 0, false, false, null, bold);
+        };
     }
 }

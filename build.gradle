@@ -3,7 +3,7 @@ plugins {
     id 'application'
 }
 
-group = 'com.xlsbuilder'
+group = 'de.makno.xlsbuilder'
 version = '1.0.0'
 
 java {
@@ -25,48 +25,26 @@ repositories {
     mavenCentral()
 }
 
-// JUnit-Version zentral.
-def junitVersion = '5.14.0'
-def junitPlatformVersion = '1.14.0'
-
-// Offline-Fallback: Auf dieser Maschine liegt JUnit zwar als JARs im Gradle-Modul-Cache, aber ohne
-// die Metadaten, die Gradle für die Offline-Auflösung normaler Koordinaten braucht. Daher werden im
-// Offline-Modus (--offline) die JARs direkt als Datei-Deps eingebunden (hash-unabhängig über den
-// Cache-Pfad). Online wird ganz normal über mavenCentral aufgelöst.
-def junitCacheJars = fileTree(
-        dir: "${System.getProperty('user.home')}/.gradle/caches/modules-2/files-2.1",
-        includes: [
-                "org.junit.jupiter/junit-jupiter/${junitVersion}/**/junit-jupiter-${junitVersion}.jar",
-                "org.junit.jupiter/junit-jupiter-api/${junitVersion}/**/junit-jupiter-api-${junitVersion}.jar",
-                "org.junit.jupiter/junit-jupiter-params/${junitVersion}/**/junit-jupiter-params-${junitVersion}.jar",
-                "org.junit.jupiter/junit-jupiter-engine/${junitVersion}/**/junit-jupiter-engine-${junitVersion}.jar",
-                "org.junit.platform/junit-platform-commons/${junitPlatformVersion}/**/junit-platform-commons-${junitPlatformVersion}.jar",
-                "org.junit.platform/junit-platform-engine/${junitPlatformVersion}/**/junit-platform-engine-${junitPlatformVersion}.jar",
-                "org.junit.platform/junit-platform-launcher/${junitPlatformVersion}/**/junit-platform-launcher-${junitPlatformVersion}.jar",
-                "org.opentest4j/opentest4j/1.3.0/**/opentest4j-1.3.0.jar",
-                "org.apiguardian/apiguardian-api/1.1.2/**/apiguardian-api-1.1.2.jar",
-        ])
-
 dependencies {
-    // Keine externe Excel-Bibliothek: XLSX wird mit reinem JDK (java.util.zip + XML) gestreamt.
-    if (gradle.startParameter.offline) {
-        // Offline: gecachte JARs direkt einbinden.
-        testImplementation files(junitCacheJars)
-    } else {
-        // Online: normale Maven-Koordinaten über mavenCentral.
-        testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
-        testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junitPlatformVersion}"
-    }
+    // Apache POI: .xlsx-Erzeugung. SXSSF (org.apache.poi.xssf.streaming) schreibt out-of-core.
+    implementation 'org.apache.poi:poi-ooxml:5.4.0'
+
+    // POI nutzt die Log4j2-API als Logging-Fassade; ohne Implementierung erscheint sonst die Meldung
+    // "Log4j API could not find a logging provider". Version passend zur transitiven log4j-api.
+    runtimeOnly 'org.apache.logging.log4j:log4j-core:2.24.3'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.14.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.0'
 }
 
 application {
-    mainClass = 'com.xlsbuilder.App'
+    mainClass = 'de.makno.xlsbuilder.App'
 }
 
 test {
     useJUnitPlatform()
-    // Begrenzter Heap, um das Out-of-core-Verhalten der Tests nachzuweisen.
-    maxHeapSize = '256m'
+    // Etwas mehr Heap: POI/SXSSF hat mehr Overhead als der frühere reine JDK-Writer.
+    maxHeapSize = '512m'
     testLogging {
         events 'passed', 'skipped', 'failed'
     }
@@ -74,4 +52,4 @@ test {
 
 // Eclipse-Integration: Die .settings/-Dateien liegen direkt im Projekt-Repository (versioniert).
 // Buildship (Gradle-Integration in Eclipse) liest sie beim Import als "Existing Gradle Project"
-// automatisch ein und ergänzt .project/.classpath selbst – ohne Konflikt mit dem eclipse-Plugin.
+// automatisch ein und ergänzt .project/.classpath selbst.
