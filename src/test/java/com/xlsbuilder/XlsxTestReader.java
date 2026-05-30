@@ -115,9 +115,15 @@ final class XlsxTestReader {
         }
     }
 
+    /** Liest das erste Blatt (Index 0). */
     static Grid read(Path xlsx) throws Exception {
+        return read(xlsx, 0);
+    }
+
+    /** Liest ein bestimmtes Blatt (0-basierter Index). */
+    static Grid read(Path xlsx, int sheetIndex) throws Exception {
         try (Workbook wb = WorkbookFactory.create(Files.newInputStream(xlsx))) {
-            Sheet sheet = wb.getSheetAt(0);
+            Sheet sheet = wb.getSheetAt(sheetIndex);
 
             int maxCols = 0;
             for (org.apache.poi.ss.usermodel.Row row : sheet) {
@@ -145,12 +151,23 @@ final class XlsxTestReader {
                 widths[c] = sheet.getColumnWidth(c);
             }
 
-            return new Grid(rows, mergeRefs, wb.getSheetName(0), widths);
+            return new Grid(rows, mergeRefs, sheet.getSheetName(), widths);
         }
     }
 
     static String sheetName(Path xlsx) throws Exception {
         return read(xlsx).sheetName();
+    }
+
+    /** Namen aller Blätter in Reihenfolge. */
+    static List<String> sheetNames(Path xlsx) throws Exception {
+        try (Workbook wb = WorkbookFactory.create(Files.newInputStream(xlsx))) {
+            List<String> names = new ArrayList<>();
+            for (int i = 0; i < wb.getNumberOfSheets(); i++) {
+                names.add(wb.getSheetName(i));
+            }
+            return names;
+        }
     }
 
     private static CellData parse(Workbook wb, Cell cell) {

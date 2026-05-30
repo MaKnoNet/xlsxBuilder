@@ -2,6 +2,7 @@ package com.xlsbuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ import de.makno.xlsbuilder.ColumnType;
 import de.makno.xlsbuilder.DataProviders;
 import de.makno.xlsbuilder.ExcelBuilder;
 import de.makno.xlsbuilder.SortOrder;
+import de.makno.xlsbuilder.WorkbookBuilder;
 
 class ExcelBuilderTest {
 
@@ -40,12 +42,14 @@ class ExcelBuilderTest {
                 new Person("Bob", 25, false));
         Path out = tempDir.resolve("basic.xlsx");
 
-        ExcelBuilder.<Person>create()
-                .sheetName("Leute")
-                .column("Name", Person::name)
-                .column("Alter", Person::age).ofType(ColumnType.INTEGER)
-                .column("Aktiv", Person::active).ofType(ColumnType.BOOLEAN)
-                .write(DataProviders.ofIterable(data), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .sheetName("Leute")
+                        .column("Name", Person::name)
+                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                        .column("Aktiv", Person::active).ofType(ColumnType.BOOLEAN)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         assertEquals("Leute", g.sheetName());
@@ -64,9 +68,11 @@ class ExcelBuilderTest {
     @Test
     void producesReadableXlsx() throws Exception {
         Path out = tempDir.resolve("struct.xlsx");
-        ExcelBuilder.<Person>create()
-                .column("Name", Person::name)
-                .write(DataProviders.ofIterable(List.of(new Person("X", 1, true))), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .column("Name", Person::name)
+                        .data(DataProviders.ofIterable(List.of(new Person("X", 1, true)))))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         assertEquals("Sheet1", g.sheetName(), "Default-Blattname");
@@ -82,11 +88,13 @@ class ExcelBuilderTest {
                 new Person("C", 40, true));
         Path out = tempDir.resolve("sortDesc.xlsx");
 
-        ExcelBuilder.<Person>create()
-                .column("Name", Person::name)
-                .column("Alter", Person::age).ofType(ColumnType.INTEGER)
-                .sortBy("Alter", SortOrder.DESC)
-                .write(DataProviders.ofIterable(data), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .column("Name", Person::name)
+                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                        .sortBy("Alter", SortOrder.DESC)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         List<Long> ages = new ArrayList<>();
@@ -105,12 +113,14 @@ class ExcelBuilderTest {
                 new DeptRow("B", 90));
         Path out = tempDir.resolve("multiSort.xlsx");
 
-        ExcelBuilder.<DeptRow>create()
-                .column("Abteilung", DeptRow::dept)
-                .column("Gehalt", DeptRow::salary).ofType(ColumnType.INTEGER)
-                .sortBy("Abteilung", SortOrder.ASC)
-                .sortBy("Gehalt", SortOrder.DESC)
-                .write(DataProviders.ofIterable(data), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<DeptRow>create()
+                        .column("Abteilung", DeptRow::dept)
+                        .column("Gehalt", DeptRow::salary).ofType(ColumnType.INTEGER)
+                        .sortBy("Abteilung", SortOrder.ASC)
+                        .sortBy("Gehalt", SortOrder.DESC)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         List<String> ordered = new ArrayList<>();
@@ -130,11 +140,13 @@ class ExcelBuilderTest {
         Collections.shuffle(shuffled, new java.util.Random(7));
         Path out = tempDir.resolve("externalSort.xlsx");
 
-        ExcelBuilder.<Integer>create()
-                .column("n", i -> i).ofType(ColumnType.INTEGER)
-                .sortBy("n", SortOrder.ASC)
-                .sortChunkSize(100)
-                .write(DataProviders.ofIterable(shuffled), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Integer>create()
+                        .column("n", i -> i).ofType(ColumnType.INTEGER)
+                        .sortBy("n", SortOrder.ASC)
+                        .sortChunkSize(100)
+                        .data(DataProviders.ofIterable(shuffled)))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         assertEquals(1001, g.rowCount(), "Kopfzeile + 1000 Datenzeilen");
@@ -155,9 +167,11 @@ class ExcelBuilderTest {
         }
         Path out = tempDir.resolve("unsorted.xlsx");
 
-        ExcelBuilder.<Integer>create()
-                .column("n", i -> i).ofType(ColumnType.INTEGER)
-                .write(DataProviders.ofIterable(data), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Integer>create()
+                        .column("n", i -> i).ofType(ColumnType.INTEGER)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         assertEquals(501, g.rowCount());
@@ -173,10 +187,12 @@ class ExcelBuilderTest {
         LocalDate date = LocalDate.of(2026, 5, 30);
         Path out = tempDir.resolve("formats.xlsx");
 
-        ExcelBuilder.<Sale>create()
-                .column("Datum", Sale::date).ofType(ColumnType.DATE)
-                .column("Betrag", Sale::amount).ofType(ColumnType.DECIMAL)
-                .write(DataProviders.ofIterable(List.of(new Sale(date, new BigDecimal("1234.56")))), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Sale>create()
+                        .column("Datum", Sale::date).ofType(ColumnType.DATE)
+                        .column("Betrag", Sale::amount).ofType(ColumnType.DECIMAL)
+                        .data(DataProviders.ofIterable(List.of(new Sale(date, new BigDecimal("1234.56"))))))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         assertTrue(g.isDateFormatted(1, 0), "Datumszelle muss ein Datumsformat haben");
@@ -192,11 +208,13 @@ class ExcelBuilderTest {
         LocalTime time = LocalTime.of(9, 30, 15);
         Path out = tempDir.resolve("customFormats.xlsx");
 
-        ExcelBuilder.<R>create()
-                .column("Betrag", R::betrag).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
-                .column("Datum", R::datum).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
-                .column("Zeit", R::zeit).ofType(ColumnType.TIME).formatForType("hh:mm:ss")
-                .write(DataProviders.ofIterable(List.of(new R(new BigDecimal("1234.5"), date, time))), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<R>create()
+                        .column("Betrag", R::betrag).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
+                        .column("Datum", R::datum).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
+                        .column("Zeit", R::zeit).ofType(ColumnType.TIME).formatForType("hh:mm:ss")
+                        .data(DataProviders.ofIterable(List.of(new R(new BigDecimal("1234.5"), date, time)))))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
 
@@ -211,76 +229,22 @@ class ExcelBuilderTest {
     }
 
     @Test
-    void convertsRawValueToTargetColumnType() throws Exception {
-        // Rohwert int (Sekunden seit Mitternacht) -> als Uhrzeit (TIME) schreiben.
-        record Task(String name, int sekunden) {
-        }
-        Path out = tempDir.resolve("convert.xlsx");
-
-        ExcelBuilder.<Task>create()
-                .column("Name", Task::name)
-                .column("Start", Task::sekunden).ofType(ColumnType.TIME)
-                .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
-                .write(DataProviders.ofIterable(List.of(new Task("A", 34215))), out); // 09:30:15
-
-        Grid g = XlsxTestReader.read(out);
-        assertTrue(g.isDateFormatted(1, 1), "Konvertierte Zelle ist als Uhrzeit formatiert");
-        assertEquals(LocalTime.of(9, 30, 15), g.dateTime(1, 1).toLocalTime());
-    }
-
-    @Test
-    void setsColumnWidthsSoFormattedValuesAreVisible() throws Exception {
-        record R(LocalDate datum) {
-        }
-        Path out = tempDir.resolve("widths.xlsx");
-
-        ExcelBuilder.<R>create()
-                .column("Eintritt", R::datum).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
-                .write(DataProviders.ofIterable(List.of(new R(LocalDate.of(2026, 12, 31)))), out);
-
-        Grid g = XlsxTestReader.read(out);
-        // Deutlich breiter als die POI-Standardbreite (~2048), damit kein "#####" entsteht.
-        assertTrue(g.columnWidth(0) >= 3000, "Datumsspalte muss breit genug sein");
-    }
-
-    @Test
-    void widthsAccountForLongStringsAndSummarySum() throws Exception {
-        record Item(String name, int wert) {
-        }
-        String longName = "Ein sehr langer Mitarbeitername XYZ"; // 35 Zeichen
-        List<Item> data = List.of(new Item(longName, 2_000_000), new Item("Kurz", 3_000_000));
-        Path out = tempDir.resolve("widths2.xlsx");
-
-        ExcelBuilder.<Item>create()
-                .column("Name", Item::name)
-                .column("Wert", Item::wert).ofType(ColumnType.INTEGER).formatForType("#,##0")
-                .sumColumn("Wert")
-                .summaryLabel("Name", "Summe")
-                .write(DataProviders.ofIterable(data), out);
-
-        Grid g = XlsxTestReader.read(out);
-        // Name-Spalte mindestens so breit wie der längste Name.
-        assertTrue(g.columnWidth(0) >= longName.length() * 256,
-                "Name-Spalte muss den längsten Namen fassen");
-        // Summe = 5.000.000 -> "5.000.000" (9 Zeichen inkl. Tausenderpunkte).
-        assertTrue(g.columnWidth(1) >= 9 * 256, "Wert-Spalte muss die Summe fassen");
-    }
-
-    @Test
     void summaryRowCanUseSumFormula() throws Exception {
         record Item(String name, int wert) {
         }
         List<Item> data = List.of(new Item("A", 10), new Item("B", 30), new Item("C", 20));
         Path out = tempDir.resolve("summaryFormula.xlsx");
 
-        ExcelBuilder.<Item>create()
-                .header("Bericht") // Titelzeile -> Datenbereich ist versetzt
-                .column("Name", Item::name)
-                .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
-                .sumColumn("Wert")
-                .summaryLabel("Name", "Summe")
-                .summaryAsFormula(true)
-                .write(DataProviders.ofIterable(data), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .header("Bericht") // Titelzeile -> Datenbereich ist versetzt
+                        .column("Name", Item::name)
+                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                        .sumColumn("Wert")
+                        .summaryLabel("Name", "Summe")
+                        .summaryAsFormula(true)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         // Titel(1) + Überschrift(2) + Daten(3-5) + Summe(6)
@@ -296,11 +260,13 @@ class ExcelBuilderTest {
         }
         Path out = tempDir.resolve("formula.xlsx");
 
-        ExcelBuilder.<P>create()
-                .column("A", P::a).ofType(ColumnType.INTEGER)
-                .column("B", P::b).ofType(ColumnType.INTEGER)
-                .column("Summe", p -> "A{row}+B{row}").ofType(ColumnType.FORMULA)
-                .write(DataProviders.ofIterable(List.of(new P(2, 3), new P(10, 20))), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<P>create()
+                        .column("A", P::a).ofType(ColumnType.INTEGER)
+                        .column("B", P::b).ofType(ColumnType.INTEGER)
+                        .column("Summe", p -> "A{row}+B{row}").ofType(ColumnType.FORMULA)
+                        .data(DataProviders.ofIterable(List.of(new P(2, 3), new P(10, 20)))))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         // Kopfzeile = Zeile 1; Datenzeilen sind Excel-Zeilen 2 und 3.
@@ -318,14 +284,16 @@ class ExcelBuilderTest {
                 new Item("C", 1, new BigDecimal("4.25")));
         Path out = tempDir.resolve("summary.xlsx");
 
-        ExcelBuilder.<Item>create()
-                .column("Name", Item::name)
-                .column("Menge", Item::menge).ofType(ColumnType.INTEGER)
-                .column("Betrag", Item::betrag).ofType(ColumnType.DECIMAL)
-                .sumColumn("Menge")
-                .sumColumn("Betrag")
-                .summaryLabel("Name", "Summe")
-                .write(DataProviders.ofIterable(data), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .column("Name", Item::name)
+                        .column("Menge", Item::menge).ofType(ColumnType.INTEGER)
+                        .column("Betrag", Item::betrag).ofType(ColumnType.DECIMAL)
+                        .sumColumn("Menge")
+                        .sumColumn("Betrag")
+                        .summaryLabel("Name", "Summe")
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         assertEquals(5, g.rowCount(), "Kopf + 3 Daten + 1 Summenzeile");
@@ -346,12 +314,14 @@ class ExcelBuilderTest {
         Collections.shuffle(data, new java.util.Random(3));
         Path out = tempDir.resolve("summarySorted.xlsx");
 
-        ExcelBuilder.<Integer>create()
-                .column("n", i -> (long) i).ofType(ColumnType.LONG)
-                .sortBy("n", SortOrder.ASC)
-                .sortChunkSize(100)
-                .sumColumn("n")
-                .write(DataProviders.ofIterable(data), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Integer>create()
+                        .column("n", i -> (long) i).ofType(ColumnType.LONG)
+                        .sortBy("n", SortOrder.ASC)
+                        .sortChunkSize(100)
+                        .sumColumn("n")
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         assertEquals(1002, g.rowCount(), "Kopf + 1000 Daten + Summenzeile");
@@ -359,16 +329,60 @@ class ExcelBuilderTest {
     }
 
     @Test
+    void setsColumnWidthsSoFormattedValuesAreVisible() throws Exception {
+        record R(LocalDate datum) {
+        }
+        Path out = tempDir.resolve("widths.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<R>create()
+                        .column("Eintritt", R::datum).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
+                        .data(DataProviders.ofIterable(List.of(new R(LocalDate.of(2026, 12, 31))))))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Deutlich breiter als die POI-Standardbreite (~2048), damit kein "#####" entsteht.
+        assertTrue(g.columnWidth(0) >= 3000, "Datumsspalte muss breit genug sein");
+    }
+
+    @Test
+    void widthsAccountForLongStringsAndSummarySum() throws Exception {
+        record Item(String name, int wert) {
+        }
+        String longName = "Ein sehr langer Mitarbeitername XYZ"; // 35 Zeichen
+        List<Item> data = List.of(new Item(longName, 2_000_000), new Item("Kurz", 3_000_000));
+        Path out = tempDir.resolve("widths2.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .column("Name", Item::name)
+                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER).formatForType("#,##0")
+                        .sumColumn("Wert")
+                        .summaryLabel("Name", "Summe")
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Name-Spalte mindestens so breit wie der längste Name.
+        assertTrue(g.columnWidth(0) >= longName.length() * 256,
+                "Name-Spalte muss den längsten Namen fassen");
+        // Summe = 5.000.000 -> "5.000.000" (9 Zeichen inkl. Tausenderpunkte).
+        assertTrue(g.columnWidth(1) >= 9 * 256, "Wert-Spalte muss die Summe fassen");
+    }
+
+    @Test
     void addsTitleHeaderRowsMergedAcrossWidth() throws Exception {
         List<Person> data = List.of(new Person("Alice", 30, true));
         Path out = tempDir.resolve("header.xlsx");
 
-        ExcelBuilder.<Person>create()
-                .header("Mitarbeiterbericht", "Stand: Mai 2026")
-                .column("Name", Person::name)
-                .column("Alter", Person::age).ofType(ColumnType.INTEGER)
-                .column("Aktiv", Person::active).ofType(ColumnType.BOOLEAN)
-                .write(DataProviders.ofIterable(data), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .header("Mitarbeiterbericht", "Stand: Mai 2026")
+                        .column("Name", Person::name)
+                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                        .column("Aktiv", Person::active).ofType(ColumnType.BOOLEAN)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         // 2 Titelzeilen + Spaltenüberschriften + 1 Datenzeile
@@ -395,14 +409,16 @@ class ExcelBuilderTest {
                 new Item("C", 20));
         Path out = tempDir.resolve("combined.xlsx");
 
-        ExcelBuilder.<Item>create()
-                .header("Bericht")
-                .column("Name", Item::name)
-                .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
-                .sortBy("Wert", SortOrder.DESC)
-                .sumColumn("Wert")
-                .summaryLabel("Name", "Summe")
-                .write(DataProviders.ofIterable(data), out);
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .header("Bericht")
+                        .column("Name", Item::name)
+                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                        .sortBy("Wert", SortOrder.DESC)
+                        .sumColumn("Wert")
+                        .summaryLabel("Name", "Summe")
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
 
         Grid g = XlsxTestReader.read(out);
         // Titel + Spaltenüberschriften + 3 Daten + Summenzeile
@@ -417,5 +433,75 @@ class ExcelBuilderTest {
         assertEquals(10, g.number(4, 1));
         assertEquals("Summe", g.string(5, 0));
         assertEquals(60, g.number(5, 1));
+    }
+
+    @Test
+    void convertsRawValueToTargetColumnType() throws Exception {
+        // Rohwert int (Sekunden seit Mitternacht) -> als Uhrzeit (TIME) schreiben.
+        record Task(String name, int sekunden) {
+        }
+        Path out = tempDir.resolve("convert.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Task>create()
+                        .column("Name", Task::name)
+                        .column("Start", Task::sekunden).ofType(ColumnType.TIME)
+                        .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
+                        .data(DataProviders.ofIterable(List.of(new Task("A", 34215))))) // 09:30:15
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertTrue(g.isDateFormatted(1, 1), "Konvertierte Zelle ist als Uhrzeit formatiert");
+        assertEquals(LocalTime.of(9, 30, 15), g.dateTime(1, 1).toLocalTime());
+    }
+
+    @Test
+    void writesMultipleSheets() throws Exception {
+        record Emp(String name, int age) {
+        }
+        record Dept(String code) {
+        }
+        Path out = tempDir.resolve("multi.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Emp>create().sheetName("Mitarbeiter")
+                        .column("Name", Emp::name)
+                        .column("Alter", Emp::age).ofType(ColumnType.INTEGER)
+                        .data(DataProviders.ofIterable(List.of(new Emp("Alice", 30), new Emp("Bob", 25)))))
+                .sheet(ExcelBuilder.<Dept>create().sheetName("Abteilungen")
+                        .column("Kürzel", Dept::code)
+                        .data(DataProviders.ofIterable(List.of(new Dept("IT"), new Dept("HR")))))
+                .write(out);
+
+        assertEquals(List.of("Mitarbeiter", "Abteilungen"), XlsxTestReader.sheetNames(out));
+
+        Grid s0 = XlsxTestReader.read(out, 0);
+        assertEquals(List.of("Name", "Alter"), s0.strings(0));
+        assertEquals("Alice", s0.string(1, 0));
+        assertEquals(30, s0.number(1, 1));
+
+        Grid s1 = XlsxTestReader.read(out, 1);
+        assertEquals(List.of("Kürzel"), s1.strings(0));
+        assertEquals("IT", s1.string(1, 0));
+        assertEquals("HR", s1.string(2, 0));
+    }
+
+    @Test
+    void deduplicatesSheetNames() throws Exception {
+        record R(String v) {
+        }
+        Path out = tempDir.resolve("dupe.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<R>create().sheetName("Daten").column("V", R::v)
+                        .data(DataProviders.ofIterable(List.of(new R("a")))))
+                .sheet(ExcelBuilder.<R>create().sheetName("Daten").column("V", R::v)
+                        .data(DataProviders.ofIterable(List.of(new R("b")))))
+                .write(out);
+
+        List<String> names = XlsxTestReader.sheetNames(out);
+        assertEquals(2, names.size());
+        assertEquals("Daten", names.get(0));
+        assertNotEquals("Daten", names.get(1), "zweites Blatt muss eindeutigen Namen erhalten");
     }
 }

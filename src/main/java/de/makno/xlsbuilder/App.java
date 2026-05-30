@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
 
@@ -29,6 +30,10 @@ public final class App {
                            LocalDateTime lastLogin, int checkInSeconds) {
     }
 
+    /** Datentyp des zweiten Blatts „Info" – zeigt, dass jedes Blatt einen eigenen Typ haben kann. */
+    public record Info(String schluessel, String wert) {
+    }
+
     public static void main(String[] args) throws IOException {
         long rowCount = args.length > 0 ? Long.parseLong(args[0]) : 1_000_000L;
         Path out = Path.of(args.length > 1 ? args[1] : "employees.xlsx");
@@ -36,7 +41,8 @@ public final class App {
         Runtime runtime = Runtime.getRuntime();
         long start = System.nanoTime();
 
-        ExcelBuilder.<Employee>create()
+        // Blatt 1: Mitarbeiter (Employee) – je eine Spalte pro Typ, sortiert, mit Summenzeile.
+        ExcelBuilder<Employee> mitarbeiter = ExcelBuilder.<Employee>create()
                 .sheetName("Mitarbeiter")
                 .header("Mitarbeiterbericht", "Erstellt am " + LocalDate.now())
                 .column("ID", Employee::id).ofType(ColumnType.LONG)
@@ -60,7 +66,22 @@ public final class App {
                 .sumColumn("Gehalt")
                 .summaryLabel("Name", "Summe")
                 .summaryAsFormula(true) // Summenzeile als echte =SUMME(...)-Formel
-                .write(employeeGenerator(rowCount), out);
+                .data(employeeGenerator(rowCount));
+
+        // Blatt 2: Info (anderer Datentyp) – kleine statische Metadaten-Tabelle.
+        ExcelBuilder<Info> info = ExcelBuilder.<Info>create()
+                .sheetName("Info")
+                .column("Schlüssel", Info::schluessel)
+                .column("Wert", Info::wert)
+                .data(DataProviders.ofIterable(List.of(
+                        new Info("Bericht", "Mitarbeiterbericht"),
+                        new Info("Zeilen", String.format("%,d", rowCount)),
+                        new Info("Erstellt am", LocalDate.now().toString()))));
+
+        WorkbookBuilder.create()
+                .sheet(mitarbeiter)
+                .sheet(info)
+                .write(out);
 
         double seconds = (System.nanoTime() - start) / 1_000_000_000.0;
         long usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);

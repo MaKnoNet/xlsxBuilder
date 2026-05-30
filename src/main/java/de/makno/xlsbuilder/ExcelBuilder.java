@@ -1,14 +1,13 @@
 package de.makno.xlsbuilder;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 /**
  * Fluent-Builder zum Erzeugen von {@code .xlsx}-Dateien.
@@ -22,13 +21,19 @@ import java.util.function.Function;
  *       k-way-Merge), sodass auch die Sortierung nicht durch den RAM begrenzt ist.</li>
  * </ul>
  *
+ * <p>Ein {@code ExcelBuilder} beschreibt genau <em>ein</em> Blatt (inkl. Datenquelle via
+ * {@link #data(DataProvider)}). Geschrieben wird über den {@link WorkbookBuilder}, der ein oder
+ * mehrere Blätter in eine Datei zusammenfasst.
+ *
  * <pre>{@code
- * ExcelBuilder.<Employee>create()
- *     .sheetName("Mitarbeiter")
- *     .column("Name", Employee::name)                                  // Default: Text
- *     .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
- *     .sortBy("Gehalt", SortOrder.DESC)
- *     .write(dataProvider, Path.of("out.xlsx"));
+ * WorkbookBuilder.create()
+ *     .sheet(ExcelBuilder.<Employee>create()
+ *         .sheetName("Mitarbeiter")
+ *         .column("Name", Employee::name)                                  // Default: Text
+ *         .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
+ *         .sortBy("Gehalt", SortOrder.DESC)
+ *         .data(dataProvider))
+ *     .write(Path.of("out.xlsx"));
  * }</pre>
  */
 public final class ExcelBuilder<T> {
@@ -44,6 +49,7 @@ public final class ExcelBuilder<T> {
     private String summaryLabelText;
     private boolean summaryAsFormula;
     private int sortChunkSize = DEFAULT_CHUNK_SIZE;
+    private DataProvider<T> dataProvider;
 
     private ExcelBuilder() {
     }
@@ -164,36 +170,39 @@ public final class ExcelBuilder<T> {
         return this;
     }
 
-    public void write(DataProvider<T> provider, Path out) throws IOException {
-        Objects.requireNonNull(provider, "provider");
-        Objects.requireNonNull(out, "out");
-        try (OutputStream os = Files.newOutputStream(out)) {
-            write(provider, os);
-        }
+    /** Setzt die Datenquelle dieses Blatts. Erforderlich, bevor das Blatt geschrieben wird. */
+    public ExcelBuilder<T> data(DataProvider<T> provider) {
+        this.dataProvider = Objects.requireNonNull(provider, "provider");
+        return this;
     }
 
-    public void write(DataProvider<T> provider, OutputStream out) throws IOException {
-        Objects.requireNonNull(provider, "provider");
-        Objects.requireNonNull(out, "out");
+    /**
+     * Rendert dieses Blatt in ein vorhandenes Workbook (vom {@link WorkbookBuilder} aufgerufen).
+     * Verarbeitet die Datenquelle gestreamt; bei Sortierung via {@link ExternalMergeSort} out-of-core.
+     */
+    void renderInto(SXSSFWorkbook wb) throws IOException {
         if (columns.isEmpty()) {
             throw new IllegalStateException("Mindestens eine Spalte muss definiert sein");
+        }
+        if (dataProvider == null) {
+            throw new IllegalStateException("Kein DataProvider gesetzt (.data(...)) für Blatt: " + sheetName);
         }
 
         SummarySpec summary = buildSummarySpec();
         List<String> header = headerLines.isEmpty() ? null : headerLines;
 
-        try (DataProvider<T> p = provider) {
+        try (DataProvider<T> p = dataProvider) {
             Iterator<Row> projected = projection(p);
             if (sortKeys.isEmpty()) {
-                XlsxWriter.write(out, sheetName, columns, header, projected, summary);
+                XlsxWriter.addSheet(wb, sheetName, columns, header, projected, summary);
             } else {
                 RowComparator comparator = new RowComparator(columns, sortKeys);
                 try (ExternalMergeSort sorter = new ExternalMergeSort(comparator, sortChunkSize)) {
                     // sort() konsumiert die Projektion (und damit den Provider) vollständig ...
                     CloseableIterator<Row> sorted = sorter.sort(projected);
-                    // ... danach wird der sortierte Strom in die Datei geschrieben.
+                    // ... danach wird der sortierte Strom in das Blatt geschrieben.
                     try (sorted) {
-                        XlsxWriter.write(out, sheetName, columns, header, sorted, summary);
+                        XlsxWriter.addSheet(wb, sheetName, columns, header, sorted, summary);
                     }
                 }
             }

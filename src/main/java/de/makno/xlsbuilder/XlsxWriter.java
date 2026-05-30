@@ -1,7 +1,5 @@
 package de.makno.xlsbuilder;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,7 +23,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 /**
  * Schreibt eine {@code .xlsx}-Datei mit Apache POI im Streaming-Modus (SXSSF).
  *
- * <p>SXSSF hält nur ein gleitendes Fenster von {@link #ROW_WINDOW} Zeilen im Speicher und lagert den
+ * <p>SXSSF hält nur ein gleitendes Fenster von Zeilen im Speicher und lagert den
  * Rest auf temporäre Dateien aus; mit Inline-Strings (Default von SXSSF) wächst auch keine
  * Shared-Strings-Tabelle. Dadurch bleibt der Speicherbedarf konstant, unabhängig von der Zeilenzahl.
  * Die Summen der optionalen Summenzeile werden beim Streamen mitgeführt (kein zweiter Durchlauf).
@@ -35,145 +33,148 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  */
 final class XlsxWriter {
 
-    /** Anzahl Zeilen, die SXSSF gleichzeitig im Speicher hält (Rest wird auf Platte ausgelagert). */
-    private static final int ROW_WINDOW = 100;
-
     private static final double NANOS_PER_DAY = 86_400d * 1_000_000_000d;
 
     private XlsxWriter() {
     }
 
-    static void write(OutputStream out, String sheetName, List<? extends Column<?>> columns,
-                      List<String> headerLines, Iterator<Row> rows, SummarySpec summary)
-            throws IOException {
-        SXSSFWorkbook wb = new SXSSFWorkbook(ROW_WINDOW);
-        try {
-            String safeName = WorkbookUtil.createSafeSheetName(
-                    (sheetName == null || sheetName.isBlank()) ? "Sheet1" : sheetName);
-            SXSSFSheet sheet = wb.createSheet(safeName);
+    /** Fügt ein Worksheet in ein vorhandenes (vom {@code WorkbookBuilder} verwaltetes) Workbook ein. */
+    static void addSheet(SXSSFWorkbook wb, String sheetName, List<? extends Column<?>> columns,
+                         List<String> headerLines, Iterator<Row> rows, SummarySpec summary) {
+        SXSSFSheet sheet = wb.createSheet(uniqueSheetName(wb, sheetName));
 
-            // Bei Formelspalten Excel anweisen, beim Öffnen neu zu berechnen (Werte sind nicht gecacht).
-            boolean hasFormula = false;
-            for (Column<?> col : columns) {
-                if (col.type() == ColumnType.FORMULA) {
-                    hasFormula = true;
-                    break;
-                }
+        // Bei Formelspalten Excel anweisen, beim Öffnen neu zu berechnen (Werte sind nicht gecacht).
+        boolean hasFormula = false;
+        for (Column<?> col : columns) {
+            if (col.type() == ColumnType.FORMULA) {
+                hasFormula = true;
+                break;
             }
-            if (hasFormula || (summary != null && summary.useFormula())) {
-                sheet.setForceFormulaRecalculation(true);
-            }
-
-            CreationHelper helper = wb.getCreationHelper();
-            CellStyle[] columnStyles = buildColumnStyles(wb, helper, columns);
-            CellStyle titleStyle = buildTitleStyle(wb);
-
-            // Spaltenbreiten inhaltsbasiert schätzen, damit nichts als "#####" erscheint. Da SXSSF-
-            // Autosize ausgelagerte Zeilen nicht sehen kann, messen wir die Breite beim Streamen mit:
-            // Stringlängen exakt, Zahlenbreite aus Stellenzahl + Format (inkl. der großen Summenwerte).
-            // Die endgültige Breite wird erst nach allen Zeilen gesetzt (in SXSSF jederzeit möglich).
-            int columnCount = columns.size();
-            int[] widthChars = new int[columnCount];
-            int[] formatDecimals = new int[columnCount];
-            boolean[] grouping = new boolean[columnCount];
-            int[] literalChars = new int[columnCount];
-            for (int c = 0; c < columnCount; c++) {
-                Column<?> col = columns.get(c);
-                String fmt = col.format() != null ? col.format() : defaultFormat(col.type());
-                boolean numericLike = isNumericLike(col.type());
-                formatDecimals[c] = decimalsOf(fmt);
-                grouping[c] = numericLike && fmt != null && fmt.indexOf(',') >= 0;
-                literalChars[c] = numericLike ? literalCharsOf(fmt) : 0;
-                widthChars[c] = Math.max(col.name().length(), minChars(col.type()) + literalChars[c]);
-            }
-
-            int rowNum = 0;
-            int lastCol = columns.size() - 1;
-
-            // Optionale Titelzeile(n): je über die volle Tabellenbreite zusammengeführt + zentriert.
-            if (headerLines != null) {
-                for (String line : headerLines) {
-                    Cell cell = sheet.createRow(rowNum).createCell(0);
-                    cell.setCellValue(line);
-                    cell.setCellStyle(titleStyle);
-                    if (lastCol > 0) {
-                        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, lastCol));
-                    }
-                    rowNum++;
-                }
-            }
-
-            // Spaltenüberschriften
-            org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(rowNum++);
-            for (int c = 0; c < columns.size(); c++) {
-                headerRow.createCell(c).setCellValue(columns.get(c).name());
-            }
-
-            // Akkumulatoren der Summenzeile (konstanter Speicher, wird beim Streamen mitgeführt).
-            BigDecimal[] sums = null;
-            if (summary != null) {
-                sums = new BigDecimal[columns.size()];
-                for (int c = 0; c < columns.size(); c++) {
-                    if (summary.sum()[c]) {
-                        sums[c] = BigDecimal.ZERO;
-                    }
-                }
-            }
-
-            // Datenzeilen
-            int firstDataRow0 = rowNum; // 0-basierter Index der ersten Datenzeile
-            while (rows.hasNext()) {
-                Row dataRow = rows.next();
-                org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum++);
-                for (int c = 0; c < columns.size(); c++) {
-                    Object value = dataRow.get(c);
-                    ColumnType type = columns.get(c).type();
-                    writeCell(r, c, type, value, columnStyles[c]);
-                    trackWidth(widthChars, formatDecimals, grouping, literalChars, c, type, value);
-                    if (sums != null && sums[c] != null && value != null) {
-                        sums[c] = sums[c].add(toBigDecimal(value));
-                    }
-                }
-            }
-            int dataRowCount = rowNum - firstDataRow0;
-            int firstDataRowNum = firstDataRow0 + 1; // Excel 1-basiert
-            int lastDataRowNum = rowNum;             // Excel 1-basiert
-
-            // Summenzeile
-            if (summary != null) {
-                org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum);
-                boolean asFormula = summary.useFormula() && dataRowCount > 0;
-                for (int c = 0; c < columns.size(); c++) {
-                    ColumnType type = columns.get(c).type();
-                    if (sums[c] != null) {
-                        Object value = summaryValue(type, sums[c]); // für Breitenschätzung
-                        if (asFormula) {
-                            String col = CellReference.convertNumToColString(c);
-                            Cell cell = r.createCell(c);
-                            cell.setCellFormula("SUM(" + col + firstDataRowNum + ":" + col + lastDataRowNum + ")");
-                            if (columnStyles[c] != null) {
-                                cell.setCellStyle(columnStyles[c]);
-                            }
-                        } else {
-                            writeCell(r, c, type, value, columnStyles[c]);
-                        }
-                        trackWidth(widthChars, formatDecimals, grouping, literalChars, c, type, value);
-                    } else if (c == summary.labelColumnIndex()) {
-                        r.createCell(c).setCellValue(summary.labelText());
-                        widthChars[c] = Math.max(widthChars[c], summary.labelText().length());
-                    }
-                }
-            }
-
-            // Endgültige Spaltenbreiten setzen (Zeichen -> POI-Einheiten 1/256, +2 Polster).
-            for (int c = 0; c < columnCount; c++) {
-                sheet.setColumnWidth(c, Math.min((widthChars[c] + 2) * 256, 255 * 256));
-            }
-
-            wb.write(out);
-        } finally {
-            wb.dispose(); // löscht die temporären SXSSF-Dateien
         }
+        if (hasFormula || (summary != null && summary.useFormula())) {
+            sheet.setForceFormulaRecalculation(true);
+        }
+
+        CreationHelper helper = wb.getCreationHelper();
+        CellStyle[] columnStyles = buildColumnStyles(wb, helper, columns);
+        CellStyle titleStyle = buildTitleStyle(wb);
+
+        // Spaltenbreiten inhaltsbasiert schätzen, damit nichts als "#####" erscheint. Da SXSSF-
+        // Autosize ausgelagerte Zeilen nicht sehen kann, messen wir die Breite beim Streamen mit:
+        // Stringlängen exakt, Zahlenbreite aus Stellenzahl + Format (inkl. der großen Summenwerte).
+        // Die endgültige Breite wird erst nach allen Zeilen gesetzt (in SXSSF jederzeit möglich).
+        int columnCount = columns.size();
+        int[] widthChars = new int[columnCount];
+        int[] formatDecimals = new int[columnCount];
+        boolean[] grouping = new boolean[columnCount];
+        int[] literalChars = new int[columnCount];
+        for (int c = 0; c < columnCount; c++) {
+            Column<?> col = columns.get(c);
+            String fmt = col.format() != null ? col.format() : defaultFormat(col.type());
+            boolean numericLike = isNumericLike(col.type());
+            formatDecimals[c] = decimalsOf(fmt);
+            grouping[c] = numericLike && fmt != null && fmt.indexOf(',') >= 0;
+            literalChars[c] = numericLike ? literalCharsOf(fmt) : 0;
+            widthChars[c] = Math.max(col.name().length(), minChars(col.type()) + literalChars[c]);
+        }
+
+        int rowNum = 0;
+        int lastCol = columns.size() - 1;
+
+        // Optionale Titelzeile(n): je über die volle Tabellenbreite zusammengeführt + zentriert.
+        if (headerLines != null) {
+            for (String line : headerLines) {
+                Cell cell = sheet.createRow(rowNum).createCell(0);
+                cell.setCellValue(line);
+                cell.setCellStyle(titleStyle);
+                if (lastCol > 0) {
+                    sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, lastCol));
+                }
+                rowNum++;
+            }
+        }
+
+        // Spaltenüberschriften
+        org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(rowNum++);
+        for (int c = 0; c < columns.size(); c++) {
+            headerRow.createCell(c).setCellValue(columns.get(c).name());
+        }
+
+        // Akkumulatoren der Summenzeile (konstanter Speicher, wird beim Streamen mitgeführt).
+        BigDecimal[] sums = null;
+        if (summary != null) {
+            sums = new BigDecimal[columns.size()];
+            for (int c = 0; c < columns.size(); c++) {
+                if (summary.sum()[c]) {
+                    sums[c] = BigDecimal.ZERO;
+                }
+            }
+        }
+
+        // Datenzeilen
+        int firstDataRow0 = rowNum; // 0-basierter Index der ersten Datenzeile
+        while (rows.hasNext()) {
+            Row dataRow = rows.next();
+            org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum++);
+            for (int c = 0; c < columns.size(); c++) {
+                Object value = dataRow.get(c);
+                ColumnType type = columns.get(c).type();
+                writeCell(r, c, type, value, columnStyles[c]);
+                trackWidth(widthChars, formatDecimals, grouping, literalChars, c, type, value);
+                if (sums != null && sums[c] != null && value != null) {
+                    sums[c] = sums[c].add(toBigDecimal(value));
+                }
+            }
+        }
+        int dataRowCount = rowNum - firstDataRow0;
+        int firstDataRowNum = firstDataRow0 + 1; // Excel 1-basiert
+        int lastDataRowNum = rowNum;             // Excel 1-basiert
+
+        // Summenzeile
+        if (summary != null) {
+            org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum);
+            boolean asFormula = summary.useFormula() && dataRowCount > 0;
+            for (int c = 0; c < columns.size(); c++) {
+                ColumnType type = columns.get(c).type();
+                if (sums[c] != null) {
+                    Object value = summaryValue(type, sums[c]); // für Breitenschätzung
+                    if (asFormula) {
+                        String col = CellReference.convertNumToColString(c);
+                        Cell cell = r.createCell(c);
+                        cell.setCellFormula("SUM(" + col + firstDataRowNum + ":" + col + lastDataRowNum + ")");
+                        if (columnStyles[c] != null) {
+                            cell.setCellStyle(columnStyles[c]);
+                        }
+                    } else {
+                        writeCell(r, c, type, value, columnStyles[c]);
+                    }
+                    trackWidth(widthChars, formatDecimals, grouping, literalChars, c, type, value);
+                } else if (c == summary.labelColumnIndex()) {
+                    r.createCell(c).setCellValue(summary.labelText());
+                    widthChars[c] = Math.max(widthChars[c], summary.labelText().length());
+                }
+            }
+        }
+
+        // Endgültige Spaltenbreiten setzen (Zeichen -> POI-Einheiten 1/256, +2 Polster).
+        for (int c = 0; c < columnCount; c++) {
+            sheet.setColumnWidth(c, Math.min((widthChars[c] + 2) * 256, 255 * 256));
+        }
+    }
+
+    /** Erzeugt einen für das Workbook eindeutigen, gültigen Blattnamen (Excel verbietet Duplikate). */
+    private static String uniqueSheetName(SXSSFWorkbook wb, String sheetName) {
+        String base = WorkbookUtil.createSafeSheetName(
+                (sheetName == null || sheetName.isBlank()) ? "Sheet1" : sheetName);
+        String unique = base;
+        int n = 2;
+        while (wb.getSheet(unique) != null) {
+            String suffix = " (" + n++ + ")";
+            String head = base.length() + suffix.length() > 31
+                    ? base.substring(0, 31 - suffix.length()) : base;
+            unique = head + suffix;
+        }
+        return unique;
     }
 
     /** Erzeugt je Spalte einmalig den Style mit Format-Code (oder {@code null}, falls kein Format nötig). */
