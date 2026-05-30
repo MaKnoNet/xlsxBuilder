@@ -41,6 +41,9 @@ public final class App {
         Runtime runtime = Runtime.getRuntime();
         long start = System.nanoTime();
 
+        System.out.printf("%s wird erstellt.",out.toAbsolutePath());
+        System.out.println();
+        
         // Blatt 1: Mitarbeiter (Employee) – je eine Spalte pro Typ, sortiert, mit Summenzeile.
         ExcelBuilder<Employee> mitarbeiter = ExcelBuilder.<Employee>create()
                 .sheetName("Mitarbeiter")
@@ -78,11 +81,42 @@ public final class App {
                         new Info("Zeilen", String.format("%,d", rowCount)),
                         new Info("Erstellt am", LocalDate.now().toString()))));
 
-        WorkbookBuilder.create()
-                .sheet(mitarbeiter)
-                .sheet(info)
-                .write(out);
+        
+        
+        ExcelBuilder<Employee> mitarbeiter_1 = ExcelBuilder.<Employee>create()
+                .sheetName("Mitarbeiter_1")
+                .header("Mitarbeiterbericht", "Erstellt am " + LocalDate.now())
+                .column("ID", Employee::id).ofType(ColumnType.LONG)
+                .column("Name", Employee::name)                                  // STRING (Default)
+                .column("Abteilung", Employee::department)                       // STRING
+                .column("Alter", Employee::age).ofType(ColumnType.INTEGER)
+                .column("Bewertung", Employee::rating).ofType(ColumnType.DOUBLE).formatForType("0.0")
+                .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00 \"€\"")
+                .column("Aktiv", Employee::active).ofType(ColumnType.BOOLEAN)
+                .column("Eintritt", Employee::hireDate).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
+                .column("Letzter Login", Employee::lastLogin).ofType(ColumnType.DATETIME)
+                .formatForType("dd.mm.yyyy hh:mm")
+                // Rohwert int (Sekunden seit Mitternacht) wird zur Uhrzeit (TIME) konvertiert.
+                .column("Kommt", Employee::checkInSeconds).ofType(ColumnType.TIME).formatForType("hh:mm")
+                .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
+                // Formelspalte: Bonus = 10 % vom Gehalt (Spalte F); {row} = aktuelle Zeilennummer.
+                .column("Bonus", e -> "F{row}*0.1").ofType(ColumnType.FORMULA).formatForType("#,##0.00 \"€\"")
+                .sortBy("Abteilung", SortOrder.ASC)
+                .sortBy("Gehalt", SortOrder.DESC)
+                .sortChunkSize(100_000)
+                .sumColumn("Gehalt")
+                .summaryLabel("Name", "Summe")
+                .summaryAsFormula(true) // Summenzeile als echte =SUMME(...)-Formel
+                .data(employeeGenerator(rowCount));
 
+
+        WorkbookBuilder.create()
+        .sheet(mitarbeiter)
+        .sheet(info)
+        .sheet(mitarbeiter_1)
+        .write(out);
+
+        
         double seconds = (System.nanoTime() - start) / 1_000_000_000.0;
         long usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);
         long fileMb = Files.size(out) / (1024 * 1024);
@@ -91,6 +125,7 @@ public final class App {
                 "Fertig: %,d Zeilen -> %s (%d MB) in %.1fs, belegter Heap ~%d MB, max Heap %d MB%n",
                 rowCount, out.toAbsolutePath(), fileMb, seconds, usedMb,
                 runtime.maxMemory() / (1024 * 1024));
+        System.out.println();
     }
 
     /** Lazy-Generator: erzeugt Datensätze erst beim Abruf, nie als komplette Liste im Speicher. */
