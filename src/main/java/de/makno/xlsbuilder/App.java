@@ -6,22 +6,27 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.NoSuchElementException;
 import java.util.Random;
 
 /**
- * Demo: erzeugt out-of-core eine sortierte {@code .xlsx} mit vielen Zeilen.
- * Die Datensätze werden über einen {@link DataProvider} <em>lazy</em> generiert – es liegt nie die
- * gesamte Datenmenge im Speicher.
+ * Demo: erzeugt out-of-core eine sortierte {@code .xlsx} mit vielen Zeilen und je einer Spalte pro
+ * {@link ColumnType}. Die Datensätze werden über einen {@link DataProvider} <em>lazy</em> generiert –
+ * es liegt nie die gesamte Datenmenge im Speicher.
  *
  * <p>Aufruf: {@code App [zeilenanzahl] [ausgabedatei]} (Default: 1_000_000 / employees.xlsx).
  */
 public final class App {
 
-    /** {@code checkInSeconds} ist die Kommt-Zeit als Sekunden seit Mitternacht (Rohwert int). */
-    public record Employee(String name, String department, BigDecimal salary, LocalDate hireDate,
-                           int checkInSeconds) {
+    /**
+     * Felder decken alle Spaltentypen ab. {@code checkInSeconds} ist die Kommt-Zeit als Sekunden seit
+     * Mitternacht (Rohwert int), der per Konverter in eine Uhrzeit umgewandelt wird.
+     */
+    public record Employee(long id, String name, String department, int age, double rating,
+                           BigDecimal salary, boolean active, LocalDate hireDate,
+                           LocalDateTime lastLogin, int checkInSeconds) {
     }
 
     public static void main(String[] args) throws IOException {
@@ -34,11 +39,17 @@ public final class App {
         ExcelBuilder.<Employee>create()
                 .sheetName("Mitarbeiter")
                 .header("Mitarbeiterbericht", "Erstellt am " + LocalDate.now())
-                .column("Name", Employee::name)
-                .column("Abteilung", Employee::department)
+                .column("ID", Employee::id).ofType(ColumnType.LONG)
+                .column("Name", Employee::name)                                  // STRING (Default)
+                .column("Abteilung", Employee::department)                       // STRING
+                .column("Alter", Employee::age).ofType(ColumnType.INTEGER)
+                .column("Bewertung", Employee::rating).ofType(ColumnType.DOUBLE).formatForType("0.0")
                 .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00 \"€\"")
+                .column("Aktiv", Employee::active).ofType(ColumnType.BOOLEAN)
                 .column("Eintritt", Employee::hireDate).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
-                // Rohwert int (Sekunden seit Mitternacht) wird zur Uhrzeit konvertiert.
+                .column("Letzter Login", Employee::lastLogin).ofType(ColumnType.DATETIME)
+                .formatForType("dd.mm.yyyy hh:mm")
+                // Rohwert int (Sekunden seit Mitternacht) wird zur Uhrzeit (TIME) konvertiert.
                 .column("Kommt", Employee::checkInSeconds).ofType(ColumnType.TIME).formatForType("hh:mm")
                 .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
                 .sortBy("Abteilung", SortOrder.ASC)
@@ -76,15 +87,22 @@ public final class App {
                     throw new NoSuchElementException();
                 }
                 produced++;
+                long id = 1_000_000L + produced;
                 String name = "Mitarbeiter-" + produced;
                 String dept = departments[random.nextInt(departments.length)];
+                int age = 20 + random.nextInt(45);
+                double rating = Math.round(random.nextDouble() * 50) / 10.0; // 0.0 .. 5.0
                 BigDecimal salary = BigDecimal.valueOf(30_000 + random.nextInt(90_000))
                         .add(BigDecimal.valueOf(random.nextInt(100), 2))
                         .setScale(2, RoundingMode.HALF_UP);
+                boolean active = random.nextBoolean();
                 LocalDate hire = LocalDate.of(2000, 1, 1).plusDays(random.nextInt(9000));
+                LocalDateTime lastLogin = LocalDateTime.of(2026, 1, 1, 0, 0)
+                        .plusMinutes(random.nextInt(525_600)); // irgendwann im Jahr 2026
                 // Kommt-Zeit zwischen 06:00 und 09:59 als Sekunden seit Mitternacht.
                 int checkInSeconds = (6 + random.nextInt(4)) * 3600 + random.nextInt(60) * 60;
-                return new Employee(name, dept, salary, hire, checkInSeconds);
+                return new Employee(id, name, dept, age, rating, salary, active, hire, lastLogin,
+                        checkInSeconds);
             }
         };
     }
