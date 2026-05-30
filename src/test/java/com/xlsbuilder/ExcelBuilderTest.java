@@ -229,6 +229,21 @@ class ExcelBuilderTest {
     }
 
     @Test
+    void setsColumnWidthsSoFormattedValuesAreVisible() throws Exception {
+        record R(LocalDate datum) {
+        }
+        Path out = tempDir.resolve("widths.xlsx");
+
+        ExcelBuilder.<R>create()
+                .column("Eintritt", R::datum).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
+                .write(DataProviders.ofIterable(List.of(new R(LocalDate.of(2026, 12, 31)))), out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Deutlich breiter als die POI-Standardbreite (~2048), damit kein "#####" entsteht.
+        assertTrue(g.columnWidth(0) >= 3000, "Datumsspalte muss breit genug sein");
+    }
+
+    @Test
     void writesFormulaColumnWithRowPlaceholder() throws Exception {
         record P(int a, int b) {
         }

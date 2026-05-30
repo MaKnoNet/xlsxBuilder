@@ -35,11 +35,19 @@ final class XlsxTestReader {
         private final List<List<CellData>> rows;
         private final List<String> mergeRefs;
         private final String sheetName;
+        private final int[] columnWidths;
 
-        private Grid(List<List<CellData>> rows, List<String> mergeRefs, String sheetName) {
+        private Grid(List<List<CellData>> rows, List<String> mergeRefs, String sheetName,
+                     int[] columnWidths) {
             this.rows = rows;
             this.mergeRefs = mergeRefs;
             this.sheetName = sheetName;
+            this.columnWidths = columnWidths;
+        }
+
+        /** Spaltenbreite in POI-Einheiten (1/256 Zeichen). */
+        int columnWidth(int c) {
+            return columnWidths[c];
         }
 
         int rowCount() {
@@ -132,7 +140,12 @@ final class XlsxTestReader {
                 mergeRefs.add(region.formatAsString());
             }
 
-            return new Grid(rows, mergeRefs, wb.getSheetName(0));
+            int[] widths = new int[maxCols];
+            for (int c = 0; c < maxCols; c++) {
+                widths[c] = sheet.getColumnWidth(c);
+            }
+
+            return new Grid(rows, mergeRefs, wb.getSheetName(0), widths);
         }
     }
 

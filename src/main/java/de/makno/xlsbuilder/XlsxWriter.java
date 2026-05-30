@@ -67,6 +67,13 @@ final class XlsxWriter {
             CellStyle[] columnStyles = buildColumnStyles(wb, helper, columns);
             CellStyle titleStyle = buildTitleStyle(wb);
 
+            // Spaltenbreiten setzen, damit formatierte Zahlen/Datumswerte nicht als "#####" erscheinen.
+            // (Echtes Autosize ist im SXSSF-Streaming unzuverlässig, da ausgelagerte Zeilen fehlen.)
+            for (int c = 0; c < columns.size(); c++) {
+                int chars = Math.max(columns.get(c).name().length(), minChars(columns.get(c).type()));
+                sheet.setColumnWidth(c, Math.min((chars + 2) * 256, 255 * 256));
+            }
+
             int rowNum = 0;
             int lastCol = columns.size() - 1;
 
@@ -146,6 +153,19 @@ final class XlsxWriter {
             }
         }
         return styles;
+    }
+
+    /** Heuristische Mindestbreite (in Zeichen) je Typ, damit formatierte Werte vollständig sichtbar sind. */
+    private static int minChars(ColumnType type) {
+        return switch (type) {
+            case DATETIME -> 18;                 // "31.12.2026 23:59"
+            case DECIMAL, DOUBLE, FORMULA -> 14; // Währung/Dezimal mit Tausendertrennung
+            case INTEGER, LONG -> 12;
+            case DATE -> 11;                     // "31.12.2026"
+            case TIME -> 8;                      // "23:59:59"
+            case BOOLEAN -> 7;
+            default -> 10;                       // STRING
+        };
     }
 
     private static String defaultFormat(ColumnType type) {
