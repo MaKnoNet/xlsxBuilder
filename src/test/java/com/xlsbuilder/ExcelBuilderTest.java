@@ -211,6 +211,24 @@ class ExcelBuilderTest {
     }
 
     @Test
+    void convertsRawValueToTargetColumnType() throws Exception {
+        // Rohwert int (Sekunden seit Mitternacht) -> als Uhrzeit (TIME) schreiben.
+        record Task(String name, int sekunden) {
+        }
+        Path out = tempDir.resolve("convert.xlsx");
+
+        ExcelBuilder.<Task>create()
+                .column("Name", Task::name)
+                .column("Start", Task::sekunden).ofType(ColumnType.TIME)
+                .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
+                .write(DataProviders.ofIterable(List.of(new Task("A", 34215))), out); // 09:30:15
+
+        Grid g = XlsxTestReader.read(out);
+        assertTrue(g.isDateFormatted(1, 1), "Konvertierte Zelle ist als Uhrzeit formatiert");
+        assertEquals(LocalTime.of(9, 30, 15), g.dateTime(1, 1).toLocalTime());
+    }
+
+    @Test
     void appendsSummaryRowWithSums() throws Exception {
         record Item(String name, int menge, BigDecimal betrag) {
         }

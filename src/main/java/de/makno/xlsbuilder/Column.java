@@ -13,6 +13,7 @@ public final class Column<T> {
     private ColumnType type;
     private String format;
     private final Function<? super T, ?> extractor;
+    private Function<Object, Object> converter;
 
     public Column(String name, ColumnType type, Function<? super T, ?> extractor) {
         this(name, type, null, extractor);
@@ -52,8 +53,21 @@ public final class Column<T> {
         this.format = format;
     }
 
-    /** Liefert den Zellenwert für den Datensatz (kann {@code null} sein). */
+    /** Paket-intern: optionalen Wert-Konverter setzen (vom {@code ExcelBuilder.convertToColumnType(...)}). */
+    void setConverter(Function<Object, Object> converter) {
+        this.converter = converter;
+    }
+
+    /**
+     * Liefert den Zellenwert für den Datensatz (kann {@code null} sein). Ist ein Konverter gesetzt,
+     * wird der extrahierte Rohwert (sofern nicht {@code null}) in die zum Zieltyp passende
+     * Repräsentation umgewandelt – z. B. ein {@code int} in eine {@link java.time.LocalTime}.
+     */
     public Object extract(T record) {
-        return extractor.apply(record);
+        Object value = extractor.apply(record);
+        if (value == null || converter == null) {
+            return value;
+        }
+        return converter.apply(value);
     }
 }

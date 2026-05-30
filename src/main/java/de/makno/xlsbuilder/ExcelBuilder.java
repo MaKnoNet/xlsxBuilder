@@ -97,6 +97,24 @@ public final class ExcelBuilder<T> {
         return this;
     }
 
+    /**
+     * Optionaler Konverter, der den extrahierten Rohwert der zuletzt definierten Spalte vor dem
+     * Schreiben in die zum Zieltyp passende Repräsentation umwandelt – z. B. ein {@code int} in eine
+     * {@link java.time.LocalTime} für {@link ColumnType#TIME}:
+     * <pre>{@code
+     * .column("Start", Task::sekunden).ofType(ColumnType.TIME)
+     *     .convertToColumnType((Integer s) -> java.time.LocalTime.ofSecondOfDay(s))
+     * }</pre>
+     * Der Lambda-Parametertyp sollte explizit angegeben werden. Die Umwandlung greift auch für
+     * Sortierung und Summenzeile, da sie bereits bei der Projektion erfolgt.
+     */
+    @SuppressWarnings("unchecked")
+    public <R> ExcelBuilder<T> convertToColumnType(Function<R, ?> converter) {
+        Objects.requireNonNull(converter, "converter");
+        lastColumn().setConverter((Function<Object, Object>) converter);
+        return this;
+    }
+
     private Column<T> lastColumn() {
         if (columns.isEmpty()) {
             throw new IllegalStateException("ofType()/formatForType() benötigt eine vorherige column(...)");
