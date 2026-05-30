@@ -17,6 +17,7 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -59,7 +60,7 @@ final class XlsxWriter {
                     break;
                 }
             }
-            if (hasFormula) {
+            if (hasFormula || (summary != null && summary.useFormula())) {
                 sheet.setForceFormulaRecalculation(true);
             }
 
@@ -120,6 +121,7 @@ final class XlsxWriter {
             }
 
             // Datenzeilen
+            int firstDataRow0 = rowNum; // 0-basierter Index der ersten Datenzeile
             while (rows.hasNext()) {
                 Row dataRow = rows.next();
                 org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum++);
@@ -133,15 +135,28 @@ final class XlsxWriter {
                     }
                 }
             }
+            int dataRowCount = rowNum - firstDataRow0;
+            int firstDataRowNum = firstDataRow0 + 1; // Excel 1-basiert
+            int lastDataRowNum = rowNum;             // Excel 1-basiert
 
             // Summenzeile
             if (summary != null) {
                 org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum);
+                boolean asFormula = summary.useFormula() && dataRowCount > 0;
                 for (int c = 0; c < columns.size(); c++) {
                     ColumnType type = columns.get(c).type();
                     if (sums[c] != null) {
-                        Object value = summaryValue(type, sums[c]);
-                        writeCell(r, c, type, value, columnStyles[c]);
+                        Object value = summaryValue(type, sums[c]); // für Breitenschätzung
+                        if (asFormula) {
+                            String col = CellReference.convertNumToColString(c);
+                            Cell cell = r.createCell(c);
+                            cell.setCellFormula("SUM(" + col + firstDataRowNum + ":" + col + lastDataRowNum + ")");
+                            if (columnStyles[c] != null) {
+                                cell.setCellStyle(columnStyles[c]);
+                            }
+                        } else {
+                            writeCell(r, c, type, value, columnStyles[c]);
+                        }
                         trackWidth(widthChars, formatDecimals, grouping, literalChars, c, type, value);
                     } else if (c == summary.labelColumnIndex()) {
                         r.createCell(c).setCellValue(summary.labelText());

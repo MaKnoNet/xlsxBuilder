@@ -42,6 +42,7 @@ public final class ExcelBuilder<T> {
     private final List<String> sumColumnNames = new ArrayList<>();
     private String summaryLabelColumn;
     private String summaryLabelText;
+    private boolean summaryAsFormula;
     private int sortChunkSize = DEFAULT_CHUNK_SIZE;
 
     private ExcelBuilder() {
@@ -144,6 +145,16 @@ public final class ExcelBuilder<T> {
         return this;
     }
 
+    /**
+     * Legt fest, wie die Summenzeile berechnet wird: {@code true} = echte Excel-Formel
+     * {@code =SUMME(Bereich)} (aktualisiert sich automatisch), {@code false} (Default) = vorberechneter
+     * Wert.
+     */
+    public ExcelBuilder<T> summaryAsFormula(boolean useFormula) {
+        this.summaryAsFormula = useFormula;
+        return this;
+    }
+
     /** Chunk-Größe (Zeilen pro in-memory sortiertem Run) des External Merge Sort. */
     public ExcelBuilder<T> sortChunkSize(int chunkSize) {
         if (chunkSize < 1) {
@@ -212,7 +223,7 @@ public final class ExcelBuilder<T> {
                 throw new IllegalArgumentException("Unbekannte Label-Spalte: " + summaryLabelColumn);
             }
         }
-        return new SummarySpec(sum, labelIndex, summaryLabelText);
+        return new SummarySpec(sum, labelIndex, summaryLabelText, summaryAsFormula);
     }
 
     private int indexOf(String columnName) {

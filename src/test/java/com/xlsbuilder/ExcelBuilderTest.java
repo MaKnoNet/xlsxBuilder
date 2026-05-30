@@ -267,6 +267,30 @@ class ExcelBuilderTest {
     }
 
     @Test
+    void summaryRowCanUseSumFormula() throws Exception {
+        record Item(String name, int wert) {
+        }
+        List<Item> data = List.of(new Item("A", 10), new Item("B", 30), new Item("C", 20));
+        Path out = tempDir.resolve("summaryFormula.xlsx");
+
+        ExcelBuilder.<Item>create()
+                .header("Bericht") // Titelzeile -> Datenbereich ist versetzt
+                .column("Name", Item::name)
+                .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                .sumColumn("Wert")
+                .summaryLabel("Name", "Summe")
+                .summaryAsFormula(true)
+                .write(DataProviders.ofIterable(data), out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Titel(1) + Überschrift(2) + Daten(3-5) + Summe(6)
+        assertEquals(6, g.rowCount());
+        assertEquals("Summe", g.string(5, 0));
+        // Wert ist Spalte B; Datenzeilen sind Excel-Zeilen 3..5.
+        assertEquals("SUM(B3:B5)", g.formula(5, 1));
+    }
+
+    @Test
     void writesFormulaColumnWithRowPlaceholder() throws Exception {
         record P(int a, int b) {
         }

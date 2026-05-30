@@ -59,6 +59,7 @@ public final class App {
                 .sortChunkSize(100_000)
                 .sumColumn("Gehalt")
                 .summaryLabel("Name", "Summe")
+                .summaryAsFormula(true) // Summenzeile als echte =SUMME(...)-Formel
                 .write(employeeGenerator(rowCount), out);
 
         double seconds = (System.nanoTime() - start) / 1_000_000_000.0;
