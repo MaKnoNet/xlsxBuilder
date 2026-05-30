@@ -19,8 +19,9 @@ import java.util.Random;
  */
 public final class App {
 
+    /** {@code checkInSeconds} ist die Kommt-Zeit als Sekunden seit Mitternacht (Rohwert int). */
     public record Employee(String name, String department, BigDecimal salary, LocalDate hireDate,
-                           LocalTime checkIn) {
+                           int checkInSeconds) {
     }
 
     public static void main(String[] args) throws IOException {
@@ -37,7 +38,9 @@ public final class App {
                 .column("Abteilung", Employee::department)
                 .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00 \"€\"")
                 .column("Eintritt", Employee::hireDate).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
-                .column("Kommt", Employee::checkIn).ofType(ColumnType.TIME).formatForType("hh:mm")
+                // Rohwert int (Sekunden seit Mitternacht) wird zur Uhrzeit konvertiert.
+                .column("Kommt", Employee::checkInSeconds).ofType(ColumnType.TIME).formatForType("hh:mm")
+                .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
                 .sortBy("Abteilung", SortOrder.ASC)
                 .sortBy("Gehalt", SortOrder.DESC)
                 .sortChunkSize(100_000)
@@ -79,8 +82,9 @@ public final class App {
                         .add(BigDecimal.valueOf(random.nextInt(100), 2))
                         .setScale(2, RoundingMode.HALF_UP);
                 LocalDate hire = LocalDate.of(2000, 1, 1).plusDays(random.nextInt(9000));
-                LocalTime checkIn = LocalTime.of(6 + random.nextInt(4), random.nextInt(60));
-                return new Employee(name, dept, salary, hire, checkIn);
+                // Kommt-Zeit zwischen 06:00 und 09:59 als Sekunden seit Mitternacht.
+                int checkInSeconds = (6 + random.nextInt(4)) * 3600 + random.nextInt(60) * 60;
+                return new Employee(name, dept, salary, hire, checkInSeconds);
             }
         };
     }
