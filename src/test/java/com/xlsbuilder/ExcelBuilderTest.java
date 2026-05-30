@@ -14,6 +14,11 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.makno.xlsbuilder.ColumnType;
+import de.makno.xlsbuilder.DataProviders;
+import de.makno.xlsbuilder.ExcelBuilder;
+import de.makno.xlsbuilder.SortOrder;
+
 class ExcelBuilderTest {
 
     @TempDir

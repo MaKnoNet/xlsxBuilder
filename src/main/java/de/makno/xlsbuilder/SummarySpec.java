@@ -1,4 +1,4 @@
-package com.xlsbuilder;
+package de.makno.xlsbuilder;
 
 /**
  * Konfiguration der optionalen Summenzeile.

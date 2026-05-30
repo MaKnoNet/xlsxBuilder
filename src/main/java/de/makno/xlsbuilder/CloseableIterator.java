@@ -1,4 +1,4 @@
-package com.xlsbuilder;
+package de.makno.xlsbuilder;
 
 import java.io.Closeable;
 import java.util.Iterator;
