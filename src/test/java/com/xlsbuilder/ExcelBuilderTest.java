@@ -42,9 +42,9 @@ class ExcelBuilderTest {
 
         ExcelBuilder.<Person>create()
                 .sheetName("Leute")
-                .column("Name", ColumnType.STRING, Person::name)
-                .column("Alter", ColumnType.INTEGER, Person::age)
-                .column("Aktiv", ColumnType.BOOLEAN, Person::active)
+                .column("Name", Person::name)
+                .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                .column("Aktiv", Person::active).ofType(ColumnType.BOOLEAN)
                 .write(DataProviders.ofIterable(data), out);
 
         Grid g = XlsxTestReader.read(out);
@@ -65,7 +65,7 @@ class ExcelBuilderTest {
     void producesReadableXlsx() throws Exception {
         Path out = tempDir.resolve("struct.xlsx");
         ExcelBuilder.<Person>create()
-                .column("Name", ColumnType.STRING, Person::name)
+                .column("Name", Person::name)
                 .write(DataProviders.ofIterable(List.of(new Person("X", 1, true))), out);
 
         Grid g = XlsxTestReader.read(out);
@@ -83,8 +83,8 @@ class ExcelBuilderTest {
         Path out = tempDir.resolve("sortDesc.xlsx");
 
         ExcelBuilder.<Person>create()
-                .column("Name", ColumnType.STRING, Person::name)
-                .column("Alter", ColumnType.INTEGER, Person::age)
+                .column("Name", Person::name)
+                .column("Alter", Person::age).ofType(ColumnType.INTEGER)
                 .sortBy("Alter", SortOrder.DESC)
                 .write(DataProviders.ofIterable(data), out);
 
@@ -106,8 +106,8 @@ class ExcelBuilderTest {
         Path out = tempDir.resolve("multiSort.xlsx");
 
         ExcelBuilder.<DeptRow>create()
-                .column("Abteilung", ColumnType.STRING, DeptRow::dept)
-                .column("Gehalt", ColumnType.INTEGER, DeptRow::salary)
+                .column("Abteilung", DeptRow::dept)
+                .column("Gehalt", DeptRow::salary).ofType(ColumnType.INTEGER)
                 .sortBy("Abteilung", SortOrder.ASC)
                 .sortBy("Gehalt", SortOrder.DESC)
                 .write(DataProviders.ofIterable(data), out);
@@ -131,7 +131,7 @@ class ExcelBuilderTest {
         Path out = tempDir.resolve("externalSort.xlsx");
 
         ExcelBuilder.<Integer>create()
-                .column("n", ColumnType.INTEGER, i -> i)
+                .column("n", i -> i).ofType(ColumnType.INTEGER)
                 .sortBy("n", SortOrder.ASC)
                 .sortChunkSize(100)
                 .write(DataProviders.ofIterable(shuffled), out);
@@ -156,7 +156,7 @@ class ExcelBuilderTest {
         Path out = tempDir.resolve("unsorted.xlsx");
 
         ExcelBuilder.<Integer>create()
-                .column("n", ColumnType.INTEGER, i -> i)
+                .column("n", i -> i).ofType(ColumnType.INTEGER)
                 .write(DataProviders.ofIterable(data), out);
 
         Grid g = XlsxTestReader.read(out);
@@ -174,8 +174,8 @@ class ExcelBuilderTest {
         Path out = tempDir.resolve("formats.xlsx");
 
         ExcelBuilder.<Sale>create()
-                .column("Datum", ColumnType.DATE, Sale::date)
-                .column("Betrag", ColumnType.DECIMAL, Sale::amount)
+                .column("Datum", Sale::date).ofType(ColumnType.DATE)
+                .column("Betrag", Sale::amount).ofType(ColumnType.DECIMAL)
                 .write(DataProviders.ofIterable(List.of(new Sale(date, new BigDecimal("1234.56")))), out);
 
         Grid g = XlsxTestReader.read(out);
@@ -193,9 +193,9 @@ class ExcelBuilderTest {
         Path out = tempDir.resolve("customFormats.xlsx");
 
         ExcelBuilder.<R>create()
-                .column("Betrag", ColumnType.DECIMAL, "#,##0.00", R::betrag)
-                .column("Datum", ColumnType.DATE, "dd.mm.yyyy", R::datum)
-                .column("Zeit", ColumnType.TIME, "hh:mm:ss", R::zeit)
+                .column("Betrag", R::betrag).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
+                .column("Datum", R::datum).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
+                .column("Zeit", R::zeit).ofType(ColumnType.TIME).formatForType("hh:mm:ss")
                 .write(DataProviders.ofIterable(List.of(new R(new BigDecimal("1234.5"), date, time))), out);
 
         Grid g = XlsxTestReader.read(out);
@@ -221,9 +221,9 @@ class ExcelBuilderTest {
         Path out = tempDir.resolve("summary.xlsx");
 
         ExcelBuilder.<Item>create()
-                .column("Name", ColumnType.STRING, Item::name)
-                .column("Menge", ColumnType.INTEGER, Item::menge)
-                .column("Betrag", ColumnType.DECIMAL, Item::betrag)
+                .column("Name", Item::name)
+                .column("Menge", Item::menge).ofType(ColumnType.INTEGER)
+                .column("Betrag", Item::betrag).ofType(ColumnType.DECIMAL)
                 .sumColumn("Menge")
                 .sumColumn("Betrag")
                 .summaryLabel("Name", "Summe")
@@ -249,7 +249,7 @@ class ExcelBuilderTest {
         Path out = tempDir.resolve("summarySorted.xlsx");
 
         ExcelBuilder.<Integer>create()
-                .column("n", ColumnType.LONG, i -> (long) i)
+                .column("n", i -> (long) i).ofType(ColumnType.LONG)
                 .sortBy("n", SortOrder.ASC)
                 .sortChunkSize(100)
                 .sumColumn("n")
@@ -267,9 +267,9 @@ class ExcelBuilderTest {
 
         ExcelBuilder.<Person>create()
                 .header("Mitarbeiterbericht", "Stand: Mai 2026")
-                .column("Name", ColumnType.STRING, Person::name)
-                .column("Alter", ColumnType.INTEGER, Person::age)
-                .column("Aktiv", ColumnType.BOOLEAN, Person::active)
+                .column("Name", Person::name)
+                .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                .column("Aktiv", Person::active).ofType(ColumnType.BOOLEAN)
                 .write(DataProviders.ofIterable(data), out);
 
         Grid g = XlsxTestReader.read(out);
@@ -299,8 +299,8 @@ class ExcelBuilderTest {
 
         ExcelBuilder.<Item>create()
                 .header("Bericht")
-                .column("Name", ColumnType.STRING, Item::name)
-                .column("Wert", ColumnType.INTEGER, Item::wert)
+                .column("Name", Item::name)
+                .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
                 .sortBy("Wert", SortOrder.DESC)
                 .sumColumn("Wert")
                 .summaryLabel("Name", "Summe")

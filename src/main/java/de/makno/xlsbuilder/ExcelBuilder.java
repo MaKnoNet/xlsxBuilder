@@ -25,8 +25,8 @@ import java.util.function.Function;
  * <pre>{@code
  * ExcelBuilder.<Employee>create()
  *     .sheetName("Mitarbeiter")
- *     .column("Name",   ColumnType.STRING,  Employee::name)
- *     .column("Gehalt", ColumnType.DECIMAL, Employee::salary)
+ *     .column("Name", Employee::name)                                  // Default: Text
+ *     .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
  *     .sortBy("Gehalt", SortOrder.DESC)
  *     .write(dataProvider, Path.of("out.xlsx"));
  * }</pre>
@@ -68,19 +68,40 @@ public final class ExcelBuilder<T> {
         return this;
     }
 
-    public ExcelBuilder<T> column(String name, ColumnType type, Function<? super T, ?> extractor) {
-        columns.add(new Column<>(name, type, extractor));
+    /**
+     * Definiert eine Spalte. Standardtyp ist {@code STRING} (Text). Typ und Format sind optional und
+     * werden direkt dahinter mit {@link #ofType(ColumnType)} bzw. {@link #formatForType(String)} gesetzt:
+     * <pre>{@code
+     * .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
+     * }</pre>
+     */
+    public ExcelBuilder<T> column(String name, Function<? super T, ?> extractor) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(extractor, "extractor");
+        columns.add(new Column<>(name, ColumnType.STRING, null, extractor));
+        return this;
+    }
+
+    /** Setzt den Typ der zuletzt definierten Spalte. */
+    public ExcelBuilder<T> ofType(ColumnType type) {
+        lastColumn().setType(type);
         return this;
     }
 
     /**
-     * Spalte mit explizitem Excel-Format-Code, z. B. für DECIMAL ({@code "#,##0.00"}),
-     * DATE ({@code "dd.mm.yyyy"}), DATETIME ({@code "dd.mm.yyyy hh:mm"}) oder TIME ({@code "hh:mm:ss"}).
+     * Setzt den Excel-Format-Code der zuletzt definierten Spalte, z. B. {@code "#,##0.00"},
+     * {@code "0.00%"}, {@code "dd.mm.yyyy"} oder {@code "hh:mm:ss"}.
      */
-    public ExcelBuilder<T> column(String name, ColumnType type, String format,
-                                  Function<? super T, ?> extractor) {
-        columns.add(new Column<>(name, type, format, extractor));
+    public ExcelBuilder<T> formatForType(String format) {
+        lastColumn().setFormat(format);
         return this;
+    }
+
+    private Column<T> lastColumn() {
+        if (columns.isEmpty()) {
+            throw new IllegalStateException("ofType()/formatForType() benötigt eine vorherige column(...)");
+        }
+        return columns.get(columns.size() - 1);
     }
 
     /** Optionale Sortierstufe. Mehrfacher Aufruf ergibt eine mehrstufige Sortierung. */

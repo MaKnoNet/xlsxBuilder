@@ -10,8 +10,8 @@ import java.util.function.Function;
 public final class Column<T> {
 
     private final String name;
-    private final ColumnType type;
-    private final String format;
+    private ColumnType type;
+    private String format;
     private final Function<? super T, ?> extractor;
 
     public Column(String name, ColumnType type, Function<? super T, ?> extractor) {
@@ -40,6 +40,16 @@ public final class Column<T> {
     /** Optionaler Excel-Format-Code oder {@code null}. */
     public String format() {
         return format;
+    }
+
+    /** Paket-intern: Typ der Spalte setzen (vom {@code ExcelBuilder.ofType(...)} genutzt). */
+    void setType(ColumnType type) {
+        this.type = Objects.requireNonNull(type, "type");
+    }
+
+    /** Paket-intern: Format-Code der Spalte setzen (vom {@code ExcelBuilder.formatForType(...)} genutzt). */
+    void setFormat(String format) {
+        this.format = format;
     }
 
     /** Liefert den Zellenwert für den Datensatz (kann {@code null} sein). */
