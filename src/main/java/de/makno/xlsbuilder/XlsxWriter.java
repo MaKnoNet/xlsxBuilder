@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -27,11 +28,16 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  * Rest auf temporäre Dateien aus; mit Inline-Strings (Default von SXSSF) wächst auch keine
  * Shared-Strings-Tabelle. Dadurch bleibt der Speicherbedarf konstant, unabhängig von der Zeilenzahl.
  * Die Summen der optionalen Summenzeile werden beim Streamen mitgeführt (kein zweiter Durchlauf).
+ *
+ * <p>Pro Spalte wird einmalig ein {@link CellStyle} mit dem gewünschten Zahlen-/Datumsformat erzeugt
+ * (expliziter Format-Code der Spalte oder, für Datums-/Zeittypen, ein Standardformat).
  */
 final class XlsxWriter {
 
     /** Anzahl Zeilen, die SXSSF gleichzeitig im Speicher hält (Rest wird auf Platte ausgelagert). */
     private static final int ROW_WINDOW = 100;
+
+    private static final double NANOS_PER_DAY = 86_400d * 1_000_000_000d;
 
     private XlsxWriter() {
     }
@@ -46,18 +52,8 @@ final class XlsxWriter {
             SXSSFSheet sheet = wb.createSheet(safeName);
 
             CreationHelper helper = wb.getCreationHelper();
-            CellStyle dateStyle = wb.createCellStyle();
-            dateStyle.setDataFormat(helper.createDataFormat().getFormat("yyyy-mm-dd"));
-            CellStyle dateTimeStyle = wb.createCellStyle();
-            dateTimeStyle.setDataFormat(helper.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss"));
-
-            Font titleFont = wb.createFont();
-            titleFont.setBold(true);
-            titleFont.setFontHeightInPoints((short) 14);
-            CellStyle titleStyle = wb.createCellStyle();
-            titleStyle.setFont(titleFont);
-            titleStyle.setAlignment(HorizontalAlignment.CENTER);
-            titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            CellStyle[] columnStyles = buildColumnStyles(wb, helper, columns);
+            CellStyle titleStyle = buildTitleStyle(wb);
 
             int rowNum = 0;
             int lastCol = columns.size() - 1;
@@ -98,7 +94,7 @@ final class XlsxWriter {
                 org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum++);
                 for (int c = 0; c < columns.size(); c++) {
                     Object value = dataRow.get(c);
-                    writeCell(r, c, columns.get(c).type(), value, dateStyle, dateTimeStyle);
+                    writeCell(r, c, columns.get(c).type(), value, columnStyles[c]);
                     if (sums != null && sums[c] != null && value != null) {
                         sums[c] = sums[c].add(toBigDecimal(value));
                     }
@@ -111,7 +107,7 @@ final class XlsxWriter {
                 for (int c = 0; c < columns.size(); c++) {
                     if (sums[c] != null) {
                         writeCell(r, c, columns.get(c).type(),
-                                summaryValue(columns.get(c).type(), sums[c]), dateStyle, dateTimeStyle);
+                                summaryValue(columns.get(c).type(), sums[c]), columnStyles[c]);
                     } else if (c == summary.labelColumnIndex()) {
                         r.createCell(c).setCellValue(summary.labelText());
                     }
@@ -124,8 +120,44 @@ final class XlsxWriter {
         }
     }
 
+    /** Erzeugt je Spalte einmalig den Style mit Format-Code (oder {@code null}, falls kein Format nötig). */
+    private static CellStyle[] buildColumnStyles(SXSSFWorkbook wb, CreationHelper helper,
+                                                 List<? extends Column<?>> columns) {
+        CellStyle[] styles = new CellStyle[columns.size()];
+        for (int c = 0; c < columns.size(); c++) {
+            Column<?> col = columns.get(c);
+            String format = col.format() != null ? col.format() : defaultFormat(col.type());
+            if (format != null) {
+                CellStyle style = wb.createCellStyle();
+                style.setDataFormat(helper.createDataFormat().getFormat(format));
+                styles[c] = style;
+            }
+        }
+        return styles;
+    }
+
+    private static String defaultFormat(ColumnType type) {
+        return switch (type) {
+            case DATE -> "yyyy-mm-dd";
+            case DATETIME -> "yyyy-mm-dd hh:mm:ss";
+            case TIME -> "hh:mm:ss";
+            default -> null; // Zahlen ohne explizites Format: Excel-Standard ("General")
+        };
+    }
+
+    private static CellStyle buildTitleStyle(SXSSFWorkbook wb) {
+        Font titleFont = wb.createFont();
+        titleFont.setBold(true);
+        titleFont.setFontHeightInPoints((short) 14);
+        CellStyle titleStyle = wb.createCellStyle();
+        titleStyle.setFont(titleFont);
+        titleStyle.setAlignment(HorizontalAlignment.CENTER);
+        titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        return titleStyle;
+    }
+
     private static void writeCell(org.apache.poi.ss.usermodel.Row row, int col, ColumnType type,
-                                  Object value, CellStyle dateStyle, CellStyle dateTimeStyle) {
+                                  Object value, CellStyle style) {
         if (value == null) {
             return; // leere Zelle gar nicht erst anlegen
         }
@@ -138,14 +170,11 @@ final class XlsxWriter {
             case DOUBLE -> cell.setCellValue(((Number) value).doubleValue());
             case DECIMAL -> cell.setCellValue(
                     (value instanceof BigDecimal bd ? bd : new BigDecimal(value.toString())).doubleValue());
-            case DATE -> {
-                setDateValue(cell, value);
-                cell.setCellStyle(dateStyle);
-            }
-            case DATETIME -> {
-                setDateValue(cell, value);
-                cell.setCellStyle(dateTimeStyle);
-            }
+            case DATE, DATETIME -> setDateValue(cell, value);
+            case TIME -> setTimeValue(cell, value);
+        }
+        if (style != null) {
+            cell.setCellStyle(style);
         }
     }
 
@@ -160,6 +189,20 @@ final class XlsxWriter {
             throw new IllegalArgumentException(
                     "Nicht unterstützter Datumstyp: " + value.getClass().getName());
         }
+    }
+
+    /** Uhrzeit als Tagesbruchteil (0..1) speichern – Excel stellt das mit einem Zeitformat als Uhrzeit dar. */
+    private static void setTimeValue(Cell cell, Object value) {
+        LocalTime time;
+        if (value instanceof LocalTime t) {
+            time = t;
+        } else if (value instanceof LocalDateTime dt) {
+            time = dt.toLocalTime();
+        } else {
+            throw new IllegalArgumentException(
+                    "Nicht unterstützter Uhrzeit-Typ: " + value.getClass().getName());
+        }
+        cell.setCellValue(time.toNanoOfDay() / NANOS_PER_DAY);
     }
 
     /** Liefert den summierten Wert im passenden Java-Typ, damit {@link #writeCell} ihn korrekt schreibt. */

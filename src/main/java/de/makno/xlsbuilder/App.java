@@ -6,6 +6,7 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.NoSuchElementException;
 import java.util.Random;
 
@@ -18,7 +19,8 @@ import java.util.Random;
  */
 public final class App {
 
-    public record Employee(String name, String department, BigDecimal salary, LocalDate hireDate) {
+    public record Employee(String name, String department, BigDecimal salary, LocalDate hireDate,
+                           LocalTime checkIn) {
     }
 
     public static void main(String[] args) throws IOException {
@@ -33,8 +35,9 @@ public final class App {
                 .header("Mitarbeiterbericht", "Erstellt am " + LocalDate.now())
                 .column("Name", ColumnType.STRING, Employee::name)
                 .column("Abteilung", ColumnType.STRING, Employee::department)
-                .column("Gehalt", ColumnType.DECIMAL, Employee::salary)
-                .column("Eintritt", ColumnType.DATE, Employee::hireDate)
+                .column("Gehalt", ColumnType.DECIMAL, "#,##0.00 \"€\"", Employee::salary)
+                .column("Eintritt", ColumnType.DATE, "dd.mm.yyyy", Employee::hireDate)
+                .column("Kommt", ColumnType.TIME, "hh:mm", Employee::checkIn)
                 .sortBy("Abteilung", SortOrder.ASC)
                 .sortBy("Gehalt", SortOrder.DESC)
                 .sortChunkSize(100_000)
@@ -76,7 +79,8 @@ public final class App {
                         .add(BigDecimal.valueOf(random.nextInt(100), 2))
                         .setScale(2, RoundingMode.HALF_UP);
                 LocalDate hire = LocalDate.of(2000, 1, 1).plusDays(random.nextInt(9000));
-                return new Employee(name, dept, salary, hire);
+                LocalTime checkIn = LocalTime.of(6 + random.nextInt(4), random.nextInt(60));
+                return new Employee(name, dept, salary, hire, checkIn);
             }
         };
     }

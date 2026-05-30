@@ -12,5 +12,7 @@ public enum ColumnType {
     DECIMAL,
     BOOLEAN,
     DATE,
-    DATETIME
+    DATETIME,
+    /** Uhrzeit (Tageszeit ohne Datum), erwartet {@link java.time.LocalTime} oder {@link java.time.LocalDateTime}. */
+    TIME
 }

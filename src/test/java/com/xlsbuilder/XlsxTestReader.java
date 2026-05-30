@@ -26,7 +26,7 @@ final class XlsxTestReader {
 
     /** Eine einzelne Zelle, typisiert eingelesen. */
     record CellData(CellType type, String string, double number, boolean bool,
-                    boolean dateFormatted, LocalDateTime dateTime, boolean bold) {
+                    boolean dateFormatted, LocalDateTime dateTime, boolean bold, String format) {
     }
 
     /** Komplettes Blatt als Zeilen/Spalten plus Metadaten. */
@@ -87,6 +87,10 @@ final class XlsxTestReader {
             return cell(r, c).bold();
         }
 
+        String format(int r, int c) {
+            return cell(r, c).format();
+        }
+
         /** Alle Zellen einer Zeile als String-Werte (für Kopf-/Überschriftszeilen). */
         List<String> strings(int r) {
             List<String> out = new ArrayList<>();
@@ -132,24 +136,26 @@ final class XlsxTestReader {
 
     private static CellData parse(Workbook wb, Cell cell) {
         if (cell == null) {
-            return new CellData(CellType.BLANK, null, 0, false, false, null, false);
+            return new CellData(CellType.BLANK, null, 0, false, false, null, false, null);
         }
         boolean bold = false;
+        String format = null;
         if (cell.getCellStyle() != null) {
             Font font = wb.getFontAt(cell.getCellStyle().getFontIndex());
             bold = font != null && font.getBold();
+            format = cell.getCellStyle().getDataFormatString();
         }
         return switch (cell.getCellType()) {
             case STRING -> new CellData(CellType.STRING, cell.getStringCellValue(),
-                    0, false, false, null, bold);
+                    0, false, false, null, bold, format);
             case BOOLEAN -> new CellData(CellType.BOOLEAN, null,
-                    0, cell.getBooleanCellValue(), false, null, bold);
+                    0, cell.getBooleanCellValue(), false, null, bold, format);
             case NUMERIC -> {
                 boolean dateFmt = DateUtil.isCellDateFormatted(cell);
                 yield new CellData(CellType.NUMERIC, null, cell.getNumericCellValue(), false,
-                        dateFmt, dateFmt ? cell.getLocalDateTimeCellValue() : null, bold);
+                        dateFmt, dateFmt ? cell.getLocalDateTimeCellValue() : null, bold, format);
             }
-            default -> new CellData(cell.getCellType(), null, 0, false, false, null, bold);
+            default -> new CellData(cell.getCellType(), null, 0, false, false, null, bold, format);
         };
     }
 }

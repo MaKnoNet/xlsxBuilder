@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -181,6 +182,32 @@ class ExcelBuilderTest {
         assertTrue(g.isDateFormatted(1, 0), "Datumszelle muss ein Datumsformat haben");
         assertEquals(date, g.dateTime(1, 0).toLocalDate());
         assertEquals(1234.56, g.dbl(1, 1), 0.0001);
+    }
+
+    @Test
+    void appliesCustomFormatsForDecimalDateAndTime() throws Exception {
+        record R(BigDecimal betrag, LocalDate datum, LocalTime zeit) {
+        }
+        LocalDate date = LocalDate.of(2026, 5, 30);
+        LocalTime time = LocalTime.of(9, 30, 15);
+        Path out = tempDir.resolve("customFormats.xlsx");
+
+        ExcelBuilder.<R>create()
+                .column("Betrag", ColumnType.DECIMAL, "#,##0.00", R::betrag)
+                .column("Datum", ColumnType.DATE, "dd.mm.yyyy", R::datum)
+                .column("Zeit", ColumnType.TIME, "hh:mm:ss", R::zeit)
+                .write(DataProviders.ofIterable(List.of(new R(new BigDecimal("1234.5"), date, time))), out);
+
+        Grid g = XlsxTestReader.read(out);
+
+        assertEquals("#,##0.00", g.format(1, 0), "DECIMAL-Format");
+        assertEquals(1234.5, g.dbl(1, 0), 0.0001);
+
+        assertEquals("dd.mm.yyyy", g.format(1, 1), "DATE-Format");
+        assertEquals(date, g.dateTime(1, 1).toLocalDate());
+
+        assertEquals("hh:mm:ss", g.format(1, 2), "TIME-Format");
+        assertEquals(time, g.dateTime(1, 2).toLocalTime());
     }
 
     @Test

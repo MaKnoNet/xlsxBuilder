@@ -73,6 +73,16 @@ public final class ExcelBuilder<T> {
         return this;
     }
 
+    /**
+     * Spalte mit explizitem Excel-Format-Code, z. B. für DECIMAL ({@code "#,##0.00"}),
+     * DATE ({@code "dd.mm.yyyy"}), DATETIME ({@code "dd.mm.yyyy hh:mm"}) oder TIME ({@code "hh:mm:ss"}).
+     */
+    public ExcelBuilder<T> column(String name, ColumnType type, String format,
+                                  Function<? super T, ?> extractor) {
+        columns.add(new Column<>(name, type, format, extractor));
+        return this;
+    }
+
     /** Optionale Sortierstufe. Mehrfacher Aufruf ergibt eine mehrstufige Sortierung. */
     public ExcelBuilder<T> sortBy(String columnName, SortOrder order) {
         sortKeys.add(new SortKey(columnName, order));
