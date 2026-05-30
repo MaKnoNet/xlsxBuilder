@@ -244,6 +244,29 @@ class ExcelBuilderTest {
     }
 
     @Test
+    void widthsAccountForLongStringsAndSummarySum() throws Exception {
+        record Item(String name, int wert) {
+        }
+        String longName = "Ein sehr langer Mitarbeitername XYZ"; // 35 Zeichen
+        List<Item> data = List.of(new Item(longName, 2_000_000), new Item("Kurz", 3_000_000));
+        Path out = tempDir.resolve("widths2.xlsx");
+
+        ExcelBuilder.<Item>create()
+                .column("Name", Item::name)
+                .column("Wert", Item::wert).ofType(ColumnType.INTEGER).formatForType("#,##0")
+                .sumColumn("Wert")
+                .summaryLabel("Name", "Summe")
+                .write(DataProviders.ofIterable(data), out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Name-Spalte mindestens so breit wie der längste Name.
+        assertTrue(g.columnWidth(0) >= longName.length() * 256,
+                "Name-Spalte muss den längsten Namen fassen");
+        // Summe = 5.000.000 -> "5.000.000" (9 Zeichen inkl. Tausenderpunkte).
+        assertTrue(g.columnWidth(1) >= 9 * 256, "Wert-Spalte muss die Summe fassen");
+    }
+
+    @Test
     void writesFormulaColumnWithRowPlaceholder() throws Exception {
         record P(int a, int b) {
         }

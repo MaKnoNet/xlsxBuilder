@@ -67,11 +67,23 @@ final class XlsxWriter {
             CellStyle[] columnStyles = buildColumnStyles(wb, helper, columns);
             CellStyle titleStyle = buildTitleStyle(wb);
 
-            // Spaltenbreiten setzen, damit formatierte Zahlen/Datumswerte nicht als "#####" erscheinen.
-            // (Echtes Autosize ist im SXSSF-Streaming unzuverlässig, da ausgelagerte Zeilen fehlen.)
-            for (int c = 0; c < columns.size(); c++) {
-                int chars = Math.max(columns.get(c).name().length(), minChars(columns.get(c).type()));
-                sheet.setColumnWidth(c, Math.min((chars + 2) * 256, 255 * 256));
+            // Spaltenbreiten inhaltsbasiert schätzen, damit nichts als "#####" erscheint. Da SXSSF-
+            // Autosize ausgelagerte Zeilen nicht sehen kann, messen wir die Breite beim Streamen mit:
+            // Stringlängen exakt, Zahlenbreite aus Stellenzahl + Format (inkl. der großen Summenwerte).
+            // Die endgültige Breite wird erst nach allen Zeilen gesetzt (in SXSSF jederzeit möglich).
+            int columnCount = columns.size();
+            int[] widthChars = new int[columnCount];
+            int[] formatDecimals = new int[columnCount];
+            boolean[] grouping = new boolean[columnCount];
+            int[] literalChars = new int[columnCount];
+            for (int c = 0; c < columnCount; c++) {
+                Column<?> col = columns.get(c);
+                String fmt = col.format() != null ? col.format() : defaultFormat(col.type());
+                boolean numericLike = isNumericLike(col.type());
+                formatDecimals[c] = decimalsOf(fmt);
+                grouping[c] = numericLike && fmt != null && fmt.indexOf(',') >= 0;
+                literalChars[c] = numericLike ? literalCharsOf(fmt) : 0;
+                widthChars[c] = Math.max(col.name().length(), minChars(col.type()) + literalChars[c]);
             }
 
             int rowNum = 0;
@@ -113,7 +125,9 @@ final class XlsxWriter {
                 org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum++);
                 for (int c = 0; c < columns.size(); c++) {
                     Object value = dataRow.get(c);
-                    writeCell(r, c, columns.get(c).type(), value, columnStyles[c]);
+                    ColumnType type = columns.get(c).type();
+                    writeCell(r, c, type, value, columnStyles[c]);
+                    trackWidth(widthChars, formatDecimals, grouping, literalChars, c, type, value);
                     if (sums != null && sums[c] != null && value != null) {
                         sums[c] = sums[c].add(toBigDecimal(value));
                     }
@@ -124,13 +138,21 @@ final class XlsxWriter {
             if (summary != null) {
                 org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum);
                 for (int c = 0; c < columns.size(); c++) {
+                    ColumnType type = columns.get(c).type();
                     if (sums[c] != null) {
-                        writeCell(r, c, columns.get(c).type(),
-                                summaryValue(columns.get(c).type(), sums[c]), columnStyles[c]);
+                        Object value = summaryValue(type, sums[c]);
+                        writeCell(r, c, type, value, columnStyles[c]);
+                        trackWidth(widthChars, formatDecimals, grouping, literalChars, c, type, value);
                     } else if (c == summary.labelColumnIndex()) {
                         r.createCell(c).setCellValue(summary.labelText());
+                        widthChars[c] = Math.max(widthChars[c], summary.labelText().length());
                     }
                 }
+            }
+
+            // Endgültige Spaltenbreiten setzen (Zeichen -> POI-Einheiten 1/256, +2 Polster).
+            for (int c = 0; c < columnCount; c++) {
+                sheet.setColumnWidth(c, Math.min((widthChars[c] + 2) * 256, 255 * 256));
             }
 
             wb.write(out);
@@ -153,6 +175,96 @@ final class XlsxWriter {
             }
         }
         return styles;
+    }
+
+    private static boolean isNumericLike(ColumnType type) {
+        return switch (type) {
+            case INTEGER, LONG, DOUBLE, DECIMAL, FORMULA -> true;
+            default -> false;
+        };
+    }
+
+    /** Aktualisiert die geschätzte Spaltenbreite anhand des konkret geschriebenen Werts. */
+    private static void trackWidth(int[] widthChars, int[] formatDecimals, boolean[] grouping,
+                                   int[] literalChars, int c, ColumnType type, Object value) {
+        if (value == null) {
+            return;
+        }
+        int chars;
+        switch (type) {
+            case STRING -> chars = value.toString().length();
+            case INTEGER, LONG, DOUBLE, DECIMAL -> {
+                int intDigits = integerDigits(value);
+                int dec = formatDecimals[c] >= 0 ? formatDecimals[c]
+                        : (type == ColumnType.INTEGER || type == ColumnType.LONG ? 0 : 2);
+                chars = intDigits
+                        + (grouping[c] ? (intDigits - 1) / 3 : 0)
+                        + (dec > 0 ? 1 + dec : 0)
+                        + literalChars[c];
+            }
+            // DATE/DATETIME/TIME/BOOLEAN/FORMULA: Basisbreite genügt.
+            default -> {
+                return;
+            }
+        }
+        if (chars > widthChars[c]) {
+            widthChars[c] = chars;
+        }
+    }
+
+    /** Anzahl Stellen des ganzzahligen Anteils (ohne Vorzeichen). */
+    private static int integerDigits(Object value) {
+        if (value instanceof BigDecimal bd) {
+            return bd.signum() == 0 ? 1 : bd.toBigInteger().abs().toString().length();
+        }
+        if (value instanceof Double || value instanceof Float) {
+            return Long.toString((long) Math.abs(((Number) value).doubleValue())).length();
+        }
+        return Long.toString(Math.abs(((Number) value).longValue())).length();
+    }
+
+    /** Dezimalstellen aus einem Format-Code, {@code 0} ohne Dezimalpunkt, {@code -1} ohne Format. */
+    private static int decimalsOf(String format) {
+        if (format == null) {
+            return -1;
+        }
+        int dot = format.indexOf('.');
+        if (dot < 0) {
+            return 0;
+        }
+        int n = 0;
+        for (int i = dot + 1; i < format.length(); i++) {
+            char ch = format.charAt(i);
+            if (ch == '0' || ch == '#') {
+                n++;
+            } else {
+                break;
+            }
+        }
+        return n;
+    }
+
+    /** Geschätzte Anzahl sichtbarer Literalzeichen eines Zahlenformats (Währungszeichen, Leerzeichen, %, ...). */
+    private static int literalCharsOf(String format) {
+        if (format == null) {
+            return 0;
+        }
+        int n = 0;
+        boolean inQuote = false;
+        for (int i = 0; i < format.length(); i++) {
+            char ch = format.charAt(i);
+            if (ch == '"') {
+                inQuote = !inQuote;
+            } else if (ch == '\\') {
+                i++;
+                n++;
+            } else if (inQuote) {
+                n++;
+            } else if (ch == ' ' || ch == '%' || ch == '€' || ch == '$' || Character.isLetter(ch)) {
+                n++;
+            }
+        }
+        return n;
     }
 
     /** Heuristische Mindestbreite (in Zeichen) je Typ, damit formatierte Werte vollständig sichtbar sind. */
