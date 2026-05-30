@@ -1,4 +1,4 @@
-package com.xlsbuilder;
+package de.makno.xlsbuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,13 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import com.xlsbuilder.XlsxTestReader.Grid;
-
-import de.makno.xlsbuilder.ColumnType;
-import de.makno.xlsbuilder.DataProviders;
-import de.makno.xlsbuilder.ExcelBuilder;
-import de.makno.xlsbuilder.SortOrder;
-import de.makno.xlsbuilder.WorkbookBuilder;
+import de.makno.xlsbuilder.XlsxTestReader.Grid;
 
 class ExcelBuilderTest {
 
