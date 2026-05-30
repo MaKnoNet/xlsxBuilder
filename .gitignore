@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Eclipse / Buildship – werden beim Import neu erzeugt
+.project
+.classpath
+.metadata/
+RemoteSystemsTempFiles/
+bin/
+
+# IDE-spezifische Settings, die nicht zum Projekt gehören
+.settings/org.eclipse.wst.common.project.facet.core.xml
+.settings/org.jboss.ide.eclipse.as.core.prefs
+
+# Demo-Output
+employees.xlsx
+
+# Betriebssystem
+Thumbs.db
+.DS_Store
