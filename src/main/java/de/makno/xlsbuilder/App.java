@@ -52,6 +52,8 @@ public final class App {
                 // Rohwert int (Sekunden seit Mitternacht) wird zur Uhrzeit (TIME) konvertiert.
                 .column("Kommt", Employee::checkInSeconds).ofType(ColumnType.TIME).formatForType("hh:mm")
                 .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
+                // Formelspalte: Bonus = 10 % vom Gehalt (Spalte F); {row} = aktuelle Zeilennummer.
+                .column("Bonus", e -> "F{row}*0.1").ofType(ColumnType.FORMULA).formatForType("#,##0.00 \"€\"")
                 .sortBy("Abteilung", SortOrder.ASC)
                 .sortBy("Gehalt", SortOrder.DESC)
                 .sortChunkSize(100_000)

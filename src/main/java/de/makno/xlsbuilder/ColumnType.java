@@ -14,5 +14,11 @@ public enum ColumnType {
     DATE,
     DATETIME,
     /** Uhrzeit (Tageszeit ohne Datum), erwartet {@link java.time.LocalTime} oder {@link java.time.LocalDateTime}. */
-    TIME
+    TIME,
+    /**
+     * Excel-Formel. Der Extraktor liefert den Formeltext ohne führendes {@code =} (z. B.
+     * {@code "F{row}*0.1"}); der Platzhalter {@code {row}} wird durch die tatsächliche Zeilennummer
+     * ersetzt. Excel berechnet die Werte beim Öffnen.
+     */
+    FORMULA
 }

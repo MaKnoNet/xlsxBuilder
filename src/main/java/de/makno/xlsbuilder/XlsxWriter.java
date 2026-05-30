@@ -51,6 +51,18 @@ final class XlsxWriter {
                     (sheetName == null || sheetName.isBlank()) ? "Sheet1" : sheetName);
             SXSSFSheet sheet = wb.createSheet(safeName);
 
+            // Bei Formelspalten Excel anweisen, beim Öffnen neu zu berechnen (Werte sind nicht gecacht).
+            boolean hasFormula = false;
+            for (Column<?> col : columns) {
+                if (col.type() == ColumnType.FORMULA) {
+                    hasFormula = true;
+                    break;
+                }
+            }
+            if (hasFormula) {
+                sheet.setForceFormulaRecalculation(true);
+            }
+
             CreationHelper helper = wb.getCreationHelper();
             CellStyle[] columnStyles = buildColumnStyles(wb, helper, columns);
             CellStyle titleStyle = buildTitleStyle(wb);
@@ -172,6 +184,13 @@ final class XlsxWriter {
                     (value instanceof BigDecimal bd ? bd : new BigDecimal(value.toString())).doubleValue());
             case DATE, DATETIME -> setDateValue(cell, value);
             case TIME -> setTimeValue(cell, value);
+            case FORMULA -> {
+                String formula = String.valueOf(value);
+                if (formula.startsWith("=")) {
+                    formula = formula.substring(1);
+                }
+                cell.setCellFormula(formula.replace("{row}", Integer.toString(row.getRowNum() + 1)));
+            }
         }
         if (style != null) {
             cell.setCellStyle(style);

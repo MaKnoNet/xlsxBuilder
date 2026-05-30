@@ -229,6 +229,24 @@ class ExcelBuilderTest {
     }
 
     @Test
+    void writesFormulaColumnWithRowPlaceholder() throws Exception {
+        record P(int a, int b) {
+        }
+        Path out = tempDir.resolve("formula.xlsx");
+
+        ExcelBuilder.<P>create()
+                .column("A", P::a).ofType(ColumnType.INTEGER)
+                .column("B", P::b).ofType(ColumnType.INTEGER)
+                .column("Summe", p -> "A{row}+B{row}").ofType(ColumnType.FORMULA)
+                .write(DataProviders.ofIterable(List.of(new P(2, 3), new P(10, 20))), out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Kopfzeile = Zeile 1; Datenzeilen sind Excel-Zeilen 2 und 3.
+        assertEquals("A2+B2", g.formula(1, 2));
+        assertEquals("A3+B3", g.formula(2, 2));
+    }
+
+    @Test
     void appendsSummaryRowWithSums() throws Exception {
         record Item(String name, int menge, BigDecimal betrag) {
         }
