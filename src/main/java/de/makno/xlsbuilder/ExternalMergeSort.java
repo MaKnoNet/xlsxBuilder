@@ -143,15 +143,27 @@ final class ExternalMergeSort implements Closeable {
         private final PriorityQueue<Node> queue;
         private final List<RunReader> readers = new ArrayList<>();
 
+        /**
+         * Konstruiert einen MergeIterator über alle Run-Dateien.
+         * Bei Fehlern beim Öffnen der Dateien werden alle bis dahin geöffneten Reader geschlossen.
+         *
+         * @throws IOException wenn eine Run-Datei nicht gelesen werden kann
+         */
         MergeIterator(List<Path> runs, Comparator<Row> comparator) throws IOException {
             this.queue = new PriorityQueue<>((a, b) -> comparator.compare(a.row(), b.row()));
-            for (Path run : runs) {
-                RunReader reader = new RunReader(run);
-                readers.add(reader);
-                Row first = reader.next();
-                if (first != null) {
-                    queue.add(new Node(first, reader));
+            try {
+                for (Path run : runs) {
+                    RunReader reader = new RunReader(run);
+                    readers.add(reader);
+                    Row first = reader.next();
+                    if (first != null) {
+                        queue.add(new Node(first, reader));
+                    }
                 }
+            } catch (IOException e) {
+                // Cleanup bei Fehler: alle bis jetzt geöffneten Reader schließen
+                closeReaders();
+                throw e;
             }
         }
 
@@ -176,6 +188,11 @@ final class ExternalMergeSort implements Closeable {
 
         @Override
         public void close() {
+            closeReaders();
+        }
+
+        /** Hilfsmethode zum Schließen aller Reader (aufgerufen bei Fehler oder close()). */
+        private void closeReaders() {
             for (RunReader reader : readers) {
                 try {
                     reader.close();
