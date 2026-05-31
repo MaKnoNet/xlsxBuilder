@@ -12,6 +12,7 @@ final class RowComparator implements Comparator<Row> {
 
     private final int[] indices;
     private final boolean[] descending;
+    private final String[] columnNames;
 
     RowComparator(List<? extends Column<?>> columns, List<SortKey> sortKeys) {
         if (sortKeys.isEmpty()) {
@@ -19,6 +20,7 @@ final class RowComparator implements Comparator<Row> {
         }
         indices = new int[sortKeys.size()];
         descending = new boolean[sortKeys.size()];
+        columnNames = new String[sortKeys.size()];
         for (int i = 0; i < sortKeys.size(); i++) {
             SortKey key = sortKeys.get(i);
             int idx = indexOf(columns, key.columnName());
@@ -27,6 +29,7 @@ final class RowComparator implements Comparator<Row> {
             }
             indices[i] = idx;
             descending[i] = key.order() == SortOrder.DESC;
+            columnNames[i] = key.columnName();
         }
     }
 
@@ -43,7 +46,7 @@ final class RowComparator implements Comparator<Row> {
     public int compare(Row a, Row b) {
         for (int i = 0; i < indices.length; i++) {
             int idx = indices[i];
-            int c = compareValues(a.get(idx), b.get(idx));
+            int c = compareValues(a.get(idx), b.get(idx), columnNames[i]);
             if (c != 0) {
                 return descending[i] ? -c : c;
             }
@@ -52,7 +55,7 @@ final class RowComparator implements Comparator<Row> {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static int compareValues(Object x, Object y) {
+    private static int compareValues(Object x, Object y, String columnName) {
         if (x == null && y == null) {
             return 0;
         }
@@ -61,6 +64,12 @@ final class RowComparator implements Comparator<Row> {
         }
         if (y == null) {
             return -1;
+        }
+        if (!(x instanceof Comparable)) {
+            throw new IllegalArgumentException(
+                    "Sortierspalte '" + columnName + "' ist vom Typ "
+                    + x.getClass().getSimpleName()
+                    + " und kann nicht sortiert werden (nicht Comparable)");
         }
         return ((Comparable) x).compareTo(y);
     }
