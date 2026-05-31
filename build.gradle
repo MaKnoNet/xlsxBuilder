@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'jacoco'
 }
 
 group = 'de.makno.xlsbuilder'
@@ -47,6 +48,18 @@ test {
     maxHeapSize = '512m'
     testLogging {
         events 'passed', 'skipped', 'failed'
+    }
+}
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        html.required = true
+        csv.required  = true
     }
 }
 

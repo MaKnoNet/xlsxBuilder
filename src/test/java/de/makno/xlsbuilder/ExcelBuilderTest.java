@@ -3,15 +3,19 @@ package de.makno.xlsbuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -497,5 +501,295 @@ class ExcelBuilderTest {
         assertEquals(2, names.size());
         assertEquals("Daten", names.get(0));
         assertNotEquals("Daten", names.get(1), "zweites Blatt muss eindeutigen Namen erhalten");
+    }
+
+    // ========== Gruppe A – Exception / Validation ==========
+
+    @Test
+    void throwsIfNoColumnsConfigured() {
+        assertThrows(
+                IllegalStateException.class,
+                () -> WorkbookBuilder.create()
+                        .sheet(ExcelBuilder.<Person>create()
+                                .data(DataProviders.ofIterable(List.of())))
+                        .write(tempDir.resolve("noColumns.xlsx")));
+    }
+
+    @Test
+    void throwsIfNoDataProviderSet() {
+        assertThrows(
+                IllegalStateException.class,
+                () -> WorkbookBuilder.create()
+                        .sheet(ExcelBuilder.<Person>create().column("Name", Person::name))
+                        .write(tempDir.resolve("noProvider.xlsx")));
+    }
+
+    @Test
+    void throwsIfSumColumnIsNotNumeric() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> WorkbookBuilder.create()
+                        .sheet(ExcelBuilder.<Person>create()
+                                .column("Name", Person::name)
+                                .sumColumn("Name")
+                                .data(DataProviders.ofIterable(
+                                        List.of(new Person("A", 1, true)))))
+                        .write(tempDir.resolve("badSum.xlsx")));
+    }
+
+    @Test
+    void throwsIfSortChunkSizeLessThanOne() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ExcelBuilder.<Person>create()
+                        .column("Name", Person::name)
+                        .sortChunkSize(0));
+    }
+
+    @Test
+    void throwsIfWorkbookHasNoSheets() {
+        assertThrows(
+                IllegalStateException.class,
+                () -> WorkbookBuilder.create().write(tempDir.resolve("noSheets.xlsx")));
+    }
+
+    @Test
+    void throwsIfSortKeyColumnUnknown() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> WorkbookBuilder.create()
+                        .sheet(ExcelBuilder.<Person>create()
+                                .column("Name", Person::name)
+                                .sortBy("NichtVorhanden", SortOrder.ASC)
+                                .data(DataProviders.ofIterable(
+                                        List.of(new Person("A", 1, true)))))
+                        .write(tempDir.resolve("badSortKey.xlsx")));
+    }
+
+    // ========== Gruppe B – Null-Handling im Comparator ==========
+
+    @Test
+    void sortsNullsLastAscending() throws Exception {
+        record NullRow(String label) {
+        }
+        List<NullRow> data = List.of(new NullRow("B"), new NullRow(null), new NullRow("A"));
+        Path out = tempDir.resolve("nullsAsc.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<NullRow>create()
+                        .column("Label", NullRow::label)
+                        .sortBy("Label", SortOrder.ASC)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // ASC nulls-last: "A", "B", null
+        assertEquals("A", g.string(1, 0));
+        assertEquals("B", g.string(2, 0));
+        assertNull(g.string(3, 0), "null-Wert landet als leere Zelle am Ende");
+    }
+
+    @Test
+    void sortsNullsFirstInDescending() throws Exception {
+        // Null wird intern als „größter Wert" behandelt (nulls-last bei ASC).
+        // Bei DESC (Vorzeichen-Flip) erscheint null daher am Anfang.
+        record NullRow(String label) {
+        }
+        List<NullRow> data = List.of(new NullRow("B"), new NullRow(null), new NullRow("A"));
+        Path out = tempDir.resolve("nullsDesc.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<NullRow>create()
+                        .column("Label", NullRow::label)
+                        .sortBy("Label", SortOrder.DESC)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // DESC: null (= größter Wert) steht ganz vorne, dann B, dann A
+        assertNull(g.string(1, 0), "null kommt bei DESC-Sortierung zuerst");
+        assertEquals("B", g.string(2, 0));
+        assertEquals("A", g.string(3, 0));
+    }
+
+    // ========== Gruppe C – Weitere Typen und XlsxWriter-Zweige ==========
+
+    @Test
+    void writesDateTimeColumn() throws Exception {
+        record Event(String name, LocalDateTime when) {
+        }
+        LocalDateTime dt = LocalDateTime.of(2026, 3, 15, 14, 30);
+        Path out = tempDir.resolve("datetime.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Event>create()
+                        .column("Name", Event::name)
+                        .column("Zeitpunkt", Event::when).ofType(ColumnType.DATETIME)
+                        .data(DataProviders.ofIterable(List.of(new Event("Test", dt)))))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertTrue(g.isDateFormatted(1, 1), "DATETIME-Zelle muss als Datum formatiert sein");
+        assertEquals(dt, g.dateTime(1, 1));
+    }
+
+    @Test
+    void writesDoubleColumn() throws Exception {
+        record Measurement(String label, double value) {
+        }
+        Path out = tempDir.resolve("doubleCol.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Measurement>create()
+                        .column("Label", Measurement::label)
+                        .column("Wert", Measurement::value).ofType(ColumnType.DOUBLE)
+                        .data(DataProviders.ofIterable(
+                                List.of(new Measurement("pi", 3.14159)))))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(3.14159, g.dbl(1, 1), 0.00001);
+    }
+
+    @Test
+    void writesFormulaColumnWithoutRowPlaceholder() throws Exception {
+        record R(int a, int b) {
+        }
+        Path out = tempDir.resolve("staticFormula.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<R>create()
+                        .column("A", R::a).ofType(ColumnType.INTEGER)
+                        .column("B", R::b).ofType(ColumnType.INTEGER)
+                        // Statische Formel ohne {row}-Platzhalter
+                        .column("Summe", r -> "A2+B2").ofType(ColumnType.FORMULA)
+                        .data(DataProviders.ofIterable(List.of(new R(5, 7)))))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Formel darf kein {row} enthalten → unveränderter Text wird als Formel gesetzt.
+        assertEquals("A2+B2", g.formula(1, 2));
+    }
+
+    @Test
+    void headerWithSingleColumnNoMerge() throws Exception {
+        Path out = tempDir.resolve("singleColHeader.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .header("Nur eine Spalte")
+                        .column("Name", Person::name)
+                        .data(DataProviders.ofIterable(List.of(new Person("Alice", 30, true)))))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals("Nur eine Spalte", g.string(0, 0));
+        // Nur 1 Spalte → kein Merge-Bereich
+        assertTrue(g.mergeRefs().isEmpty(), "Einzel-Spalte darf keinen Merge erzeugen");
+    }
+
+    @Test
+    void writesEmptyDataSource() throws Exception {
+        Path out = tempDir.resolve("empty.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .column("Name", Person::name)
+                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                        .data(DataProviders.ofIterable(List.of())))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Nur Kopfzeile, keine Datenzeilen
+        assertEquals(1, g.rowCount(), "Leere Quelle erzeugt nur Kopfzeile");
+        assertEquals(List.of("Name", "Alter"), g.strings(0));
+    }
+
+    @Test
+    void summaryWithPrecomputedDecimal() throws Exception {
+        record Item(String name, BigDecimal betrag) {
+        }
+        List<Item> data = List.of(
+                new Item("X", new BigDecimal("10.50")),
+                new Item("Y", new BigDecimal("5.25")));
+        Path out = tempDir.resolve("sumDecimal.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .column("Name", Item::name)
+                        .column("Betrag", Item::betrag)
+                                .ofType(ColumnType.DECIMAL)
+                                .formatForType("#,##0.00")
+                        .sumColumn("Betrag")
+                        .summaryLabel("Name", "Gesamt")
+                        // summaryAsFormula(false) ist der Default → vorberechneter Wert
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(4, g.rowCount(), "Kopf + 2 Daten + Summenzeile");
+        assertEquals("Gesamt", g.string(3, 0));
+        assertEquals(15.75, g.dbl(3, 1), 0.001);
+    }
+
+    // ========== Gruppe D – DataProviders & ExternalMergeSort ==========
+
+    @Test
+    void dataProviderOfStreamAdapter() throws Exception {
+        Path out = tempDir.resolve("stream.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<String>create()
+                        .column("Wert", s -> s)
+                        .data(DataProviders.ofStream(Stream.of("Alpha", "Beta", "Gamma"))))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(4, g.rowCount(), "Kopf + 3 Datenzeilen");
+        assertEquals("Alpha", g.string(1, 0));
+        assertEquals("Beta", g.string(2, 0));
+        assertEquals("Gamma", g.string(3, 0));
+    }
+
+    @Test
+    void dataProviderOfIteratorAdapter() throws Exception {
+        Path out = tempDir.resolve("iterator.xlsx");
+        var iterator = List.of("Eins", "Zwei").iterator();
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<String>create()
+                        .column("Wert", s -> s)
+                        .data(DataProviders.ofIterator(iterator)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(3, g.rowCount(), "Kopf + 2 Datenzeilen");
+        assertEquals("Eins", g.string(1, 0));
+        assertEquals("Zwei", g.string(2, 0));
+    }
+
+    @Test
+    void externalSortWithEmptyInput() throws Exception {
+        Path out = tempDir.resolve("emptySorted.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Integer>create()
+                        .column("n", i -> i).ofType(ColumnType.INTEGER)
+                        .sortBy("n", SortOrder.ASC)
+                        .data(DataProviders.ofIterable(List.of())))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Sortierung mit leerer Quelle → kein Run, MergeIterator leer, nur Kopfzeile
+        assertEquals(1, g.rowCount(), "Leere sortierte Quelle erzeugt nur Kopfzeile");
+    }
+
+    @Test
+    void externalSortChunkSizeValidation() {
+        // ExternalMergeSort direkt (package-private, gleicher Package) instanziieren.
+        var comparator = new RowComparator(
+                List.of(new Column<>("n", ColumnType.INTEGER, i -> i)),
+                List.of(new SortKey("n", SortOrder.ASC)));
+        assertThrows(IllegalArgumentException.class, () -> new ExternalMergeSort(comparator, 0));
     }
 }
