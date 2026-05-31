@@ -42,21 +42,30 @@ final class ExternalMergeSort implements Closeable {
         this.chunkSize = chunkSize;
     }
 
-    /** Konsumiert die Quelle vollständig (erzeugt die Runs) und liefert den sortierten Merge-Strom. */
+    /**
+     * Konsumiert die Quelle vollständig (erzeugt die Runs) und liefert den sortierten Merge-Strom.
+     * Bei Fehlern werden alle erstellten Temp-Dateien automatisch gelöscht ({@link #close()} wird aufgerufen).
+     */
     CloseableIterator<Row> sort(java.util.Iterator<Row> source) throws IOException {
-        tempDir = Files.createTempDirectory("xlsbuilder-sort-");
-        List<Row> buffer = new ArrayList<>(Math.min(chunkSize, 1024));
-        while (source.hasNext()) {
-            buffer.add(source.next());
-            if (buffer.size() >= chunkSize) {
-                flushRun(buffer);
-                buffer.clear();
+        try {
+            tempDir = Files.createTempDirectory("xlsbuilder-sort-");
+            List<Row> buffer = new ArrayList<>(Math.min(chunkSize, 1024));
+            while (source.hasNext()) {
+                buffer.add(source.next());
+                if (buffer.size() >= chunkSize) {
+                    flushRun(buffer);
+                    buffer.clear();
+                }
             }
+            if (!buffer.isEmpty()) {
+                flushRun(buffer);
+            }
+            return new MergeIterator(runFiles, comparator);
+        } catch (IOException e) {
+            // Cleanup bei Fehler: alle bis jetzt erstellten Temp-Dateien löschen
+            close();
+            throw e;
         }
-        if (!buffer.isEmpty()) {
-            flushRun(buffer);
-        }
-        return new MergeIterator(runFiles, comparator);
     }
 
     private void flushRun(List<Row> buffer) throws IOException {
