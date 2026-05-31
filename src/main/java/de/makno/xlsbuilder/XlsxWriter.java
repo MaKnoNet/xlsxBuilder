@@ -296,11 +296,16 @@ final class XlsxWriter {
         };
     }
 
+    /**
+     * Liefert den Standard-Excel-Format-Code für Datums- und Zeittypen.
+     * Hinweis: Excel-Format-Codes verwenden {@code mm} für Monat (nicht {@code MM}) und
+     * {@code hh} für 12-Stunden-Format (oder {@code HH} für 24-Stunden-Format).
+     */
     private static String defaultFormat(ColumnType type) {
         return switch (type) {
-            case DATE -> "yyyy-mm-dd";
-            case DATETIME -> "yyyy-mm-dd hh:mm:ss";
-            case TIME -> "hh:mm:ss";
+            case DATE -> "yyyy-mm-dd";           // ISO 8601 Standardformat für Datumsanzeige
+            case DATETIME -> "yyyy-mm-dd hh:mm"; // Datum + Zeit (12h Format)
+            case TIME -> "hh:mm:ss";             // Zeit (12h Format mit Sekunden)
             default -> null; // Zahlen ohne explizites Format: Excel-Standard ("General")
         };
     }
