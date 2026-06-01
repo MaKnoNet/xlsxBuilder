@@ -61,14 +61,11 @@ public final class WorkbookBuilder {
         if (sheets.isEmpty()) {
             throw new IllegalStateException("Mindestens ein Blatt erforderlich");
         }
-        SXSSFWorkbook wb = new SXSSFWorkbook(ROW_WINDOW);
-        try {
+        try (SXSSFWorkbook wb = new SXSSFWorkbook(ROW_WINDOW)) {
             for (ExcelBuilder<?> sheet : sheets) {
                 sheet.renderInto(wb);
             }
             wb.write(out);
-        } finally {
-            wb.dispose(); // löscht die temporären SXSSF-Dateien
         }
     }
 }
