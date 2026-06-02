@@ -28,7 +28,7 @@ werden gestreamt geschrieben und (falls nötig) per External Merge Sort sortiert
 ## Schnellstart
 
 ```java
-import de.makno.xlsbuilder.*;
+import de.makno.xlsbuilder.component.*;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -131,7 +131,7 @@ Demo mit Parametern und begrenztem Heap (zeigt Out-of-core):
 
 ```bash
 ./gradlew installDist
-java -Xmx128m -cp "build/install/xlsbuilder/lib/*" de.makno.xlsbuilder.App 1000000 employees.xlsx
+java -Xmx128m -cp "build/install/xlsbuilder/lib/*" de.makno.xlsbuilder.app.App 1000000 employees.xlsx
 #        ^ Heap-Limit                                                       ^ Zeilen  ^ Ausgabedatei
 ```
 

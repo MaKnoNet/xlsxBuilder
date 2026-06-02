@@ -1,4 +1,4 @@
-package de.makno.xlsbuilder;
+package de.makno.xlsbuilder.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import de.makno.xlsbuilder.XlsxTestReader.Grid;
+import de.makno.xlsbuilder.component.XlsxTestReader.Grid;
 
 class ExcelBuilderTest {
 

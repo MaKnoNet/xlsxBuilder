@@ -1,4 +1,4 @@
-package de.makno.xlsbuilder;
+package de.makno.xlsbuilder.component;
 
 /**
  * Logischer Typ einer Spalte. Steuert, wie der projizierte Wert als Excel-Zelle

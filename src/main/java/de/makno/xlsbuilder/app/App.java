@@ -1,4 +1,4 @@
-package de.makno.xlsbuilder;
+package de.makno.xlsbuilder.app;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -11,6 +11,13 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
+
+import de.makno.xlsbuilder.component.ColumnType;
+import de.makno.xlsbuilder.component.DataProvider;
+import de.makno.xlsbuilder.component.DataProviders;
+import de.makno.xlsbuilder.component.ExcelBuilder;
+import de.makno.xlsbuilder.component.SortOrder;
+import de.makno.xlsbuilder.component.WorkbookBuilder;
 
 /**
  * Demo: erzeugt out-of-core eine sortierte {@code .xlsx} mit vielen Zeilen und je einer Spalte pro

@@ -1,4 +1,4 @@
-package de.makno.xlsbuilder;
+package de.makno.xlsbuilder.component;
 
 import java.util.Comparator;
 import java.util.List;

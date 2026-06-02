@@ -40,7 +40,7 @@ dependencies {
 }
 
 application {
-    mainClass = 'de.makno.xlsbuilder.App'
+    mainClass = 'de.makno.xlsbuilder.app.App'
 }
 
 test {
@@ -62,6 +62,11 @@ jacocoTestReport {
         html.required = true
         csv.required  = true
     }
+    // Reine Demo-/Glue-Klassen (Package de.makno.xlsbuilder.app) werden nicht gemessen;
+    // gemessen wird der wiederverwendbare Bibliotheks-Code (de.makno.xlsbuilder.component).
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it, exclude: 'de/makno/xlsbuilder/app/**')
+    }))
 }
 
 // Eclipse-Integration: Die .settings/-Dateien liegen direkt im Projekt-Repository (versioniert).

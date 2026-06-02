@@ -1,4 +1,4 @@
-package de.makno.xlsbuilder;
+package de.makno.xlsbuilder.component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
