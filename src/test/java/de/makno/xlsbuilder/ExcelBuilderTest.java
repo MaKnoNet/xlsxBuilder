@@ -158,6 +158,36 @@ class ExcelBuilderTest {
     }
 
     @Test
+    void externalMergeSortWithMultiplePasses() throws Exception {
+        // 600 Werte bei Chunk-Größe 2 => 300 Runs. Bei Fan-in 16 erzwingt das mehrstufiges
+        // Vormerging (300 -> 19 -> 2 Runs), bevor der finale k-way-Merge läuft.
+        List<Integer> shuffled = new ArrayList<>();
+        for (int i = 0; i < 600; i++) {
+            shuffled.add(i);
+        }
+        Collections.shuffle(shuffled, new java.util.Random(11));
+        Path out = tempDir.resolve("multiPassSort.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Integer>create()
+                        .column("n", i -> i).ofType(ColumnType.INTEGER)
+                        .sortBy("n", SortOrder.ASC)
+                        .sortChunkSize(2)
+                        .data(DataProviders.ofIterable(shuffled)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(601, g.rowCount(), "Kopfzeile + 600 Datenzeilen");
+        long previous = Long.MIN_VALUE;
+        for (int i = 1; i < g.rowCount(); i++) {
+            long v = g.number(i, 0);
+            assertTrue(v > previous, "Werte müssen über alle Merge-Stufen streng aufsteigend sein");
+            previous = v;
+        }
+        assertEquals(599, previous);
+    }
+
+    @Test
     void unsortedPreservesInputOrder() throws Exception {
         List<Integer> data = new ArrayList<>();
         for (int i = 0; i < 500; i++) {
