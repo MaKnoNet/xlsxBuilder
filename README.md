@@ -5,6 +5,9 @@ Eine schlanke Java-21-Bibliothek zum Erzeugen von **`.xlsx`-Dateien** über ein 
 Im Mittelpunkt steht die **Out-of-core-Verarbeitung**: Datenmengen, die nicht in den Speicher passen,
 werden gestreamt geschrieben und (falls nötig) per External Merge Sort sortiert.
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
+
 ## Highlights
 
 - **Builder-API** – Spalten, Sortierung, Summenzeile und Titel fluent zusammenstecken.
@@ -125,6 +128,7 @@ Lambda-Parametertyp explizit angeben.
 ./gradlew build          # kompiliert + führt alle Tests aus
 ./gradlew test           # nur Tests (JUnit 5)
 ./gradlew run            # Demo (erzeugt employees.xlsx)
+./gradlew javadoc        # generiert die API-Dokumentation
 ```
 
 Demo mit Parametern und begrenztem Heap (zeigt Out-of-core):
@@ -133,6 +137,18 @@ Demo mit Parametern und begrenztem Heap (zeigt Out-of-core):
 ./gradlew installDist
 java -Xmx128m -cp "build/install/xlsbuilder/lib/*" de.makno.xlsbuilder.app.ExcelBuilderDemo 1000000 employees.xlsx
 #        ^ Heap-Limit                                                       ^ Zeilen  ^ Ausgabedatei
+```
+
+### API-Dokumentation
+
+Nach dem Bauen findet sich die Javadoc-Dokumentation unter:
+```
+build/docs/javadoc/index.html
+```
+
+Oder direkt generieren:
+```bash
+./gradlew javadoc
 ```
 
 ## Out-of-core / Benchmark
@@ -191,4 +207,4 @@ versionierten `.settings/`-Dateien vorkonfiguriert (UTF-8 – wichtig wegen der 
 
 ## Lizenz
 
-Noch nicht festgelegt.
+Dieses Projekt ist unter der [Apache License 2.0](LICENSE) lizenziert.

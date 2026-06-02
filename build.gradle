@@ -21,6 +21,11 @@ tasks.withType(JavaCompile).configureEach {
 }
 tasks.withType(Javadoc).configureEach {
     options.encoding = 'UTF-8'
+    options.docEncoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    options.windowTitle = 'XLSBuilder API Documentation'
+    options.docTitle = 'XLSBuilder – Excel-Builder für Java'
+    options.addStringOption('Xdoclint:none', '-quiet')
 }
 
 repositories {
@@ -67,6 +72,19 @@ jacocoTestReport {
     classDirectories.setFrom(files(classDirectories.files.collect {
         fileTree(dir: it, exclude: 'de/makno/xlsbuilder/app/**')
     }))
+}
+
+// Javadoc-JAR für Maven Central Publishing
+tasks.register('javadocJar', Jar) {
+    from javadoc
+    archiveClassifier = 'javadoc'
+    dependsOn javadoc
+}
+
+// Sources-JAR für Maven Central Publishing
+tasks.register('sourcesJar', Jar) {
+    from sourceSets.main.allSource
+    archiveClassifier = 'sources'
 }
 
 // Eclipse-Integration: Die .settings/-Dateien liegen direkt im Projekt-Repository (versioniert).
