@@ -15,6 +15,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -821,6 +822,27 @@ class ExcelBuilderTest {
                 List.of(new Column<>("n", ColumnType.INTEGER, i -> i)),
                 List.of(new SortKey("n", SortOrder.ASC)));
         assertThrows(IllegalArgumentException.class, () -> new ExternalMergeSort(comparator, 0));
+    }
+
+    @Test
+    void streamProviderThrowsWhenExhausted() {
+        // ofStream().next() ohne weiteres Element -> NoSuchElementException (Guard wie bei ofIterator).
+        DataProvider<String> provider = DataProviders.ofStream(Stream.of("einziger"));
+        assertEquals("einziger", provider.next());
+        assertThrows(NoSuchElementException.class, provider::next);
+    }
+
+    @Test
+    void comparatorRejectsIncompatibleValueTypes() {
+        // Zwei Zeilen mit inkompatiblen Werttypen in der Sortierspalte -> aussagekräftige Exception
+        // statt roher ClassCastException.
+        var comparator = new RowComparator(
+                List.of(new Column<>("v", ColumnType.STRING, x -> x)),
+                List.of(new SortKey("v", SortOrder.ASC)));
+        Row textRow = new Row(new Object[] {"abc"});
+        Row numberRow = new Row(new Object[] {123});
+        assertThrows(
+                IllegalArgumentException.class, () -> comparator.compare(textRow, numberRow));
     }
 
     // ========== Spaltenüberschriften-Schalter ==========

@@ -35,6 +35,9 @@ final class XlsxWriter {
 
     private static final double NANOS_PER_DAY = 86_400d * 1_000_000_000d;
 
+    /** Maximale Länge eines Excel-Blattnamens. */
+    private static final int MAX_SHEET_NAME_LENGTH = 31;
+
     private XlsxWriter() {
     }
 
@@ -187,8 +190,8 @@ final class XlsxWriter {
         int n = 2;
         while (wb.getSheet(unique) != null) {
             String suffix = " (" + n++ + ")";
-            String head = base.length() + suffix.length() > 31
-                    ? base.substring(0, 31 - suffix.length()) : base;
+            String head = base.length() + suffix.length() > MAX_SHEET_NAME_LENGTH
+                    ? base.substring(0, MAX_SHEET_NAME_LENGTH - suffix.length()) : base;
             unique = head + suffix;
         }
         return unique;

@@ -42,6 +42,9 @@ public final class DataProviders {
 
             @Override
             public T next() {
+                if (!iterator.hasNext()) {
+                    throw new NoSuchElementException();
+                }
                 return iterator.next();
             }
 

@@ -71,6 +71,13 @@ final class RowComparator implements Comparator<Row> {
                     + x.getClass().getSimpleName()
                     + " und kann nicht sortiert werden (nicht Comparable)");
         }
-        return ((Comparable) x).compareTo(y);
+        try {
+            return ((Comparable) x).compareTo(y);
+        } catch (ClassCastException e) {
+            throw new IllegalArgumentException(
+                    "Sortierspalte '" + columnName + "' enthält nicht vergleichbare Werttypen ("
+                    + x.getClass().getSimpleName() + " vs. " + y.getClass().getSimpleName() + ")",
+                    e);
+        }
     }
 }
