@@ -40,7 +40,7 @@ dependencies {
 }
 
 application {
-    mainClass = 'de.makno.xlsbuilder.app.App'
+    mainClass = 'de.makno.xlsbuilder.app.ExcelBuilderDemo'
 }
 
 test {

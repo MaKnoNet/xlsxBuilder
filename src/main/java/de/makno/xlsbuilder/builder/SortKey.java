@@ -1,4 +1,4 @@
-package de.makno.xlsbuilder.component;
+package de.makno.xlsbuilder.builder;
 
 import java.util.Objects;
 

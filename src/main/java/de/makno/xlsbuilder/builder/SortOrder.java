@@ -1,4 +1,4 @@
-package de.makno.xlsbuilder.component;
+package de.makno.xlsbuilder.builder;
 
 public enum SortOrder {
     ASC,

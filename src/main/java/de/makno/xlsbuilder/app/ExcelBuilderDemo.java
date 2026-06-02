@@ -12,21 +12,21 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
 
-import de.makno.xlsbuilder.component.ColumnType;
-import de.makno.xlsbuilder.component.DataProvider;
-import de.makno.xlsbuilder.component.DataProviders;
-import de.makno.xlsbuilder.component.ExcelBuilder;
-import de.makno.xlsbuilder.component.SortOrder;
-import de.makno.xlsbuilder.component.WorkbookBuilder;
+import de.makno.xlsbuilder.builder.ColumnType;
+import de.makno.xlsbuilder.builder.DataProvider;
+import de.makno.xlsbuilder.builder.DataProviders;
+import de.makno.xlsbuilder.builder.ExcelBuilder;
+import de.makno.xlsbuilder.builder.SortOrder;
+import de.makno.xlsbuilder.builder.WorkbookBuilder;
 
 /**
  * Demo: erzeugt out-of-core eine sortierte {@code .xlsx} mit vielen Zeilen und je einer Spalte pro
  * {@link ColumnType}. Die Datensätze werden über einen {@link DataProvider} <em>lazy</em> generiert –
  * es liegt nie die gesamte Datenmenge im Speicher.
  *
- * <p>Aufruf: {@code App [zeilenanzahl] [ausgabedatei]} (Default: 1_000_000 / employees.xlsx).
+ * <p>Aufruf: {@code ExcelBuilderDemo [zeilenanzahl] [ausgabedatei]} (Default: 1_000_000 / employees.xlsx).
  */
-public final class App {
+public final class ExcelBuilderDemo {
 
     /**
      * Felder decken alle Spaltentypen ab. {@code checkInSeconds} ist die Kommt-Zeit als Sekunden seit
