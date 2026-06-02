@@ -48,6 +48,7 @@ public final class ExcelBuilder<T> {
     private String summaryLabelColumn;
     private String summaryLabelText;
     private boolean summaryAsFormula;
+    private boolean showColumnHeaders = true;
     private int sortChunkSize = DEFAULT_CHUNK_SIZE;
     private DataProvider<T> dataProvider;
 
@@ -161,6 +162,16 @@ public final class ExcelBuilder<T> {
         return this;
     }
 
+    /**
+     * Steuert, ob die Zeile mit den Spaltenüberschriften in die Datei geschrieben wird.
+     * Default: {@code true}. Mit {@code false} beginnt die Tabelle direkt mit den Datenzeilen –
+     * nützlich für Rohdaten-Exports oder Blätter, die per Makro weiterverarbeitet werden.
+     */
+    public ExcelBuilder<T> columnHeaders(boolean show) {
+        this.showColumnHeaders = show;
+        return this;
+    }
+
     /** Chunk-Größe (Zeilen pro in-memory sortiertem Run) des External Merge Sort. */
     public ExcelBuilder<T> sortChunkSize(int chunkSize) {
         if (chunkSize < 1) {
@@ -194,7 +205,7 @@ public final class ExcelBuilder<T> {
         try (DataProvider<T> p = dataProvider) {
             Iterator<Row> projected = projection(p);
             if (sortKeys.isEmpty()) {
-                XlsxWriter.addSheet(wb, sheetName, columns, header, projected, summary);
+                XlsxWriter.addSheet(wb, sheetName, columns, header, projected, summary, showColumnHeaders);
             } else {
                 RowComparator comparator = new RowComparator(columns, sortKeys);
                 try (ExternalMergeSort sorter = new ExternalMergeSort(comparator, sortChunkSize)) {
@@ -202,7 +213,7 @@ public final class ExcelBuilder<T> {
                     CloseableIterator<Row> sorted = sorter.sort(projected);
                     // ... danach wird der sortierte Strom in das Blatt geschrieben.
                     try (sorted) {
-                        XlsxWriter.addSheet(wb, sheetName, columns, header, sorted, summary);
+                        XlsxWriter.addSheet(wb, sheetName, columns, header, sorted, summary, showColumnHeaders);
                     }
                 }
             }

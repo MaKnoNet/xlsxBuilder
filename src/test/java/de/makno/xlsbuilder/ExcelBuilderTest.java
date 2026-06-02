@@ -792,4 +792,51 @@ class ExcelBuilderTest {
                 List.of(new SortKey("n", SortOrder.ASC)));
         assertThrows(IllegalArgumentException.class, () -> new ExternalMergeSort(comparator, 0));
     }
+
+    // ========== Spaltenüberschriften-Schalter ==========
+
+    @Test
+    void writesWithoutColumnHeaders() throws Exception {
+        // columnHeaders(false) → erste Zeile ist direkt eine Datenzeile, keine Überschrift.
+        List<Person> data = List.of(new Person("Alice", 30, true), new Person("Bob", 25, false));
+        Path out = tempDir.resolve("noHeader.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .column("Name", Person::name)
+                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                        .columnHeaders(false)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(2, g.rowCount(), "Nur 2 Datenzeilen, keine Kopfzeile");
+        assertEquals("Alice", g.string(0, 0));
+        assertEquals(30, g.number(0, 1));
+        assertEquals("Bob", g.string(1, 0));
+    }
+
+    @Test
+    void summaryFormulaWithoutColumnHeaders() throws Exception {
+        // Ohne Kopfzeile beginnen die Daten in Excel-Zeile 1 → Formel muss SUM(B1:B2) lauten.
+        record Item(String name, int wert) {
+        }
+        List<Item> data = List.of(new Item("A", 10), new Item("B", 20));
+        Path out = tempDir.resolve("noHeaderSum.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .column("Name", Item::name)
+                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                        .sumColumn("Wert")
+                        .summaryAsFormula(true)
+                        .columnHeaders(false)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Ohne Kopfzeile: Daten in Excel-Zeilen 1–2, Summenzeile in Zeile 3
+        assertEquals(3, g.rowCount());
+        assertEquals("SUM(B1:B2)", g.formula(2, 1));
+    }
 }

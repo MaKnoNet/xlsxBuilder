@@ -40,7 +40,8 @@ final class XlsxWriter {
 
     /** Fügt ein Worksheet in ein vorhandenes (vom {@code WorkbookBuilder} verwaltetes) Workbook ein. */
     static void addSheet(SXSSFWorkbook wb, String sheetName, List<? extends Column<?>> columns,
-                         List<String> headerLines, Iterator<Row> rows, SummarySpec summary) {
+                         List<String> headerLines, Iterator<Row> rows, SummarySpec summary,
+                         boolean showColumnHeaders) {
         SXSSFSheet sheet = wb.createSheet(uniqueSheetName(wb, sheetName));
 
         // Bei Formelspalten Excel anweisen, beim Öffnen neu zu berechnen (Werte sind nicht gecacht).
@@ -75,7 +76,8 @@ final class XlsxWriter {
             formatDecimals[c] = decimalsOf(fmt);
             grouping[c] = numericLike && fmt != null && fmt.indexOf(',') >= 0;
             literalChars[c] = numericLike ? literalCharsOf(fmt) : 0;
-            widthChars[c] = Math.max(col.name().length(), minChars(col.type()) + literalChars[c]);
+            int nameWidth = showColumnHeaders ? col.name().length() : 0;
+            widthChars[c] = Math.max(nameWidth, minChars(col.type()) + literalChars[c]);
         }
 
         int rowNum = 0;
@@ -94,10 +96,12 @@ final class XlsxWriter {
             }
         }
 
-        // Spaltenüberschriften
-        org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(rowNum++);
-        for (int c = 0; c < columns.size(); c++) {
-            headerRow.createCell(c).setCellValue(columns.get(c).name());
+        // Spaltenüberschriften (optional)
+        if (showColumnHeaders) {
+            org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(rowNum++);
+            for (int c = 0; c < columns.size(); c++) {
+                headerRow.createCell(c).setCellValue(columns.get(c).name());
+            }
         }
 
         // Akkumulatoren der Summenzeile (konstanter Speicher, wird beim Streamen mitgeführt).
