@@ -833,6 +833,43 @@ class ExcelBuilderTest {
     }
 
     @Test
+    void rowCodecRoundTripsAllValueTypes() throws Exception {
+        // Deckt alle Typtags des RowCodec ab, inkl. UTF-8-String und Java-Serialisierungs-Fallback.
+        Object[] values = {
+            null,
+            "Käse äöü ß€",
+            42, // Integer
+            9_000_000_000L, // Long
+            3.14159, // Double
+            true, // Boolean
+            new BigDecimal("12345.6789"), // BigDecimal
+            LocalDate.of(2026, 6, 2),
+            LocalDateTime.of(2026, 6, 2, 14, 30, 15),
+            LocalTime.of(9, 30, 15),
+            new java.util.Date(1_700_000_000_000L) // Fallback (Serializable, kein eigenes Tag)
+        };
+        Row original = new Row(values);
+
+        var buffer = new java.io.ByteArrayOutputStream();
+        try (var out = new java.io.DataOutputStream(buffer)) {
+            RowCodec.writeRow(out, original);
+        }
+        Row restored;
+        try (var in =
+                new java.io.DataInputStream(new java.io.ByteArrayInputStream(buffer.toByteArray()))) {
+            restored = RowCodec.readRow(in);
+        }
+
+        assertEquals(values.length, restored.size());
+        for (int i = 0; i < values.length; i++) {
+            assertEquals(values[i], restored.get(i), "Wert an Index " + i);
+        }
+        // Laufzeittyp muss exakt erhalten bleiben (sonst bräche der Vergleich Integer vs. Long).
+        assertTrue(restored.get(2) instanceof Integer, "Integer bleibt Integer");
+        assertTrue(restored.get(3) instanceof Long, "Long bleibt Long");
+    }
+
+    @Test
     void comparatorRejectsIncompatibleValueTypes() {
         // Zwei Zeilen mit inkompatiblen Werttypen in der Sortierspalte -> aussagekräftige Exception
         // statt roher ClassCastException.

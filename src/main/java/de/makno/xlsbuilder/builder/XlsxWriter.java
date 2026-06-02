@@ -220,15 +220,29 @@ final class XlsxWriter {
         };
     }
 
-    /** Anzahl Stellen des ganzzahligen Anteils (ohne Vorzeichen). */
+    /** Anzahl Stellen des ganzzahligen Anteils (ohne Vorzeichen), ohne Zwischen-Strings zu allokieren. */
     private static int integerDigits(Object value) {
         if (value instanceof BigDecimal bd) {
-            return bd.signum() == 0 ? 1 : bd.toBigInteger().abs().toString().length();
+            // precision - scale = Anzahl Vorkommastellen; für |x| < 1 mindestens eine ("0").
+            return Math.max(1, bd.precision() - bd.scale());
         }
+        long magnitude;
         if (value instanceof Double || value instanceof Float) {
-            return Long.toString((long) Math.abs(((Number) value).doubleValue())).length();
+            magnitude = (long) Math.abs(((Number) value).doubleValue());
+        } else {
+            magnitude = Math.abs(((Number) value).longValue());
         }
-        return Long.toString(Math.abs(((Number) value).longValue())).length();
+        return decimalDigits(magnitude);
+    }
+
+    /** Anzahl Dezimalstellen eines nicht-negativen {@code long} (allokationsfrei). */
+    private static int decimalDigits(long v) {
+        int digits = 1;
+        while (v >= 10) {
+            v /= 10;
+            digits++;
+        }
+        return digits;
     }
 
     /** Dezimalstellen aus einem Format-Code, {@code 0} ohne Dezimalpunkt, {@code -1} ohne Format. */

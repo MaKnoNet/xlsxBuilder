@@ -3,9 +3,9 @@ package de.makno.xlsbuilder.builder;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -139,14 +139,11 @@ final class ExternalMergeSort implements Closeable {
 
     /** Schreibt {@code count} Zeilen (in der Reihenfolge des Iterators) als Run-Datei. */
     private static void writeRun(Path file, java.util.Iterator<Row> rows, long count) throws IOException {
-        try (ObjectOutputStream out = new ObjectOutputStream(
+        try (DataOutputStream out = new DataOutputStream(
                 new BufferedOutputStream(Files.newOutputStream(file)))) {
             out.writeLong(count);
             while (rows.hasNext()) {
-                out.writeObject(rows.next());
-                // Handle-Tabelle leeren: sonst halten ObjectOutput-/ObjectInputStream Referenzen
-                // auf jedes je geschriebene/gelesene Objekt -> unbegrenztes Wachstum bei großen Runs.
-                out.reset();
+                RowCodec.writeRow(out, rows.next());
             }
         }
     }
@@ -181,11 +178,11 @@ final class ExternalMergeSort implements Closeable {
 
     /** Liest einen sortierten Run zeilenweise von der Platte. */
     private static final class RunReader implements Closeable {
-        private final ObjectInputStream in;
+        private final DataInputStream in;
         private long remaining;
 
         RunReader(Path file) throws IOException {
-            this.in = new ObjectInputStream(new BufferedInputStream(Files.newInputStream(file)));
+            this.in = new DataInputStream(new BufferedInputStream(Files.newInputStream(file)));
             this.remaining = in.readLong();
         }
 
@@ -199,13 +196,11 @@ final class ExternalMergeSort implements Closeable {
                 return null;
             }
             try {
-                Row row = (Row) in.readObject();
+                Row row = RowCodec.readRow(in);
                 remaining--;
                 return row;
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
-            } catch (ClassNotFoundException e) {
-                throw new IllegalStateException(e);
             }
         }
 
