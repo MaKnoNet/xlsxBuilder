@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,6 +17,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -822,6 +827,83 @@ class ExcelBuilderTest {
                 List.of(new Column<>("n", ColumnType.INTEGER, i -> i)),
                 List.of(new SortKey("n", SortOrder.ASC)));
         assertThrows(IllegalArgumentException.class, () -> new ExternalMergeSort(comparator, 0));
+    }
+
+    @Test
+    void usesConfiguredSortTempDir() throws Exception {
+        // Eigenes (noch nicht existierendes) Sortier-Temp-Verzeichnis -> wird angelegt und nach
+        // dem Schreiben wieder geleert (das je Sortierung erzeugte Unterverzeichnis verschwindet).
+        Path customTmp = tempDir.resolve("sortwork");
+        List<Integer> data = new ArrayList<>();
+        for (int i = 0; i < 300; i++) {
+            data.add(i);
+        }
+        Collections.shuffle(data, new java.util.Random(5));
+        Path out = tempDir.resolve("customTmp.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Integer>create()
+                        .column("n", i -> i).ofType(ColumnType.INTEGER)
+                        .sortBy("n", SortOrder.ASC)
+                        .sortChunkSize(50) // erzwingt Auslagern in das konfigurierte Verzeichnis
+                        .sortTempDir(customTmp)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(301, g.rowCount());
+        for (int i = 1; i < g.rowCount(); i++) {
+            assertEquals(i - 1, g.number(i, 0));
+        }
+        assertTrue(Files.isDirectory(customTmp), "Konfiguriertes Temp-Verzeichnis wurde angelegt");
+        try (var entries = Files.list(customTmp)) {
+            assertEquals(0, entries.count(), "Sortier-Unterverzeichnis muss aufgeräumt sein");
+        }
+    }
+
+    @Test
+    void concurrentBuildsAreIsolated() throws Exception {
+        // Viele Builder parallel: jeder Thread schreibt mit eigenen Instanzen seine eigene Datei.
+        // Verifiziert, dass es keinen geteilten Zustand gibt (kein Cross-Talk zwischen Threads).
+        int tasks = 16;
+        int rowsPerTask = 200;
+        ExecutorService pool = Executors.newFixedThreadPool(8);
+        List<Future<?>> futures = new ArrayList<>();
+        try {
+            for (int t = 0; t < tasks; t++) {
+                final int id = t;
+                futures.add(pool.submit(() -> {
+                    List<Integer> data = new ArrayList<>();
+                    for (int i = 0; i < rowsPerTask; i++) {
+                        data.add(id * 1_000 + i); // pro Task eindeutiger Wertebereich
+                    }
+                    Collections.shuffle(data, new java.util.Random(id));
+                    Path out = tempDir.resolve("concurrent-" + id + ".xlsx");
+
+                    WorkbookBuilder.create()
+                            .sheet(ExcelBuilder.<Integer>create()
+                                    .sheetName("S" + id)
+                                    .column("n", i -> i).ofType(ColumnType.INTEGER)
+                                    .sortBy("n", SortOrder.ASC)
+                                    .sortChunkSize(32) // erzwingt Auslagern + Merge je Thread
+                                    .data(DataProviders.ofIterable(data)))
+                            .write(out);
+
+                    Grid g = XlsxTestReader.read(out);
+                    assertEquals(rowsPerTask + 1, g.rowCount(), "Task " + id);
+                    for (int i = 0; i < rowsPerTask; i++) {
+                        assertEquals((long) id * 1_000 + i, g.number(i + 1, 0), "Task " + id + " Zeile " + i);
+                    }
+                    return null;
+                }));
+            }
+        } finally {
+            pool.shutdown();
+        }
+        assertTrue(pool.awaitTermination(60, TimeUnit.SECONDS), "Alle Tasks müssen fertig werden");
+        for (Future<?> f : futures) {
+            f.get(); // propagiert etwaige AssertionErrors aus den Threads -> Test schlägt fehl
+        }
     }
 
     @Test

@@ -37,15 +37,25 @@ final class ExternalMergeSort implements Closeable {
 
     private final Comparator<Row> comparator;
     private final int chunkSize;
+    private final Path baseTempDir; // Basisverzeichnis für Runs; null = System-Temp
     private final List<Path> runFiles = new ArrayList<>();
     private Path tempDir;
 
     ExternalMergeSort(Comparator<Row> comparator, int chunkSize) {
+        this(comparator, chunkSize, null);
+    }
+
+    /**
+     * @param baseTempDir Basisverzeichnis für die Run-Dateien; {@code null} = System-Temp
+     *                    ({@code java.io.tmpdir}). Wird bei Bedarf angelegt.
+     */
+    ExternalMergeSort(Comparator<Row> comparator, int chunkSize, Path baseTempDir) {
         if (chunkSize < 1) {
             throw new IllegalArgumentException("chunkSize muss >= 1 sein");
         }
         this.comparator = comparator;
         this.chunkSize = chunkSize;
+        this.baseTempDir = baseTempDir;
     }
 
     /**
@@ -54,7 +64,12 @@ final class ExternalMergeSort implements Closeable {
      */
     CloseableIterator<Row> sort(java.util.Iterator<Row> source) throws IOException {
         try {
-            tempDir = Files.createTempDirectory("xlsbuilder-sort-");
+            if (baseTempDir != null) {
+                Files.createDirectories(baseTempDir);
+                tempDir = Files.createTempDirectory(baseTempDir, "xlsbuilder-sort-");
+            } else {
+                tempDir = Files.createTempDirectory("xlsbuilder-sort-");
+            }
             List<Path> runs = new ArrayList<>();
             List<Row> buffer = new ArrayList<>(Math.min(chunkSize, 1024));
             while (source.hasNext()) {

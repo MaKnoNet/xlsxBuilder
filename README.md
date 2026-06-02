@@ -147,6 +147,26 @@ Blattanzahl. Beispiel (Demo mit 3 Blättern, davon zwei mit je 1 Mio. Zeilen × 
 
 Mehr Blätter/Zeilen kosten v. a. Zeit und Plattenplatz (Temp-Dateien), kaum mehr Heap.
 
+## Nebenläufigkeit / Server-Betrieb
+
+Die Bibliothek hat **keinen geteilten oder statischen veränderlichen Zustand**. Nebenläufige Aufträge
+laufen daher isoliert, solange jeder Thread **eigene** Builder-Instanzen verwendet:
+
+- **Builder sind nicht thread-safe und single-use.** Pro Request `WorkbookBuilder.create()` /
+  `ExcelBuilder.create()` neu erzeugen; eine Instanz nicht zwischen Threads teilen.
+- **Pro `write()` entsteht ein eigenes POI-Workbook.** Zwei Aufträge dürfen nicht gleichzeitig in
+  dieselbe Datei schreiben (jeweils eigener `OutputStream`/`Path`).
+- **`DataProvider` nicht teilen.** Forward-only, einmalig, pro Request eigene Quelle (z. B. eine
+  eigene JDBC-`Connection` aus dem Pool); `close()` ruft der Builder selbst auf.
+- **Speicher skaliert mit der Nebenläufigkeit.** Out-of-core begrenzt den Speicher *pro* Sortierung
+  (`sortChunkSize` Zeilen + SXSSF-Fenster), aber bei *N* gleichzeitigen Sortierungen summiert sich
+  das auf ~*N × sortChunkSize* Zeilen. Daher die Nebenläufigkeit begrenzen (Thread-Pool/`Semaphore`)
+  und/oder `sortChunkSize` kleiner wählen.
+- **Temp-Verzeichnis & OS-Limits.** Sortier-Runs liegen standardmäßig unter `java.io.tmpdir`; mit
+  `ExcelBuilder.sortTempDir(Path)` lässt sich eine dedizierte Platte wählen. Je Sortierung sind bis
+  zu 16 Run-Dateien gleichzeitig offen – `ulimit -n` und freien Plattenplatz entsprechend der
+  erwarteten Nebenläufigkeit dimensionieren.
+
 ## Architektur (Kurzüberblick)
 
 ```

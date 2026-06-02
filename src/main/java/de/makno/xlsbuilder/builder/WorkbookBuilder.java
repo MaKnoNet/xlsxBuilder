@@ -28,6 +28,11 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  *         .data(orderProvider))
  *     .write(Path.of("report.xlsx"));
  * }</pre>
+ *
+ * <p><b>Thread-Sicherheit:</b> nicht thread-safe und auf Einmal-Nutzung ausgelegt – pro Auftrag eine
+ * eigene Instanz erzeugen, nicht zwischen Threads teilen und nicht gleichzeitig in dieselbe Datei
+ * schreiben. Da die Bibliothek keinen geteilten/statischen Zustand hat, laufen nebenläufige Aufträge
+ * mit jeweils eigenen Instanzen isoliert; pro {@link #write} entsteht ein eigenes POI-Workbook.
  */
 public final class WorkbookBuilder {
 

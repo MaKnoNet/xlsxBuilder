@@ -1,6 +1,7 @@
 package de.makno.xlsbuilder.builder;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -35,6 +36,14 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  *         .data(dataProvider))
  *     .write(Path.of("out.xlsx"));
  * }</pre>
+ *
+ * <p><b>Thread-Sicherheit:</b> Diese Klasse ist <em>nicht</em> thread-safe und auf Einmal-Nutzung
+ * ausgelegt – pro Auftrag/Request eine neue Instanz erzeugen und nicht zwischen Threads teilen.
+ * Nebenläufige Aufträge mit jeweils eigenen Builder-Instanzen laufen isoliert (kein geteilter/
+ * statischer Zustand). Beachte aber: Der externe Merge Sort puffert {@link #sortChunkSize(int)}
+ * Zeilen je Sortierung im Speicher – bei vielen gleichzeitigen Aufträgen summiert sich das, daher
+ * ggf. die Nebenläufigkeit begrenzen oder {@code sortChunkSize} kleiner wählen. Der übergebene
+ * {@link DataProvider} darf ebenfalls nicht zwischen Threads geteilt werden.
  */
 public final class ExcelBuilder<T> {
 
@@ -50,6 +59,7 @@ public final class ExcelBuilder<T> {
     private boolean summaryAsFormula;
     private boolean showColumnHeaders = true;
     private int sortChunkSize = DEFAULT_CHUNK_SIZE;
+    private Path sortTempDir; // null = System-Temp (java.io.tmpdir)
     private DataProvider<T> dataProvider;
 
     private ExcelBuilder() {
@@ -181,6 +191,18 @@ public final class ExcelBuilder<T> {
         return this;
     }
 
+    /**
+     * Optionales Basisverzeichnis für die temporären Sortier-Dateien (External Merge Sort).
+     * {@code null} (Default) = System-Temp ({@code java.io.tmpdir}). Im Server-Betrieb kann hier eine
+     * dedizierte (schnelle/große) Platte gewählt werden. Das Verzeichnis wird bei Bedarf angelegt;
+     * das je Sortierung erzeugte Unterverzeichnis wird nach dem Schreiben wieder gelöscht.
+     * Wirkt nur bei aktiver Sortierung ({@link #sortBy(String, SortOrder)}).
+     */
+    public ExcelBuilder<T> sortTempDir(Path dir) {
+        this.sortTempDir = dir;
+        return this;
+    }
+
     /** Setzt die Datenquelle dieses Blatts. Erforderlich, bevor das Blatt geschrieben wird. */
     public ExcelBuilder<T> data(DataProvider<T> provider) {
         this.dataProvider = Objects.requireNonNull(provider, "provider");
@@ -208,7 +230,8 @@ public final class ExcelBuilder<T> {
                 XlsxWriter.addSheet(wb, sheetName, columns, header, projected, summary, showColumnHeaders);
             } else {
                 RowComparator comparator = new RowComparator(columns, sortKeys);
-                try (ExternalMergeSort sorter = new ExternalMergeSort(comparator, sortChunkSize)) {
+                try (ExternalMergeSort sorter =
+                        new ExternalMergeSort(comparator, sortChunkSize, sortTempDir)) {
                     // sort() konsumiert die Projektion (und damit den Provider) vollständig ...
                     CloseableIterator<Row> sorted = sorter.sort(projected);
                     // ... danach wird der sortierte Strom in das Blatt geschrieben.
