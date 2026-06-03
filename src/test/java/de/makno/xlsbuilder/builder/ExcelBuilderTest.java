@@ -23,6 +23,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.Property;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -949,6 +955,54 @@ class ExcelBuilderTest {
         // Laufzeittyp muss exakt erhalten bleiben (sonst bräche der Vergleich Integer vs. Long).
         assertTrue(restored.get(2) instanceof Integer, "Integer bleibt Integer");
         assertTrue(restored.get(3) instanceof Long, "Long bleibt Long");
+    }
+
+    @Test
+    void emitsPerformanceLogsOnSortedBuild() throws Exception {
+        // Hängt einen In-Memory-Appender an den Builder-Logger und prüft, dass ein sortierter Lauf
+        // die Performance-Log-Zeilen (Sort, Blatt, Workbook) auf DEBUG erzeugt.
+        List<String> messages = java.util.Collections.synchronizedList(new ArrayList<>());
+        AbstractAppender appender =
+                new AbstractAppender("perfCapture", null, null, true, Property.EMPTY_ARRAY) {
+                    @Override
+                    public void append(LogEvent event) {
+                        messages.add(event.getMessage().getFormattedMessage());
+                    }
+                };
+        appender.start();
+        String loggerName = "de.makno.xlsbuilder.builder";
+        org.apache.logging.log4j.core.Logger logger =
+                (org.apache.logging.log4j.core.Logger) LogManager.getLogger(loggerName);
+        Level previous = logger.getLevel();
+        logger.addAppender(appender);
+        Configurator.setLevel(loggerName, Level.DEBUG);
+        try {
+            List<Integer> data = new ArrayList<>();
+            for (int i = 0; i < 100; i++) {
+                data.add(i);
+            }
+            Collections.shuffle(data, new java.util.Random(1));
+            Path out = tempDir.resolve("perfLog.xlsx");
+            WorkbookBuilder.create()
+                    .sheet(ExcelBuilder.<Integer>create()
+                            .sheetName("L")
+                            .column("n", i -> i).ofType(ColumnType.INTEGER)
+                            .sortBy("n", SortOrder.ASC)
+                            .sortChunkSize(10) // erzwingt Auslagern -> ExternalMergeSort-Log
+                            .data(DataProviders.ofIterable(data)))
+                    .write(out);
+        } finally {
+            logger.removeAppender(appender);
+            appender.stop();
+            Configurator.setLevel(loggerName, previous);
+        }
+
+        assertTrue(messages.stream().anyMatch(m -> m.contains("External Merge Sort")),
+                "Sort-Performance-Log fehlt: " + messages);
+        assertTrue(messages.stream().anyMatch(m -> m.contains("Blatt '")),
+                "Blatt-Performance-Log fehlt: " + messages);
+        assertTrue(messages.stream().anyMatch(m -> m.contains("Workbook:")),
+                "Workbook-Performance-Log fehlt: " + messages);
     }
 
     @Test

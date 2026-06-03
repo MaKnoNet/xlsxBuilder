@@ -41,8 +41,12 @@ final class XlsxWriter {
     private XlsxWriter() {
     }
 
-    /** Fügt ein Worksheet in ein vorhandenes (vom {@code WorkbookBuilder} verwaltetes) Workbook ein. */
-    static void addSheet(SXSSFWorkbook wb, String sheetName, List<? extends Column<?>> columns,
+    /**
+     * Fügt ein Worksheet in ein vorhandenes (vom {@code WorkbookBuilder} verwaltetes) Workbook ein.
+     *
+     * @return Anzahl geschriebener Datenzeilen (ohne Titel-/Kopf-/Summenzeile) – für Performance-Logs.
+     */
+    static int addSheet(SXSSFWorkbook wb, String sheetName, List<? extends Column<?>> columns,
                          List<String> headerLines, Iterator<Row> rows, SummarySpec summary,
                          boolean showColumnHeaders) {
         SXSSFSheet sheet = wb.createSheet(uniqueSheetName(wb, sheetName));
@@ -67,6 +71,7 @@ final class XlsxWriter {
                 rowNum, firstDataRow0 + 1, rowNum, dataRowCount);
 
         widths.applyTo(sheet);
+        return dataRowCount;
     }
 
     /** Bei Formelspalten/-summen Excel anweisen, beim Öffnen neu zu berechnen (Werte sind nicht gecacht). */

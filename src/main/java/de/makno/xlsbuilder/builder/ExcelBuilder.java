@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 /**
@@ -46,6 +48,8 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  * {@link DataProvider} darf ebenfalls nicht zwischen Threads geteilt werden.
  */
 public final class ExcelBuilder<T> {
+
+    private static final Logger LOG = LogManager.getLogger(ExcelBuilder.class);
 
     private static final int DEFAULT_CHUNK_SIZE = 100_000;
 
@@ -227,16 +231,27 @@ public final class ExcelBuilder<T> {
         try (DataProvider<T> p = dataProvider) {
             Iterator<Row> projected = projection(p);
             if (sortKeys.isEmpty()) {
-                XlsxWriter.addSheet(wb, sheetName, columns, header, projected, summary, showColumnHeaders);
+                long writeStart = System.nanoTime();
+                int rows = XlsxWriter.addSheet(
+                        wb, sheetName, columns, header, projected, summary, showColumnHeaders);
+                LOG.debug("Blatt '{}': {} Zeilen, unsortiert – Schreibphase {} ms",
+                        sheetName, rows, (System.nanoTime() - writeStart) / 1_000_000);
             } else {
                 RowComparator comparator = new RowComparator(columns, sortKeys);
                 try (ExternalMergeSort sorter =
                         new ExternalMergeSort(comparator, sortChunkSize, sortTempDir)) {
                     // sort() konsumiert die Projektion (und damit den Provider) vollständig ...
+                    long sortStart = System.nanoTime();
                     CloseableIterator<Row> sorted = sorter.sort(projected);
-                    // ... danach wird der sortierte Strom in das Blatt geschrieben.
+                    long sortMs = (System.nanoTime() - sortStart) / 1_000_000;
+                    // ... danach wird der sortierte Strom in das Blatt geschrieben (inkl. finalem Merge).
+                    long writeStart = System.nanoTime();
                     try (sorted) {
-                        XlsxWriter.addSheet(wb, sheetName, columns, header, sorted, summary, showColumnHeaders);
+                        int rows = XlsxWriter.addSheet(
+                                wb, sheetName, columns, header, sorted, summary, showColumnHeaders);
+                        LOG.debug("Blatt '{}': {} Zeilen, sortiert – Sortierphase {} ms, "
+                                        + "Schreibphase {} ms",
+                                sheetName, rows, sortMs, (System.nanoTime() - writeStart) / 1_000_000);
                     }
                 }
             }

@@ -163,6 +163,18 @@ Blattanzahl. Beispiel (Demo mit 3 Blättern, davon zwei mit je 1 Mio. Zeilen × 
 
 Mehr Blätter/Zeilen kosten v. a. Zeit und Plattenplatz (Temp-Dateien), kaum mehr Heap.
 
+### Performance-Logging (für Entwickler)
+
+Der Builder schreibt Messpunkte auf **DEBUG** über die Log4j2-API (Logger-Namen unter
+`de.makno.xlsbuilder.builder`): je Blatt Zeilenzahl + Sortier-/Schreibphase, die External-Merge-Sort-
+Kennzahlen (Zeilen, Runs, Vormerge-Pässe, Zeit, Temp-Verzeichnis) und die Gesamtzeit des Workbooks.
+Im Normalbetrieb (Level ≥ INFO) entstehen **keine Ausgaben und kein nennenswerter Overhead**. Zum
+Aktivieren das Log-Level der Anwendung für dieses Package auf `DEBUG` setzen, z. B. in `log4j2.xml`:
+
+```xml
+<Logger name="de.makno.xlsbuilder.builder" level="debug"/>
+```
+
 ## Nebenläufigkeit / Server-Betrieb
 
 Die Bibliothek hat **keinen geteilten oder statischen veränderlichen Zustand**. Nebenläufige Aufträge

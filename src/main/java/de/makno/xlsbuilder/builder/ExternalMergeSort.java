@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * External Merge Sort über {@link Row}s. Funktioniert auch für Datenmengen, die nicht in den
  * Speicher passen:
@@ -32,6 +35,8 @@ import java.util.PriorityQueue;
  */
 final class ExternalMergeSort implements Closeable {
 
+    private static final Logger LOG = LogManager.getLogger(ExternalMergeSort.class);
+
     /** Maximale Anzahl gleichzeitig offener Runs beim Merge (begrenzt offene File-Handles). */
     private static final int MAX_FAN_IN = 16;
 
@@ -40,6 +45,11 @@ final class ExternalMergeSort implements Closeable {
     private final Path baseTempDir; // Basisverzeichnis für Runs; null = System-Temp
     private final List<Path> runFiles = new ArrayList<>();
     private Path tempDir;
+
+    // Performance-Kennzahlen (nur für Logging).
+    private long rowsRead;
+    private int initialRuns;
+    private int mergePasses;
 
     ExternalMergeSort(Comparator<Row> comparator, int chunkSize) {
         this(comparator, chunkSize, null);
@@ -63,6 +73,7 @@ final class ExternalMergeSort implements Closeable {
      * Bei Fehlern werden alle erstellten Temp-Dateien automatisch gelöscht ({@link #close()} wird aufgerufen).
      */
     CloseableIterator<Row> sort(java.util.Iterator<Row> source) throws IOException {
+        long startNanos = System.nanoTime();
         try {
             if (baseTempDir != null) {
                 Files.createDirectories(baseTempDir);
@@ -74,6 +85,7 @@ final class ExternalMergeSort implements Closeable {
             List<Row> buffer = new ArrayList<>(Math.min(chunkSize, 1024));
             while (source.hasNext()) {
                 buffer.add(source.next());
+                rowsRead++;
                 if (buffer.size() >= chunkSize) {
                     runs.add(flushRun(buffer));
                     buffer.clear();
@@ -82,9 +94,16 @@ final class ExternalMergeSort implements Closeable {
             if (!buffer.isEmpty()) {
                 runs.add(flushRun(buffer));
             }
+            initialRuns = runs.size();
             // Fan-in begrenzen, damit der finale Merge nie zu viele Dateien gleichzeitig offen hält.
             runs = reduceToFanIn(runs);
-            return new MergeIterator(runs, comparator);
+            CloseableIterator<Row> merged = new MergeIterator(runs, comparator);
+            LOG.debug(
+                    "External Merge Sort: {} Zeilen, {} Runs, {} Vormerge-Pässe (chunkSize={}), "
+                            + "Runs+Vormerge in {} ms, Temp={}",
+                    rowsRead, initialRuns, mergePasses, chunkSize,
+                    (System.nanoTime() - startNanos) / 1_000_000, tempDir);
+            return merged;
         } catch (IOException e) {
             // Cleanup bei Fehler: alle bis jetzt erstellten Temp-Dateien löschen
             close();
@@ -107,6 +126,7 @@ final class ExternalMergeSort implements Closeable {
      */
     private List<Path> reduceToFanIn(List<Path> runs) throws IOException {
         while (runs.size() > MAX_FAN_IN) {
+            mergePasses++;
             List<Path> merged = new ArrayList<>();
             for (int i = 0; i < runs.size(); i += MAX_FAN_IN) {
                 List<Path> group = runs.subList(i, Math.min(i + MAX_FAN_IN, runs.size()));

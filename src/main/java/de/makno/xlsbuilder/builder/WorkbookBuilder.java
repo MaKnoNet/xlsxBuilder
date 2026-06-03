@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 /**
@@ -35,6 +37,8 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  * mit jeweils eigenen Instanzen isoliert; pro {@link #write} entsteht ein eigenes POI-Workbook.
  */
 public final class WorkbookBuilder {
+
+    private static final Logger LOG = LogManager.getLogger(WorkbookBuilder.class);
 
     /** Anzahl Zeilen, die SXSSF je Blatt gleichzeitig im Speicher hält (Rest wird ausgelagert). */
     private static final int ROW_WINDOW = 100;
@@ -66,11 +70,14 @@ public final class WorkbookBuilder {
         if (sheets.isEmpty()) {
             throw new IllegalStateException("Mindestens ein Blatt erforderlich");
         }
+        long startNanos = System.nanoTime();
         try (SXSSFWorkbook wb = new SXSSFWorkbook(ROW_WINDOW)) {
             for (ExcelBuilder<?> sheet : sheets) {
                 sheet.renderInto(wb);
             }
             wb.write(out);
         }
+        LOG.debug("Workbook: {} Blätter in {} ms geschrieben",
+                sheets.size(), (System.nanoTime() - startNanos) / 1_000_000);
     }
 }

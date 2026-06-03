@@ -36,11 +36,16 @@ dependencies {
     // Apache POI: .xlsx-Erzeugung. SXSSF (org.apache.poi.xssf.streaming) schreibt out-of-core.
     implementation 'org.apache.poi:poi-ooxml:5.4.0'
 
-    // POI nutzt die Log4j2-API als Logging-Fassade; ohne Implementierung erscheint sonst die Meldung
-    // "Log4j API could not find a logging provider". Version passend zur transitiven log4j-api.
+    // Log4j2-API als Logging-Fassade (auch von POI genutzt) – für die Performance-Logs des Builders.
+    implementation 'org.apache.logging.log4j:log4j-api:2.24.3'
+
+    // POI/Builder nutzen die Log4j2-API; ohne Implementierung erschiene "Log4j API could not find a
+    // logging provider". Version passend zur log4j-api.
     runtimeOnly 'org.apache.logging.log4j:log4j-core:2.24.3'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.14.0'
+    // log4j-core im Test: In-Memory-Appender zum Verifizieren der Performance-Log-Ausgaben.
+    testImplementation 'org.apache.logging.log4j:log4j-core:2.24.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.0'
 }
 
