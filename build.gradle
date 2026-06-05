@@ -43,14 +43,30 @@ dependencies {
     // logging provider". Version passend zur log4j-api.
     runtimeOnly 'org.apache.logging.log4j:log4j-core:2.24.3'
 
+    // H2: eingebettete SQL-DB für den Performance-Benchmark (app). Reines JDBC via DriverManager,
+    // daher nur zur Laufzeit nötig.
+    runtimeOnly 'com.h2database:h2:2.3.232'
+
     testImplementation 'org.junit.jupiter:junit-jupiter:5.14.0'
     // log4j-core im Test: In-Memory-Appender zum Verifizieren der Performance-Log-Ausgaben.
     testImplementation 'org.apache.logging.log4j:log4j-core:2.24.3'
+    // H2 im Test: In-Memory-DB für den DataProviders.ofResultSet-Adapter-Test.
+    testImplementation 'com.h2database:h2:2.3.232'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.0'
 }
 
 application {
     mainClass = 'de.makno.xlsbuilder.app.ExcelBuilderDemo'
+}
+
+// SQL-Performance-Benchmark: befüllt eine eingebettete H2-DB und exportiert sie streamend nach .xlsx.
+// Aufruf: ./gradlew dbBenchmark --args="1000000 build/employees-db.xlsx"
+tasks.register('dbBenchmark', JavaExec) {
+    group = 'benchmark'
+    description = 'Befüllt H2 mit Testdaten und misst den streamenden .xlsx-Export.'
+    mainClass = 'de.makno.xlsbuilder.app.DbBenchmark'
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Xmx256m'] // zeigt Out-of-core trotz 1 Mio. Zeilen
 }
 
 test {

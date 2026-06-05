@@ -95,10 +95,35 @@ Forward-only Datenquelle (wird genau einmal gelesen → streamingfähig). Adapte
 DataProviders.ofIterable(list);
 DataProviders.ofIterator(iterator);
 DataProviders.ofStream(stream);     // Stream wird beim Schließen mitgeschlossen
+DataProviders.ofResultSet(rs, mapper);  // JDBC-ResultSet streamend, ideal für große DB-Exporte
 ```
 
-Für echte Out-of-core-Fälle einfach `DataProvider<T>` direkt implementieren (z. B. über ein
-JDBC-`ResultSet` oder einen Datei-Reader), sodass Datensätze lazy beim Abruf entstehen.
+**JDBC:** `ofResultSet(ResultSet, ResultSetRowMapper<T>)` liest die Datenbank zeilenweise (forward-only)
+und mappt jede Zeile via `mapper` auf `T`. `close()` schließt **nur das `ResultSet`** – `Statement`
+und `Connection` verwaltet der Aufrufer (try-with-resources). `SQLException`s werden in eine
+`DataAccessException` verpackt.
+
+```java
+try (Connection conn = dataSource.getConnection();
+     Statement st = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+    st.setFetchSize(1_000);
+    ResultSet rs = st.executeQuery("SELECT id, name, salary FROM employee");
+    WorkbookBuilder.create()
+        .sheet(ExcelBuilder.<Employee>create()
+            .column("ID", Employee::id).ofType(ColumnType.LONG)
+            .column("Name", Employee::name)
+            .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL)
+            .data(DataProviders.ofResultSet(rs, r -> new Employee(
+                r.getLong("id"), r.getString("name"), r.getBigDecimal("salary")))))
+        .write(Path.of("export.xlsx"));   // schließt das ResultSet
+}
+```
+
+Für andere Quellen einfach `DataProvider<T>` direkt implementieren (z. B. einen Datei-Reader), sodass
+Datensätze lazy beim Abruf entstehen.
+
+> **Tipp:** Kann die DB selbst sortieren (`ORDER BY`), das dort tun und `.sortBy()` weglassen – dann
+> entfällt der External Merge Sort im Builder (kein Temp-File, weniger I/O).
 
 ### Spaltentypen & Formate
 
@@ -133,8 +158,22 @@ Lambda-Parametertyp explizit angeben.
 ./gradlew build          # kompiliert + führt alle Tests aus
 ./gradlew test           # nur Tests (JUnit 5)
 ./gradlew run            # Demo (erzeugt employees.xlsx)
+./gradlew dbBenchmark    # SQL-Benchmark: H2 mit 1 Mio. Zeilen befüllen + streamend exportieren
 ./gradlew javadoc        # generiert die API-Dokumentation
 ```
+
+### SQL-Benchmark (H2)
+
+`dbBenchmark` befüllt eine eingebettete H2-Datenbank (`build/benchdb/`) einmalig mit Testdaten und
+exportiert sie streamend über `DataProviders.ofResultSet` nach `.xlsx` – misst also DB-Streaming +
+External Merge Sort + SXSSF zusammen. Läuft mit `-Xmx256m` (im Task gesetzt), um Out-of-core zu zeigen:
+
+```bash
+./gradlew dbBenchmark --args="1000000 build/employees-db.xlsx"
+# Beispielmessung: 1.000.000 Zeilen DB -> 70 MB xlsx in ~17s, belegter Heap ~78 MB (max 256 MB)
+```
+
+Ein zweiter Lauf überspringt das Seeding (idempotent). H2 wird beim ersten Build einmalig geladen.
 
 Demo mit Parametern und begrenztem Heap (zeigt Out-of-core):
 

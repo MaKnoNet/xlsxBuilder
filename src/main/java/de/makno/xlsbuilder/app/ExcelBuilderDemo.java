@@ -1,43 +1,30 @@
 package de.makno.xlsbuilder.app;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Random;
 
 import de.makno.xlsbuilder.builder.ColumnType;
 import de.makno.xlsbuilder.builder.DataProvider;
 import de.makno.xlsbuilder.builder.DataProviders;
 import de.makno.xlsbuilder.builder.ExcelBuilder;
-import de.makno.xlsbuilder.builder.SortOrder;
 import de.makno.xlsbuilder.builder.WorkbookBuilder;
 
 /**
  * Demo: erzeugt out-of-core eine sortierte {@code .xlsx} mit vielen Zeilen und je einer Spalte pro
- * {@link ColumnType}. Die Datensätze werden über einen {@link DataProvider} <em>lazy</em> generiert –
- * es liegt nie die gesamte Datenmenge im Speicher.
+ * {@link ColumnType}. Die Datensätze werden über einen {@link DataProvider} <em>lazy</em> generiert
+ * ({@link EmployeeData#generator(long)}) – es liegt nie die gesamte Datenmenge im Speicher.
  *
  * <p>Aufruf: {@code ExcelBuilderDemo [zeilenanzahl] [ausgabedatei]} (Default: 1_000_000 / employees.xlsx).
  */
 public final class ExcelBuilderDemo {
 
-    /**
-     * Felder decken alle Spaltentypen ab. {@code checkInSeconds} ist die Kommt-Zeit als Sekunden seit
-     * Mitternacht (Rohwert int), der per Konverter in eine Uhrzeit umgewandelt wird.
-     */
-    public record Employee(long id, String name, String department, int age, double rating,
-                           BigDecimal salary, boolean active, LocalDate hireDate,
-                           LocalDateTime lastLogin, int checkInSeconds) {
+    private ExcelBuilderDemo() {
     }
 
-    /** Datentyp des zweiten Blatts „Info" – zeigt, dass jedes Blatt einen eigenen Typ haben kann. */
+    /** Datentyp des Info-Blatts – zeigt, dass jedes Blatt einen eigenen Typ haben kann. */
     public record Info(String schluessel, String wert) {
     }
 
@@ -53,9 +40,9 @@ public final class ExcelBuilderDemo {
         // Zwei Mitarbeiter-Blätter (gleicher Typ; demonstriert mehrere Blätter + Namens-Deduplizierung)
         // plus ein Info-Blatt mit eigenem Datentyp.
         WorkbookBuilder.create()
-                .sheet(buildEmployeeSheet("Mitarbeiter", rowCount))
+                .sheet(EmployeeData.sheet("Mitarbeiter", EmployeeData.generator(rowCount)))
                 .sheet(buildInfoSheet(rowCount))
-                .sheet(buildEmployeeSheet("Mitarbeiter_1", rowCount))
+                .sheet(EmployeeData.sheet("Mitarbeiter_1", EmployeeData.generator(rowCount)))
                 .write(out);
 
         double seconds = (System.nanoTime() - start) / 1_000_000_000.0;
@@ -68,35 +55,6 @@ public final class ExcelBuilderDemo {
                 runtime.maxMemory() / (1024 * 1024));
     }
 
-    /** Baut ein Mitarbeiter-Blatt: je eine Spalte pro {@link ColumnType}, sortiert, mit Summenzeile. */
-    private static ExcelBuilder<Employee> buildEmployeeSheet(String sheetName, long rowCount) {
-        return ExcelBuilder.<Employee>create()
-                .sheetName(sheetName)
-                .header("Mitarbeiterbericht", "Erstellt am " + LocalDate.now())
-                .column("ID", Employee::id).ofType(ColumnType.LONG)
-                .column("Name", Employee::name)                                  // STRING (Default)
-                .column("Abteilung", Employee::department)                       // STRING
-                .column("Alter", Employee::age).ofType(ColumnType.INTEGER)
-                .column("Bewertung", Employee::rating).ofType(ColumnType.DOUBLE).formatForType("0.0")
-                .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00 \"€\"")
-                .column("Aktiv", Employee::active).ofType(ColumnType.BOOLEAN)
-                .column("Eintritt", Employee::hireDate).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
-                .column("Letzter Login", Employee::lastLogin).ofType(ColumnType.DATETIME)
-                .formatForType("dd.mm.yyyy hh:mm")
-                // Rohwert int (Sekunden seit Mitternacht) wird zur Uhrzeit (TIME) konvertiert.
-                .column("Kommt", Employee::checkInSeconds).ofType(ColumnType.TIME).formatForType("hh:mm")
-                .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
-                // Formelspalte: Bonus = 10 % vom Gehalt (Spalte F); {row} = aktuelle Zeilennummer.
-                .column("Bonus", e -> "F{row}*0.1").ofType(ColumnType.FORMULA).formatForType("#,##0.00 \"€\"")
-                .sortBy("Abteilung", SortOrder.ASC)
-                .sortBy("Gehalt", SortOrder.DESC)
-                .sortChunkSize(100_000)
-                .sumColumn("Gehalt")
-                .summaryLabel("Name", "Summe")
-                .summaryAsFormula(true) // Summenzeile als echte =SUMME(...)-Formel
-                .data(employeeGenerator(rowCount));
-    }
-
     /** Baut das Info-Blatt (anderer Datentyp) – kleine statische Metadaten-Tabelle. */
     private static ExcelBuilder<Info> buildInfoSheet(long rowCount) {
         return ExcelBuilder.<Info>create()
@@ -107,43 +65,5 @@ public final class ExcelBuilderDemo {
                         new Info("Bericht", "Mitarbeiterbericht"),
                         new Info("Zeilen", String.format("%,d", rowCount)),
                         new Info("Erstellt am", LocalDate.now().toString()))));
-    }
-
-    /** Lazy-Generator: erzeugt Datensätze erst beim Abruf, nie als komplette Liste im Speicher. */
-    private static DataProvider<Employee> employeeGenerator(long count) {
-        String[] departments = {"Vertrieb", "Technik", "Marketing", "Personal", "Finanzen", "Support"};
-        Random random = new Random(42);
-        return new DataProvider<>() {
-            private long produced = 0;
-
-            @Override
-            public boolean hasNext() {
-                return produced < count;
-            }
-
-            @Override
-            public Employee next() {
-                if (produced >= count) {
-                    throw new NoSuchElementException();
-                }
-                produced++;
-                long id = 1_000_000L + produced;
-                String name = "Mitarbeiter-" + produced;
-                String dept = departments[random.nextInt(departments.length)];
-                int age = 20 + random.nextInt(45);
-                double rating = Math.round(random.nextDouble() * 50) / 10.0; // 0.0 .. 5.0
-                BigDecimal salary = BigDecimal.valueOf(30_000 + random.nextInt(90_000))
-                        .add(BigDecimal.valueOf(random.nextInt(100), 2))
-                        .setScale(2, RoundingMode.HALF_UP);
-                boolean active = random.nextBoolean();
-                LocalDate hire = LocalDate.of(2000, 1, 1).plusDays(random.nextInt(9000));
-                LocalDateTime lastLogin = LocalDateTime.of(2026, 1, 1, 0, 0)
-                        .plusMinutes(random.nextInt(525_600)); // irgendwann im Jahr 2026
-                // Kommt-Zeit zwischen 06:00 und 09:59 als Sekunden seit Mitternacht.
-                int checkInSeconds = (6 + random.nextInt(4)) * 3600 + random.nextInt(60) * 60;
-                return new Employee(id, name, dept, age, rating, salary, active, hire, lastLogin,
-                        checkInSeconds);
-            }
-        };
     }
 }
