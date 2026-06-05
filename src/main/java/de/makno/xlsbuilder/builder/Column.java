@@ -12,6 +12,7 @@ public final class Column<T> {
     private final String name;
     private ColumnType type;
     private String format;
+    private String nullText;
     private final Function<? super T, ?> extractor;
     private Function<Object, Object> converter;
 
@@ -43,6 +44,11 @@ public final class Column<T> {
         return format;
     }
 
+    /** Spalten-spezifischer Platzhalter für {@code null}-Werte oder {@code null} (= sheet-weiter Default). */
+    public String nullText() {
+        return nullText;
+    }
+
     /** Paket-intern: Typ der Spalte setzen (vom {@code ExcelBuilder.ofType(...)} genutzt). */
     void setType(ColumnType type) {
         this.type = Objects.requireNonNull(type, "type");
@@ -51,6 +57,11 @@ public final class Column<T> {
     /** Paket-intern: Format-Code der Spalte setzen (vom {@code ExcelBuilder.formatForType(...)} genutzt). */
     void setFormat(String format) {
         this.format = format;
+    }
+
+    /** Paket-intern: spalten-spezifischen Null-Platzhalter setzen (vom {@code ExcelBuilder.nullText(...)}). */
+    void setNullText(String nullText) {
+        this.nullText = nullText;
     }
 
     /** Paket-intern: optionalen Wert-Konverter setzen (vom {@code ExcelBuilder.convertToColumnType(...)}). */

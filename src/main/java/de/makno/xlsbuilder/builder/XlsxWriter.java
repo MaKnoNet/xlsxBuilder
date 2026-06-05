@@ -48,7 +48,7 @@ final class XlsxWriter {
      */
     static int addSheet(SXSSFWorkbook wb, String sheetName, List<? extends Column<?>> columns,
                          List<String> headerLines, Iterator<Row> rows, SummarySpec summary,
-                         boolean showColumnHeaders) {
+                         boolean showColumnHeaders, String defaultNullText) {
         SXSSFSheet sheet = wb.createSheet(uniqueSheetName(wb, sheetName));
         enableFormulaRecalculationIfNeeded(sheet, columns, summary);
 
@@ -63,7 +63,7 @@ final class XlsxWriter {
 
         BigDecimal[] sums = initSums(columns, summary);
         int firstDataRow0 = rowNum; // 0-basierter Index der ersten Datenzeile
-        rowNum = writeDataRows(sheet, columns, rows, columnStyles, widths, sums, rowNum);
+        rowNum = writeDataRows(sheet, columns, rows, columnStyles, widths, sums, rowNum, defaultNullText);
 
         int dataRowCount = rowNum - firstDataRow0;
         // Excel-Zeilennummern sind 1-basiert: erste Datenzeile = firstDataRow0 + 1, letzte = rowNum.
@@ -138,16 +138,28 @@ final class XlsxWriter {
     /** Streamt die Datenzeilen, misst dabei die Spaltenbreiten und führt die Summen mit. Gibt die nächste Zeile zurück. */
     private static int writeDataRows(SXSSFSheet sheet, List<? extends Column<?>> columns,
                                      Iterator<Row> rows, CellStyle[] columnStyles,
-                                     ColumnWidthEstimator widths, BigDecimal[] sums, int rowNum) {
+                                     ColumnWidthEstimator widths, BigDecimal[] sums, int rowNum,
+                                     String defaultNullText) {
         while (rows.hasNext()) {
             Row dataRow = rows.next();
             org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum++);
             for (int c = 0; c < columns.size(); c++) {
                 Object value = dataRow.get(c);
-                ColumnType type = columns.get(c).type();
+                Column<?> col = columns.get(c);
+                if (value == null) {
+                    // Null-Wert-Handler: spalten-spezifischer Platzhalter vor sheet-weitem Default.
+                    String nullText = col.nullText() != null ? col.nullText() : defaultNullText;
+                    if (nullText != null) {
+                        r.createCell(c).setCellValue(nullText);
+                        widths.ensureAtLeast(c, nullText.length());
+                    }
+                    // sonst: Zelle leer lassen (bisheriges Verhalten)
+                    continue;
+                }
+                ColumnType type = col.type();
                 writeCell(r, c, type, value, columnStyles[c]);
                 widths.track(c, value);
-                if (sums != null && sums[c] != null && value != null) {
+                if (sums != null && sums[c] != null) {
                     sums[c] = sums[c].add(toBigDecimal(value));
                 }
             }

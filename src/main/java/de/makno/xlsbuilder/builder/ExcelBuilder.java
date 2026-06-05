@@ -5,8 +5,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,6 +66,8 @@ public final class ExcelBuilder<T> {
     private boolean showColumnHeaders = true;
     private int sortChunkSize = DEFAULT_CHUNK_SIZE;
     private Path sortTempDir; // null = System-Temp (java.io.tmpdir)
+    private Predicate<? super T> filter; // null = keine Filterung (alle Objekte)
+    private String defaultNullText; // sheet-weiter Platzhalter für null; null = leere Zelle
     private DataProvider<T> dataProvider;
 
     private ExcelBuilder() {
@@ -116,6 +120,16 @@ public final class ExcelBuilder<T> {
      */
     public ExcelBuilder<T> formatForType(String format) {
         lastColumn().setFormat(format);
+        return this;
+    }
+
+    /**
+     * Platzhalter für {@code null}-Werte der zuletzt definierten Spalte (überschreibt
+     * {@link #defaultNullText(String)}). Ohne Angabe gilt der sheet-weite Default bzw. eine leere
+     * Zelle. {@code ""} erzwingt eine leere Textzelle trotz gesetztem Default.
+     */
+    public ExcelBuilder<T> nullText(String text) {
+        lastColumn().setNullText(text);
         return this;
     }
 
@@ -207,6 +221,29 @@ public final class ExcelBuilder<T> {
         return this;
     }
 
+    /**
+     * Optionaler Filter auf den Rohdatensätzen: nur Objekte, für die das Prädikat {@code true} liefert,
+     * werden geschrieben. Wird <em>vor</em> Projektion, Sortierung und Summenbildung angewandt – die
+     * Summenzeile bezieht sich also nur auf die tatsächlich geschriebenen Zeilen. Mehrfacher Aufruf
+     * verknüpft die Prädikate mit UND.
+     */
+    public ExcelBuilder<T> filter(Predicate<? super T> predicate) {
+        Objects.requireNonNull(predicate, "predicate");
+        Predicate<? super T> existing = this.filter;
+        this.filter = existing == null ? predicate : r -> existing.test(r) && predicate.test(r);
+        return this;
+    }
+
+    /**
+     * Sheet-weiter Platzhalter, der für {@code null}-Zellwerte geschrieben wird (z. B. {@code "-"} oder
+     * {@code "n/a"}). Ohne Angabe bleiben {@code null}-Zellen leer. Einzelne Spalten können dies via
+     * {@link #nullText(String)} überschreiben.
+     */
+    public ExcelBuilder<T> defaultNullText(String text) {
+        this.defaultNullText = text;
+        return this;
+    }
+
     /** Setzt die Datenquelle dieses Blatts. Erforderlich, bevor das Blatt geschrieben wird. */
     public ExcelBuilder<T> data(DataProvider<T> provider) {
         this.dataProvider = Objects.requireNonNull(provider, "provider");
@@ -232,8 +269,8 @@ public final class ExcelBuilder<T> {
             Iterator<Row> projected = projection(p);
             if (sortKeys.isEmpty()) {
                 long writeStart = System.nanoTime();
-                int rows = XlsxWriter.addSheet(
-                        wb, sheetName, columns, header, projected, summary, showColumnHeaders);
+                int rows = XlsxWriter.addSheet(wb, sheetName, columns, header, projected, summary,
+                        showColumnHeaders, defaultNullText);
                 LOG.debug("Blatt '{}': {} Zeilen, unsortiert – Schreibphase {} ms",
                         sheetName, rows, (System.nanoTime() - writeStart) / 1_000_000);
             } else {
@@ -247,8 +284,8 @@ public final class ExcelBuilder<T> {
                     // ... danach wird der sortierte Strom in das Blatt geschrieben (inkl. finalem Merge).
                     long writeStart = System.nanoTime();
                     try (sorted) {
-                        int rows = XlsxWriter.addSheet(
-                                wb, sheetName, columns, header, sorted, summary, showColumnHeaders);
+                        int rows = XlsxWriter.addSheet(wb, sheetName, columns, header, sorted, summary,
+                                showColumnHeaders, defaultNullText);
                         LOG.debug("Blatt '{}': {} Zeilen, sortiert – Sortierphase {} ms, "
                                         + "Schreibphase {} ms",
                                 sheetName, rows, sortMs, (System.nanoTime() - writeStart) / 1_000_000);
@@ -300,23 +337,44 @@ public final class ExcelBuilder<T> {
         };
     }
 
-    /** Projiziert jeden Datensatz früh auf eine {@link Row} aus den extrahierten Zellenwerten. */
+    /**
+     * Projiziert jeden (vom optionalen {@link #filter} akzeptierten) Datensatz früh auf eine
+     * {@link Row} aus den extrahierten Zellenwerten. Look-ahead-Iterator, da die Quelle forward-only
+     * ist und nicht passende Datensätze übersprungen werden.
+     */
     private Iterator<Row> projection(DataProvider<T> provider) {
         return new Iterator<>() {
+            private Row pending; // vorausgelesene, gefilterte Zeile oder null
+
             @Override
             public boolean hasNext() {
-                return provider.hasNext();
+                while (pending == null && provider.hasNext()) {
+                    T record = provider.next();
+                    if (filter == null || filter.test(record)) {
+                        pending = project(record);
+                    }
+                }
+                return pending != null;
             }
 
             @Override
             public Row next() {
-                T record = provider.next();
-                Object[] values = new Object[columns.size()];
-                for (int i = 0; i < columns.size(); i++) {
-                    values[i] = columns.get(i).extract(record);
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
                 }
-                return new Row(values);
+                Row row = pending;
+                pending = null;
+                return row;
             }
         };
+    }
+
+    /** Projiziert einen Datensatz auf eine {@link Row} aus den extrahierten Zellenwerten. */
+    private Row project(T record) {
+        Object[] values = new Object[columns.size()];
+        for (int i = 0; i < columns.size(); i++) {
+            values[i] = columns.get(i).extract(record);
+        }
+        return new Row(values);
     }
 }

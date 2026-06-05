@@ -76,8 +76,13 @@ WorkbookBuilder.create()
 | `.ofType(ColumnType)` | Typ der zuletzt definierten Spalte |
 | `.formatForType(String)` | Excel-Format-Code der zuletzt definierten Spalte |
 | `.convertToColumnType(fn)` | Rohwert der Spalte vor dem Schreiben umwandeln |
+| `.nullText(String)` | Platzhalter der zuletzt definierten Spalte für `null`-Werte (überschreibt den Default) |
+| `filter(Predicate<? super T>)` | nur passende Objekte schreiben (mehrfach = UND); vor Sortierung/Summe |
+| `defaultNullText(String)` | sheet-weiter Platzhalter für `null`-Zellen (z. B. `"-"`); ohne Angabe leere Zelle |
 | `sortBy(name, SortOrder)` | optionale (mehrstufige) Sortierung |
 | `sortChunkSize(int)` | Zeilen pro In-memory-Run des External Merge Sort (Default 100 000) |
+| `sortTempDir(Path)` | Basisverzeichnis für die Sortier-Temp-Dateien (Default `java.io.tmpdir`) |
+| `columnHeaders(boolean)` | Spaltenüberschriften-Zeile schreiben (Default `true`) |
 | `sumColumn(name)` | numerische Spalte summieren (aktiviert Summenzeile) |
 | `summaryLabel(name, text)` | Label in der Summenzeile (z. B. „Summe") |
 | `summaryAsFormula(boolean)` | `true` = `=SUMME(...)`-Formel, `false` (Default) = vorberechnet |

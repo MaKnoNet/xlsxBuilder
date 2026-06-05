@@ -1005,6 +1005,106 @@ class ExcelBuilderTest {
                 "Workbook-Performance-Log fehlt: " + messages);
     }
 
+    // ========== Filter ==========
+
+    @Test
+    void filterSkipsNonMatchingObjects() throws Exception {
+        List<Person> data = List.of(
+                new Person("A", 30, true),
+                new Person("B", 25, false),
+                new Person("C", 40, true),
+                new Person("D", 20, false),
+                new Person("E", 50, true));
+        Path out = tempDir.resolve("filter.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .column("Name", Person::name)
+                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                        .filter(Person::active) // nur aktive Mitarbeiter
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(4, g.rowCount(), "Kopf + 3 aktive Datensätze");
+        assertEquals("A", g.string(1, 0));
+        assertEquals("C", g.string(2, 0));
+        assertEquals("E", g.string(3, 0));
+    }
+
+    @Test
+    void filterCombinesWithSortAndSummary() throws Exception {
+        record Item(String name, int wert) {
+        }
+        List<Item> data = List.of(
+                new Item("A", 5),
+                new Item("B", 20),
+                new Item("C", 15),
+                new Item("D", 8),
+                new Item("E", 30));
+        Path out = tempDir.resolve("filterSortSum.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .column("Name", Item::name)
+                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                        .filter(i -> i.wert() > 10) // behält B(20), C(15), E(30)
+                        .sortBy("Wert", SortOrder.DESC)
+                        .sumColumn("Wert")
+                        .summaryLabel("Name", "Summe")
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Kopf + 3 gefilterte Datenzeilen + Summenzeile
+        assertEquals(5, g.rowCount());
+        assertEquals(30, g.number(1, 1));
+        assertEquals(20, g.number(2, 1));
+        assertEquals(15, g.number(3, 1));
+        assertEquals("Summe", g.string(4, 0));
+        assertEquals(65, g.number(4, 1), "Summe nur über die gefilterten Zeilen");
+    }
+
+    // ========== Null-Wert-Handler ==========
+
+    @Test
+    void nullTextPerColumnAndDefault() throws Exception {
+        record R(String a, String b, Integer c) {
+        }
+        Path out = tempDir.resolve("nullText.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<R>create()
+                        .defaultNullText("-")
+                        .column("A", R::a)
+                        .column("B", R::b).nullText("n/a") // Spalten-Override
+                        .column("C", R::c).ofType(ColumnType.INTEGER)
+                        .data(DataProviders.ofIterable(List.of(new R(null, null, null)))))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals("-", g.string(1, 0), "Spalte A: sheet-weiter Default");
+        assertEquals("n/a", g.string(1, 1), "Spalte B: Spalten-Override");
+        assertEquals("-", g.string(1, 2), "Spalte C (INTEGER): Default als Text");
+    }
+
+    @Test
+    void noNullTextLeavesCellEmpty() throws Exception {
+        record R(String a) {
+        }
+        Path out = tempDir.resolve("noNullText.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<R>create()
+                        .column("A", R::a)
+                        .data(DataProviders.ofIterable(java.util.Arrays.asList(new R(null)))))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(2, g.rowCount(), "Kopf + 1 (leere) Datenzeile");
+        assertNull(g.string(1, 0), "ohne Null-Text bleibt die Zelle leer");
+    }
+
     @Test
     void comparatorRejectsIncompatibleValueTypes() {
         // Zwei Zeilen mit inkompatiblen Werttypen in der Sortierspalte -> aussagekräftige Exception
