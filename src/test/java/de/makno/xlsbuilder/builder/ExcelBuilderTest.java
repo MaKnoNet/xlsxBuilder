@@ -3,6 +3,7 @@ package de.makno.xlsbuilder.builder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,6 +30,9 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.Property;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -1103,6 +1107,30 @@ class ExcelBuilderTest {
         Grid g = XlsxTestReader.read(out);
         assertEquals(2, g.rowCount(), "Kopf + 1 (leere) Datenzeile");
         assertNull(g.string(1, 0), "ohne Null-Text bleibt die Zelle leer");
+    }
+
+    @Test
+    void nullWritesExplicitBlankCell() throws Exception {
+        // Ohne Platzhalter wird eine explizite leere Zelle (Excel-Zelltyp BLANK/"Empty") angelegt –
+        // nicht einfach weggelassen. Die Zelle existiert also und hat den Typ BLANK.
+        record R(String a, Integer b) {
+        }
+        Path out = tempDir.resolve("blankCell.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<R>create()
+                        .column("A", R::a)
+                        .column("B", R::b).ofType(ColumnType.INTEGER)
+                        .data(DataProviders.ofIterable(java.util.Arrays.asList(new R(null, null)))))
+                .write(out);
+
+        try (Workbook wb = WorkbookFactory.create(Files.newInputStream(out))) {
+            var dataRow = wb.getSheetAt(0).getRow(1); // erste Datenzeile (nach Kopfzeile)
+            assertNotNull(dataRow.getCell(0), "Zelle A muss als Empty existieren");
+            assertEquals(CellType.BLANK, dataRow.getCell(0).getCellType());
+            assertNotNull(dataRow.getCell(1), "Zelle B muss als Empty existieren");
+            assertEquals(CellType.BLANK, dataRow.getCell(1).getCellType());
+        }
     }
 
     @Test

@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -152,8 +153,10 @@ final class XlsxWriter {
                     if (nullText != null) {
                         r.createCell(c).setCellValue(nullText);
                         widths.ensureAtLeast(c, nullText.length());
+                    } else {
+                        // Ohne Platzhalter: explizit eine leere Zelle (Excel-Zelltyp BLANK/"Empty") anlegen.
+                        r.createCell(c, CellType.BLANK);
                     }
-                    // sonst: Zelle leer lassen (bisheriges Verhalten)
                     continue;
                 }
                 ColumnType type = col.type();
