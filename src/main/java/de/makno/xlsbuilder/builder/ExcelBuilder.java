@@ -32,9 +32,22 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  *       k-way-Merge), sodass auch die Sortierung nicht durch den RAM begrenzt ist.</li>
  * </ul>
  *
+ * <p><b>Funktionsumfang</b> (alles optional, streamend/out-of-core):
+ * <ul>
+ *   <li>Spaltentypen + Excel-Format-Codes ({@link #ofType}/{@link #formatForType}) und
+ *       Wert-Konverter ({@link #convertToColumnType});</li>
+ *   <li>mehrstufige Sortierung ({@link #sortBy}) und Datenfilter ({@link #filter});</li>
+ *   <li>Summenzeile ({@link #sumColumn}), Titelzeilen ({@link #header}) und Fußzeilen
+ *       ({@link #footer}) – je mit {@code {platzhaltern}} ({@link #placeholder});</li>
+ *   <li>Null-Wert-Platzhalter ({@link #defaultNullText}/{@link #nullText});</li>
+ *   <li>Ausgabe als {@code .xlsx} (über den {@link WorkbookBuilder}) <em>oder</em> als CSV
+ *       ({@link #writeCsv(java.nio.file.Path)});</li>
+ *   <li>optionale Pipeline-Parallelität ({@link #parallel(boolean)}).</li>
+ * </ul>
+ *
  * <p>Ein {@code ExcelBuilder} beschreibt genau <em>ein</em> Blatt (inkl. Datenquelle via
- * {@link #data(DataProvider)}). Geschrieben wird über den {@link WorkbookBuilder}, der ein oder
- * mehrere Blätter in eine Datei zusammenfasst.
+ * {@link #data(DataProvider)}). Als {@code .xlsx} wird über den {@link WorkbookBuilder} geschrieben
+ * (ein oder mehrere Blätter je Datei); als CSV direkt über {@link #writeCsv(java.nio.file.Path)}.
  *
  * <pre>{@code
  * WorkbookBuilder.create()
@@ -289,9 +302,24 @@ public final class ExcelBuilder<T> {
 
     /**
      * Aktiviert die optionale Pipeline-Parallelität für dieses Blatt: ein Hintergrund-Thread liest/
-     * sortiert, während der aufrufende Thread schreibt (Producer/Consumer über eine beschränkte Queue).
-     * Default {@code false}. Kostet einen Zusatz-Thread je Blatt – bei hoher Request-Nebenläufigkeit
-     * bewusst einsetzen. Das Ergebnis ist identisch zum sequenziellen Modus.
+     * sortiert (Producer), während der aufrufende Thread schreibt (Consumer), gekoppelt über eine
+     * beschränkte Queue. Default {@code false}. Das Ergebnis ist <em>identisch</em> zum sequenziellen
+     * Modus; der Speicher bleibt out-of-core (Queue ist begrenzt).
+     *
+     * <p><b>Wann lohnt sich {@code parallel(true)}?</b> Nur, wenn die <em>Producer-Seite</em> der
+     * Flaschenhals ist und sich mit dem Schreiben überlappen lässt, z. B.:
+     * <ul>
+     *   <li>eine <b>langsame/entfernte Datenquelle</b> mit Latenz (Remote-DB, Netzwerk-Stream);</li>
+     *   <li>teure <b>Projektion/Konvertierung</b> je Zeile (aufwändige {@link #convertToColumnType}-
+     *       Logik oder Extraktoren).</li>
+     * </ul>
+     *
+     * <p><b>Wann besser aus lassen?</b> Wenn das <b>POI-Schreiben dominiert</b> (typische lokale
+     * Lasten): POI schreibt single-threaded, der Producer ist dann nur schnelle Disk-I/O – die
+     * Überlappung ist gering und der Thread-/Queue-Overhead macht es eher minimal langsamer. Auf einem
+     * <b>Multiuser-Server</b> zudem bedenken: jeder aktivierte Export kostet einen Zusatz-Thread –
+     * dort skaliert man Durchsatz besser <em>zwischen</em> Requests (Thread-Pool) als hier einzeln.
+     * Im Zweifel mit und ohne messen.
      */
     public ExcelBuilder<T> parallel(boolean enabled) {
         this.parallel = enabled;
