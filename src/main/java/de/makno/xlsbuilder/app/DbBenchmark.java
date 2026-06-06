@@ -1,5 +1,8 @@
 package de.makno.xlsbuilder.app;
 
+import de.makno.xlsbuilder.builder.DataProvider;
+import de.makno.xlsbuilder.builder.DataProviders;
+import de.makno.xlsbuilder.builder.WorkbookBuilder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,10 +14,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-
-import de.makno.xlsbuilder.builder.DataProvider;
-import de.makno.xlsbuilder.builder.DataProviders;
-import de.makno.xlsbuilder.builder.WorkbookBuilder;
 
 /**
  * Performance-Benchmark mit echter SQL-Datenquelle: befüllt eine eingebettete H2-Datenbank einmalig
@@ -32,8 +31,7 @@ public final class DbBenchmark {
     private static final String JDBC_URL = "jdbc:h2:./build/benchdb/employees";
     private static final int BATCH_SIZE = 10_000;
 
-    private DbBenchmark() {
-    }
+    private DbBenchmark() {}
 
     public static void main(String[] args) throws IOException, SQLException {
         long rowCount = args.length > 0 ? Long.parseLong(args[0]) : 1_000_000L;
@@ -52,7 +50,8 @@ public final class DbBenchmark {
             } else {
                 long seedStart = System.nanoTime();
                 seed(conn, rowCount);
-                System.out.printf("Seeding: %,d Zeilen in H2 in %.1fs.%n",
+                System.out.printf(
+                        "Seeding: %,d Zeilen in H2 in %.1fs.%n",
                         rowCount, (System.nanoTime() - seedStart) / 1_000_000_000.0);
             }
 
@@ -64,14 +63,20 @@ public final class DbBenchmark {
             long fileMb = Files.size(out) / (1024 * 1024);
             System.out.printf(
                     "Export%s: %,d Zeilen DB -> %s (%d MB) in %.1fs, belegter Heap ~%d MB, max Heap %d MB%n",
-                    parallel ? " (parallel)" : "", rowCount, out.toAbsolutePath(), fileMb, seconds,
-                    usedMb, runtime.maxMemory() / (1024 * 1024));
+                    parallel ? " (parallel)" : "",
+                    rowCount,
+                    out.toAbsolutePath(),
+                    fileMb,
+                    seconds,
+                    usedMb,
+                    runtime.maxMemory() / (1024 * 1024));
         }
     }
 
     private static void ensureSchema(Connection conn) throws SQLException {
         try (Statement st = conn.createStatement()) {
-            st.execute("""
+            st.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS employee (
                         id               BIGINT PRIMARY KEY,
                         name             VARCHAR(100),
@@ -132,10 +137,8 @@ public final class DbBenchmark {
     }
 
     /** Liest die Tabelle forward-only/streamend und exportiert sie über den Builder nach {@code out}. */
-    private static void export(Connection conn, Path out, boolean parallel)
-            throws SQLException, IOException {
-        try (Statement st =
-                conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+    private static void export(Connection conn, Path out, boolean parallel) throws SQLException, IOException {
+        try (Statement st = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
             st.setFetchSize(1_000);
             // Kein ORDER BY in SQL -> H2 liefert den Tabellen-Scan lazy; sortiert wird out-of-core
             // im Builder (External Merge Sort).

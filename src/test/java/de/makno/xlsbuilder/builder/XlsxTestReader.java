@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -21,14 +20,19 @@ import org.apache.poi.ss.util.CellRangeAddress;
  */
 final class XlsxTestReader {
 
-    private XlsxTestReader() {
-    }
+    private XlsxTestReader() {}
 
     /** Eine einzelne Zelle, typisiert eingelesen. */
-    record CellData(CellType type, String string, double number, boolean bool,
-                    boolean dateFormatted, LocalDateTime dateTime, boolean bold, String format,
-                    String formula) {
-    }
+    record CellData(
+            CellType type,
+            String string,
+            double number,
+            boolean bool,
+            boolean dateFormatted,
+            LocalDateTime dateTime,
+            boolean bold,
+            String format,
+            String formula) {}
 
     /** Komplettes Blatt als Zeilen/Spalten plus Metadaten. */
     static final class Grid {
@@ -37,8 +41,7 @@ final class XlsxTestReader {
         private final String sheetName;
         private final int[] columnWidths;
 
-        private Grid(List<List<CellData>> rows, List<String> mergeRefs, String sheetName,
-                     int[] columnWidths) {
+        private Grid(List<List<CellData>> rows, List<String> mergeRefs, String sheetName, int[] columnWidths) {
             this.rows = rows;
             this.mergeRefs = mergeRefs;
             this.sheetName = sheetName;
@@ -182,17 +185,25 @@ final class XlsxTestReader {
             format = cell.getCellStyle().getDataFormatString();
         }
         return switch (cell.getCellType()) {
-            case STRING -> new CellData(CellType.STRING, cell.getStringCellValue(),
-                    0, false, false, null, bold, format, null);
-            case BOOLEAN -> new CellData(CellType.BOOLEAN, null,
-                    0, cell.getBooleanCellValue(), false, null, bold, format, null);
+            case STRING -> new CellData(
+                    CellType.STRING, cell.getStringCellValue(), 0, false, false, null, bold, format, null);
+            case BOOLEAN -> new CellData(
+                    CellType.BOOLEAN, null, 0, cell.getBooleanCellValue(), false, null, bold, format, null);
             case NUMERIC -> {
                 boolean dateFmt = DateUtil.isCellDateFormatted(cell);
-                yield new CellData(CellType.NUMERIC, null, cell.getNumericCellValue(), false,
-                        dateFmt, dateFmt ? cell.getLocalDateTimeCellValue() : null, bold, format, null);
+                yield new CellData(
+                        CellType.NUMERIC,
+                        null,
+                        cell.getNumericCellValue(),
+                        false,
+                        dateFmt,
+                        dateFmt ? cell.getLocalDateTimeCellValue() : null,
+                        bold,
+                        format,
+                        null);
             }
-            case FORMULA -> new CellData(CellType.FORMULA, null, 0, false, false, null, bold, format,
-                    cell.getCellFormula());
+            case FORMULA -> new CellData(
+                    CellType.FORMULA, null, 0, false, false, null, bold, format, cell.getCellFormula());
             default -> new CellData(cell.getCellType(), null, 0, false, false, null, bold, format, null);
         };
     }

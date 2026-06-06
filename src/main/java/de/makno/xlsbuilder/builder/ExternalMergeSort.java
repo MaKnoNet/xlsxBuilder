@@ -14,7 +14,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -101,8 +100,12 @@ final class ExternalMergeSort implements Closeable {
             LOG.debug(
                     "External Merge Sort: {} Zeilen, {} Runs, {} Vormerge-Pässe (chunkSize={}), "
                             + "Runs+Vormerge in {} ms, Temp={}",
-                    rowsRead, initialRuns, mergePasses, chunkSize,
-                    (System.nanoTime() - startNanos) / 1_000_000, tempDir);
+                    rowsRead,
+                    initialRuns,
+                    mergePasses,
+                    chunkSize,
+                    (System.nanoTime() - startNanos) / 1_000_000,
+                    tempDir);
             return merged;
         } catch (IOException e) {
             // Cleanup bei Fehler: alle bis jetzt erstellten Temp-Dateien löschen
@@ -143,8 +146,7 @@ final class ExternalMergeSort implements Closeable {
         runFiles.add(out);
         List<RunReader> readers = new ArrayList<>(group.size());
         try {
-            PriorityQueue<Node> queue =
-                    new PriorityQueue<>((a, b) -> comparator.compare(a.row(), b.row()));
+            PriorityQueue<Node> queue = new PriorityQueue<>((a, b) -> comparator.compare(a.row(), b.row()));
             long total = 0;
             for (Path run : group) {
                 RunReader reader = new RunReader(run);
@@ -174,8 +176,7 @@ final class ExternalMergeSort implements Closeable {
 
     /** Schreibt {@code count} Zeilen (in der Reihenfolge des Iterators) als Run-Datei. */
     private static void writeRun(Path file, java.util.Iterator<Row> rows, long count) throws IOException {
-        try (DataOutputStream out = new DataOutputStream(
-                new BufferedOutputStream(Files.newOutputStream(file)))) {
+        try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) {
             out.writeLong(count);
             while (rows.hasNext()) {
                 RowCodec.writeRow(out, rows.next());
@@ -245,8 +246,7 @@ final class ExternalMergeSort implements Closeable {
         }
     }
 
-    private record Node(Row row, RunReader reader) {
-    }
+    private record Node(Row row, RunReader reader) {}
 
     /**
      * Zieht die nächste Zeile aus einer vorbefüllten {@link PriorityQueue} von Run-Köpfen

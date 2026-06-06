@@ -1,16 +1,15 @@
 package de.makno.xlsbuilder.app;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDate;
-import java.util.List;
-
 import de.makno.xlsbuilder.builder.ColumnType;
 import de.makno.xlsbuilder.builder.DataProvider;
 import de.makno.xlsbuilder.builder.DataProviders;
 import de.makno.xlsbuilder.builder.ExcelBuilder;
 import de.makno.xlsbuilder.builder.WorkbookBuilder;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Demo: erzeugt out-of-core eine sortierte {@code .xlsx} mit vielen Zeilen und je einer Spalte pro
@@ -21,12 +20,10 @@ import de.makno.xlsbuilder.builder.WorkbookBuilder;
  */
 public final class ExcelBuilderDemo {
 
-    private ExcelBuilderDemo() {
-    }
+    private ExcelBuilderDemo() {}
 
     /** Datentyp des Info-Blatts – zeigt, dass jedes Blatt einen eigenen Typ haben kann. */
-    public record Info(String schluessel, String wert) {
-    }
+    public record Info(String schluessel, String wert) {}
 
     public static void main(String[] args) throws IOException {
         long rowCount = args.length > 0 ? Long.parseLong(args[0]) : 1_000_000L;
@@ -51,8 +48,7 @@ public final class ExcelBuilderDemo {
 
         System.out.printf(
                 "Fertig: %,d Zeilen -> %s (%d MB) in %.1fs, belegter Heap ~%d MB, max Heap %d MB%n",
-                rowCount, out.toAbsolutePath(), fileMb, seconds, usedMb,
-                runtime.maxMemory() / (1024 * 1024));
+                rowCount, out.toAbsolutePath(), fileMb, seconds, usedMb, runtime.maxMemory() / (1024 * 1024));
     }
 
     /** Baut das Info-Blatt (anderer Datentyp) – kleine statische Metadaten-Tabelle. */

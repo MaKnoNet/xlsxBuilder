@@ -16,12 +16,7 @@ import java.util.Objects;
  * @param includeTitleRows Titelzeilen ({@link ExcelBuilder#header}) als CSV-Zeilen ausgeben (Default {@code false})
  */
 public record CsvOptions(
-        char delimiter,
-        Charset charset,
-        boolean bom,
-        String lineSeparator,
-        char quote,
-        boolean includeTitleRows) {
+        char delimiter, Charset charset, boolean bom, String lineSeparator, char quote, boolean includeTitleRows) {
 
     public CsvOptions {
         Objects.requireNonNull(charset, "charset");
@@ -29,8 +24,7 @@ public record CsvOptions(
     }
 
     /** RFC-4180-Default: Komma, UTF-8, CRLF, ohne BOM, ohne Titelzeilen. */
-    public static final CsvOptions DEFAULT =
-            new CsvOptions(',', StandardCharsets.UTF_8, false, "\r\n", '"', false);
+    public static final CsvOptions DEFAULT = new CsvOptions(',', StandardCharsets.UTF_8, false, "\r\n", '"', false);
 
     /** Excel-DE-freundlich: Semikolon + UTF-8-BOM (öffnet in deutschem Excel direkt korrekt). */
     public static CsvOptions excelGerman() {

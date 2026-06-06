@@ -9,5 +9,4 @@ package de.makno.xlsbuilder.builder;
  * @param useFormula       {@code true} = als Excel-Formel {@code =SUM(...)} schreiben; sonst
  *                         vorberechneter Wert.
  */
-record SummarySpec(boolean[] sum, int labelColumnIndex, String labelText, boolean useFormula) {
-}
+record SummarySpec(boolean[] sum, int labelColumnIndex, String labelText, boolean useFormula) {}

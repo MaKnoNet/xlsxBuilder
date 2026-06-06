@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'application'
     id 'jacoco'
+    // Code-Formatierung mit palantir-java-format (Konvention: Java-Quellen liegen immer in diesem Format vor).
+    id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group = 'de.makno.xlsbuilder'
@@ -75,6 +77,16 @@ test {
     maxHeapSize = '512m'
     testLogging {
         events 'passed', 'skipped', 'failed'
+    }
+}
+
+// palantir-java-format: 'gradlew spotlessApply' formatiert, 'gradlew spotlessCheck' prüft (hängt an 'check').
+spotless {
+    java {
+        target 'src/**/*.java'
+        palantirJavaFormat('2.39.0')
+        trimTrailingWhitespace()
+        endWithNewline()
     }
 }
 

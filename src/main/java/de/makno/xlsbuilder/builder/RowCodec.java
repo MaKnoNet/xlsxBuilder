@@ -41,8 +41,7 @@ final class RowCodec {
     private static final byte LTIME = 9;
     private static final byte JAVA = 99; // Fallback: beliebiges Serializable
 
-    private RowCodec() {
-    }
+    private RowCodec() {}
 
     static void writeRow(DataOutputStream out, Row row) throws IOException {
         int n = row.size();

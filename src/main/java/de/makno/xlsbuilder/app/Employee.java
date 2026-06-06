@@ -20,5 +20,4 @@ public record Employee(
         boolean active,
         LocalDate hireDate,
         LocalDateTime lastLogin,
-        int checkInSeconds) {
-}
+        int checkInSeconds) {}

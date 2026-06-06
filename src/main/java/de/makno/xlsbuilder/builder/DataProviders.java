@@ -9,8 +9,7 @@ import java.util.stream.Stream;
 /** Factory für gängige {@link DataProvider}-Adapter. */
 public final class DataProviders {
 
-    private DataProviders() {
-    }
+    private DataProviders() {}
 
     public static <T> DataProvider<T> ofIterator(Iterator<? extends T> iterator) {
         return new DataProvider<T>() {

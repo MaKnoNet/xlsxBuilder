@@ -17,6 +17,5 @@ public interface DataProvider<T> extends Closeable {
 
     /** Standard: nichts zu schließen. Quellen mit Ressourcen (DB, Datei) überschreiben dies. */
     @Override
-    default void close() {
-    }
+    default void close() {}
 }

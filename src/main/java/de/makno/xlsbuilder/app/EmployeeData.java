@@ -1,5 +1,9 @@
 package de.makno.xlsbuilder.app;
 
+import de.makno.xlsbuilder.builder.ColumnType;
+import de.makno.xlsbuilder.builder.DataProvider;
+import de.makno.xlsbuilder.builder.ExcelBuilder;
+import de.makno.xlsbuilder.builder.SortOrder;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.ResultSet;
@@ -10,11 +14,6 @@ import java.time.LocalTime;
 import java.util.NoSuchElementException;
 import java.util.Random;
 
-import de.makno.xlsbuilder.builder.ColumnType;
-import de.makno.xlsbuilder.builder.DataProvider;
-import de.makno.xlsbuilder.builder.ExcelBuilder;
-import de.makno.xlsbuilder.builder.SortOrder;
-
 /**
  * Geteilte Helfer rund um {@link Employee}: ein deterministischer Lazy-Generator, die einheitliche
  * Blatt-Konfiguration (Spalten/Sortierung/Summe) sowie das Mapping einer JDBC-{@link ResultSet}-Zeile.
@@ -22,12 +21,9 @@ import de.makno.xlsbuilder.builder.SortOrder;
  */
 public final class EmployeeData {
 
-    private static final String[] DEPARTMENTS = {
-        "Vertrieb", "Technik", "Marketing", "Personal", "Finanzen", "Support"
-    };
+    private static final String[] DEPARTMENTS = {"Vertrieb", "Technik", "Marketing", "Personal", "Finanzen", "Support"};
 
-    private EmployeeData() {
-    }
+    private EmployeeData() {}
 
     /** Lazy-Generator: erzeugt {@code count} Datensätze erst beim Abruf, nie als komplette Liste. */
     public static DataProvider<Employee> generator(long count) {
@@ -60,8 +56,7 @@ public final class EmployeeData {
                         .plusMinutes(random.nextInt(525_600)); // irgendwann im Jahr 2026
                 // Kommt-Zeit zwischen 06:00 und 09:59 als Sekunden seit Mitternacht.
                 int checkInSeconds = (6 + random.nextInt(4)) * 3600 + random.nextInt(60) * 60;
-                return new Employee(
-                        id, name, dept, age, rating, salary, active, hire, lastLogin, checkInSeconds);
+                return new Employee(id, name, dept, age, rating, salary, active, hire, lastLogin, checkInSeconds);
             }
         };
     }
@@ -71,21 +66,35 @@ public final class EmployeeData {
         return ExcelBuilder.<Employee>create()
                 .sheetName(sheetName)
                 .header("Mitarbeiterbericht", "Erstellt am " + LocalDate.now())
-                .column("ID", Employee::id).ofType(ColumnType.LONG)
+                .column("ID", Employee::id)
+                .ofType(ColumnType.LONG)
                 .column("Name", Employee::name) // STRING (Default)
                 .column("Abteilung", Employee::department) // STRING
-                .column("Alter", Employee::age).ofType(ColumnType.INTEGER)
-                .column("Bewertung", Employee::rating).ofType(ColumnType.DOUBLE).formatForType("0.0")
-                .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00 \"€\"")
-                .column("Aktiv", Employee::active).ofType(ColumnType.BOOLEAN)
-                .column("Eintritt", Employee::hireDate).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
-                .column("Letzter Login", Employee::lastLogin).ofType(ColumnType.DATETIME)
+                .column("Alter", Employee::age)
+                .ofType(ColumnType.INTEGER)
+                .column("Bewertung", Employee::rating)
+                .ofType(ColumnType.DOUBLE)
+                .formatForType("0.0")
+                .column("Gehalt", Employee::salary)
+                .ofType(ColumnType.DECIMAL)
+                .formatForType("#,##0.00 \"€\"")
+                .column("Aktiv", Employee::active)
+                .ofType(ColumnType.BOOLEAN)
+                .column("Eintritt", Employee::hireDate)
+                .ofType(ColumnType.DATE)
+                .formatForType("dd.mm.yyyy")
+                .column("Letzter Login", Employee::lastLogin)
+                .ofType(ColumnType.DATETIME)
                 .formatForType("dd.mm.yyyy hh:mm")
                 // Rohwert int (Sekunden seit Mitternacht) wird zur Uhrzeit (TIME) konvertiert.
-                .column("Kommt", Employee::checkInSeconds).ofType(ColumnType.TIME).formatForType("hh:mm")
+                .column("Kommt", Employee::checkInSeconds)
+                .ofType(ColumnType.TIME)
+                .formatForType("hh:mm")
                 .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
                 // Formelspalte: Bonus = 10 % vom Gehalt (Spalte F); {row} = aktuelle Zeilennummer.
-                .column("Bonus", e -> "F{row}*0.1").ofType(ColumnType.FORMULA).formatForType("#,##0.00 \"€\"")
+                .column("Bonus", e -> "F{row}*0.1")
+                .ofType(ColumnType.FORMULA)
+                .formatForType("#,##0.00 \"€\"")
                 .sortBy("Abteilung", SortOrder.ASC)
                 .sortBy("Gehalt", SortOrder.DESC)
                 .sortChunkSize(100_000)
