@@ -15,7 +15,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -66,7 +65,9 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  * statischer Zustand). Beachte aber: Der externe Merge Sort puffert {@link #sortChunkSize(int)}
  * Zeilen je Sortierung im Speicher – bei vielen gleichzeitigen Aufträgen summiert sich das, daher
  * ggf. die Nebenläufigkeit begrenzen oder {@code sortChunkSize} kleiner wählen. Der übergebene
- * {@link DataProvider} darf ebenfalls nicht zwischen Threads geteilt werden.
+ * {@link DataProvider} darf ebenfalls nicht zwischen Threads geteilt werden. Ein zweites Schreiben
+ * derselben Instanz (erneutes {@code write}/{@link #writeCsv(java.nio.file.Path)}) wirft eine
+ * {@link IllegalStateException}, da die Datenquelle forward-only/einmalig ist.
  */
 public final class ExcelBuilder<T> {
 
@@ -81,6 +82,7 @@ public final class ExcelBuilder<T> {
     private final List<SortKey> sortKeys = new ArrayList<>();
     private final List<String> sumColumnNames = new ArrayList<>();
     private final Map<String, String> placeholders = new LinkedHashMap<>();
+    private Function<String, String> placeholderResolver; // null = nur statische Platzhalter
     private String summaryLabelColumn;
     private String summaryLabelText;
     private boolean summaryAsFormula;
@@ -90,6 +92,7 @@ public final class ExcelBuilder<T> {
     private Predicate<? super T> filter; // null = keine Filterung (alle Objekte)
     private String defaultNullText; // sheet-weiter Platzhalter für null; null = leere Zelle
     private boolean parallel; // Pipeline-Parallelität (Producer/Consumer); Default aus
+    private boolean consumed; // Einmal-Nutzung: nach write/writeCsv nicht erneut verwendbar
     private DataProvider<T> dataProvider;
 
     /** Senke für den projizierten/sortierten Zeilenstrom (xlsx oder CSV); liefert die Zeilenanzahl. */
@@ -98,8 +101,7 @@ public final class ExcelBuilder<T> {
         int write(Iterator<Row> rows) throws IOException;
     }
 
-    private ExcelBuilder() {
-    }
+    private ExcelBuilder() {}
 
     public static <T> ExcelBuilder<T> create() {
         return new ExcelBuilder<>();
@@ -170,7 +172,17 @@ public final class ExcelBuilder<T> {
      *     .convertToColumnType((Integer s) -> java.time.LocalTime.ofSecondOfDay(s))
      * }</pre>
      * Der Lambda-Parametertyp sollte explizit angegeben werden. Die Umwandlung greift auch für
-     * Sortierung und Summenzeile, da sie bereits bei der Projektion erfolgt.
+     * Sortierung und Summenzeile, da sie bereits bei der Projektion erfolgt. Der Rückgabewert muss zur
+     * Repräsentation des konfigurierten {@link ColumnType} passen (z. B. {@link java.time.LocalDate}
+     * für {@link ColumnType#DATE}, {@link java.math.BigDecimal} für {@link ColumnType#DECIMAL}).
+     *
+     * <p><b>Achtung – Präzisionsverlust:</b> Verlustbehaftete Umwandlungen sind hier leicht möglich und
+     * fallen oft erst im fertigen Bericht auf. Insbesondere {@code BigDecimal -> double}
+     * ({@link ColumnType#DOUBLE}) verliert Genauigkeit, und {@code Zahl -> String} kann Skalierung/
+     * Formatierung verändern. Für <em>volle</em> Genauigkeit den Wert bewusst als
+     * {@link java.math.BigDecimal} liefern und {@link ColumnType#DECIMAL} verwenden – oder, falls als
+     * Text gewünscht, kontrolliert (z. B. via {@code BigDecimal#toPlainString()}) nach {@code String}
+     * konvertieren. Eine automatische Laufzeitprüfung gibt es bewusst nicht (Performance im Hot-Path).
      */
     @SuppressWarnings("unchecked")
     public <R> ExcelBuilder<T> convertToColumnType(Function<R, ?> converter) {
@@ -294,6 +306,21 @@ public final class ExcelBuilder<T> {
         return this;
     }
 
+    /**
+     * Setzt einen optionalen Resolver für lazy/berechnete Platzhalter (z. B. Versionsnummer oder
+     * Benutzername aus dem Request-Kontext). Er wird je {@code {key}} <em>nur dann</em> konsultiert,
+     * wenn weder {@link #placeholder(String, String)} noch die eingebauten Platzhalter den Schlüssel
+     * kennen – die statische Map hat also Vorrang. Liefert der Resolver {@code null}, bleibt das Token
+     * unverändert sichtbar stehen. Mehrfacher Aufruf ersetzt den vorherigen Resolver.
+     *
+     * <p>Die Auflösung erfolgt zur Schreibzeit und nur für Titel-, Kopf- und Footer-Zeilen (nicht je
+     * Datenzeile) – damit bleibt der Speicherbedarf out-of-core-neutral.
+     */
+    public ExcelBuilder<T> placeholderResolver(Function<String, String> resolver) {
+        this.placeholderResolver = Objects.requireNonNull(resolver, "resolver");
+        return this;
+    }
+
     /** Fügt mehrere Platzhalter auf einmal hinzu (siehe {@link #placeholder(String, String)}). */
     public ExcelBuilder<T> placeholders(Map<String, String> values) {
         values.forEach(this::placeholder);
@@ -356,8 +383,12 @@ public final class ExcelBuilder<T> {
         SheetWriteOptions layout = buildLayout();
         long start = System.nanoTime();
         int rows = process(r -> CsvWriter.write(out, columns, r, summary, layout, options));
-        LOG.debug("Blatt '{}': {} Zeilen als CSV{} in {} ms",
-                sheetName, rows, parallel ? ", parallel" : "", (System.nanoTime() - start) / 1_000_000);
+        LOG.debug(
+                "Blatt '{}': {} Zeilen als CSV{} in {} ms",
+                sheetName,
+                rows,
+                parallel ? ", parallel" : "",
+                (System.nanoTime() - start) / 1_000_000);
     }
 
     /**
@@ -369,9 +400,13 @@ public final class ExcelBuilder<T> {
         SheetWriteOptions layout = buildLayout();
         long start = System.nanoTime();
         int rows = process(r -> XlsxWriter.addSheet(wb, sheetName, columns, r, summary, layout));
-        LOG.debug("Blatt '{}': {} Zeilen ({}{}) in {} ms",
-                sheetName, rows, sortKeys.isEmpty() ? "unsortiert" : "sortiert",
-                parallel ? ", parallel" : "", (System.nanoTime() - start) / 1_000_000);
+        LOG.debug(
+                "Blatt '{}': {} Zeilen ({}{}) in {} ms",
+                sheetName,
+                rows,
+                sortKeys.isEmpty() ? "unsortiert" : "sortiert",
+                parallel ? ", parallel" : "",
+                (System.nanoTime() - start) / 1_000_000);
     }
 
     /**
@@ -379,20 +414,27 @@ public final class ExcelBuilder<T> {
      * Out-of-core-Sortierung und Lifecycle; übergibt den finalen {@link Row}-Strom an die Senke.
      */
     private int process(RowSink sink) throws IOException {
+        if (consumed) {
+            throw new IllegalStateException(
+                    "ExcelBuilder ist Einmal-Nutzung: bereits geschrieben – pro Auftrag eine neue Instanz erstellen"
+                            + " (Blatt: "
+                            + sheetName + ")");
+        }
         if (columns.isEmpty()) {
             throw new IllegalStateException("Mindestens eine Spalte muss definiert sein");
         }
         if (dataProvider == null) {
             throw new IllegalStateException("Kein DataProvider gesetzt (.data(...)) für Blatt: " + sheetName);
         }
+        // Ab hier wird die (forward-only, einmalige) Datenquelle konsumiert -> Wiederverwendung sperren.
+        consumed = true;
         try (DataProvider<T> p = dataProvider) {
             Iterator<Row> projected = projection(p);
             if (sortKeys.isEmpty()) {
                 return consume(projected, sink);
             }
             RowComparator comparator = new RowComparator(columns, sortKeys);
-            try (ExternalMergeSort sorter =
-                    new ExternalMergeSort(comparator, sortChunkSize, sortTempDir)) {
+            try (ExternalMergeSort sorter = new ExternalMergeSort(comparator, sortChunkSize, sortTempDir)) {
                 CloseableIterator<Row> sorted = sorter.sort(projected);
                 try (sorted) {
                     return consume(sorted, sink);
@@ -416,9 +458,10 @@ public final class ExcelBuilder<T> {
         List<String> header = headerLines.isEmpty() ? null : headerLines;
         Map<String, String> staticPlaceholders = new LinkedHashMap<>(placeholders);
         staticPlaceholders.putIfAbsent("date", LocalDate.now().toString());
-        staticPlaceholders.putIfAbsent("datetime", LocalDateTime.now().withNano(0).toString());
+        staticPlaceholders.putIfAbsent(
+                "datetime", LocalDateTime.now().withNano(0).toString());
         return new SheetWriteOptions(
-                header, footerLines, staticPlaceholders, showColumnHeaders, defaultNullText);
+                header, footerLines, staticPlaceholders, placeholderResolver, showColumnHeaders, defaultNullText);
     }
 
     /** Baut die Summenzeilen-Konfiguration oder {@code null}, falls keine Summenzeile gewünscht ist. */

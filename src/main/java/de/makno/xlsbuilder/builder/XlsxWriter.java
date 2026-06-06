@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
+import java.util.function.Function;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -41,16 +41,20 @@ final class XlsxWriter {
     /** Maximale Länge eines Excel-Blattnamens. */
     private static final int MAX_SHEET_NAME_LENGTH = 31;
 
-    private XlsxWriter() {
-    }
+    private XlsxWriter() {}
 
     /**
      * Fügt ein Worksheet in ein vorhandenes (vom {@code WorkbookBuilder} verwaltetes) Workbook ein.
      *
      * @return Anzahl geschriebener Datenzeilen (ohne Titel-/Kopf-/Summenzeile) – für Performance-Logs.
      */
-    static int addSheet(SXSSFWorkbook wb, String sheetName, List<? extends Column<?>> columns,
-                         Iterator<Row> rows, SummarySpec summary, SheetWriteOptions layout) {
+    static int addSheet(
+            SXSSFWorkbook wb,
+            String sheetName,
+            List<? extends Column<?>> columns,
+            Iterator<Row> rows,
+            SummarySpec summary,
+            SheetWriteOptions layout) {
         SXSSFSheet sheet = wb.createSheet(uniqueSheetName(wb, sheetName));
         enableFormulaRecalculationIfNeeded(sheet, columns, summary);
 
@@ -60,33 +64,41 @@ final class XlsxWriter {
         CellStyle footerStyle = buildFooterStyle(wb);
         boolean showHeaders = layout.showColumnHeaders();
         Map<String, String> placeholders = layout.placeholders();
+        Function<String, String> resolver = layout.placeholderResolver();
         ColumnWidthEstimator widths = new ColumnWidthEstimator(columns, showHeaders);
 
         int lastCol = columns.size() - 1;
-        int rowNum = writeTitleRows(sheet, layout.headerLines(), placeholders, titleStyle, lastCol);
+        int rowNum = writeTitleRows(sheet, layout.headerLines(), placeholders, resolver, titleStyle, lastCol);
         rowNum = writeColumnHeaders(sheet, columns, rowNum, showHeaders);
 
         BigDecimal[] sums = initSums(columns, summary);
         int firstDataRow0 = rowNum; // 0-basierter Index der ersten Datenzeile
-        rowNum = writeDataRows(
-                sheet, columns, rows, columnStyles, widths, sums, rowNum, layout.defaultNullText());
+        rowNum = writeDataRows(sheet, columns, rows, columnStyles, widths, sums, rowNum, layout.defaultNullText());
 
         int dataRowCount = rowNum - firstDataRow0;
         // Excel-Zeilennummern sind 1-basiert: erste Datenzeile = firstDataRow0 + 1, letzte = rowNum.
-        rowNum = writeSummaryRow(sheet, columns, columnStyles, widths, summary, sums,
-                rowNum, firstDataRow0 + 1, rowNum, dataRowCount);
+        rowNum = writeSummaryRow(
+                sheet, columns, columnStyles, widths, summary, sums, rowNum, firstDataRow0 + 1, rowNum, dataRowCount);
 
-        writeFooterRows(sheet, layout.footerLines(), placeholders, columns, sums, dataRowCount,
-                footerStyle, lastCol, rowNum);
+        writeFooterRows(
+                sheet,
+                layout.footerLines(),
+                placeholders,
+                resolver,
+                columns,
+                sums,
+                dataRowCount,
+                footerStyle,
+                lastCol,
+                rowNum);
 
         widths.applyTo(sheet);
         return dataRowCount;
     }
 
     /** Bei Formelspalten/-summen Excel anweisen, beim Öffnen neu zu berechnen (Werte sind nicht gecacht). */
-    private static void enableFormulaRecalculationIfNeeded(SXSSFSheet sheet,
-                                                           List<? extends Column<?>> columns,
-                                                           SummarySpec summary) {
+    private static void enableFormulaRecalculationIfNeeded(
+            SXSSFSheet sheet, List<? extends Column<?>> columns, SummarySpec summary) {
         boolean hasFormula = false;
         for (Column<?> col : columns) {
             if (col.type() == ColumnType.FORMULA) {
@@ -100,14 +112,18 @@ final class XlsxWriter {
     }
 
     /** Schreibt die optionalen Titelzeilen (je über die volle Breite zusammengeführt). Gibt die nächste Zeile zurück. */
-    private static int writeTitleRows(SXSSFSheet sheet, List<String> headerLines,
-                                      Map<String, String> placeholders, CellStyle titleStyle,
-                                      int lastCol) {
+    private static int writeTitleRows(
+            SXSSFSheet sheet,
+            List<String> headerLines,
+            Map<String, String> placeholders,
+            Function<String, String> resolver,
+            CellStyle titleStyle,
+            int lastCol) {
         int rowNum = 0;
         if (headerLines != null) {
             for (String line : headerLines) {
                 Cell cell = sheet.createRow(rowNum).createCell(0);
-                cell.setCellValue(Placeholders.resolve(line, placeholders));
+                cell.setCellValue(Placeholders.resolve(line, placeholders, resolver));
                 cell.setCellStyle(titleStyle);
                 if (lastCol > 0) {
                     sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, lastCol));
@@ -119,8 +135,8 @@ final class XlsxWriter {
     }
 
     /** Schreibt die Spaltenüberschriften (sofern aktiviert). Gibt die nächste Zeile zurück. */
-    private static int writeColumnHeaders(SXSSFSheet sheet, List<? extends Column<?>> columns,
-                                          int rowNum, boolean showColumnHeaders) {
+    private static int writeColumnHeaders(
+            SXSSFSheet sheet, List<? extends Column<?>> columns, int rowNum, boolean showColumnHeaders) {
         if (!showColumnHeaders) {
             return rowNum;
         }
@@ -146,10 +162,15 @@ final class XlsxWriter {
     }
 
     /** Streamt die Datenzeilen, misst dabei die Spaltenbreiten und führt die Summen mit. Gibt die nächste Zeile zurück. */
-    private static int writeDataRows(SXSSFSheet sheet, List<? extends Column<?>> columns,
-                                     Iterator<Row> rows, CellStyle[] columnStyles,
-                                     ColumnWidthEstimator widths, BigDecimal[] sums, int rowNum,
-                                     String defaultNullText) {
+    private static int writeDataRows(
+            SXSSFSheet sheet,
+            List<? extends Column<?>> columns,
+            Iterator<Row> rows,
+            CellStyle[] columnStyles,
+            ColumnWidthEstimator widths,
+            BigDecimal[] sums,
+            int rowNum,
+            String defaultNullText) {
         while (rows.hasNext()) {
             Row dataRow = rows.next();
             org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum++);
@@ -183,10 +204,17 @@ final class XlsxWriter {
      * Schreibt die optionale Summenzeile (vorberechneter Wert oder echte {@code =SUM(...)}-Formel).
      * Gibt die nächste freie Zeile zurück (für die Footer-Zeilen).
      */
-    private static int writeSummaryRow(SXSSFSheet sheet, List<? extends Column<?>> columns,
-                                        CellStyle[] columnStyles, ColumnWidthEstimator widths,
-                                        SummarySpec summary, BigDecimal[] sums, int rowNum,
-                                        int firstDataRowNum, int lastDataRowNum, int dataRowCount) {
+    private static int writeSummaryRow(
+            SXSSFSheet sheet,
+            List<? extends Column<?>> columns,
+            CellStyle[] columnStyles,
+            ColumnWidthEstimator widths,
+            SummarySpec summary,
+            BigDecimal[] sums,
+            int rowNum,
+            int firstDataRowNum,
+            int lastDataRowNum,
+            int dataRowCount) {
         if (summary == null) {
             return rowNum;
         }
@@ -219,10 +247,17 @@ final class XlsxWriter {
      * Schreibt die optionalen Footer-Zeilen (je über die volle Breite zusammengeführt). Löst dabei die
      * dynamischen Platzhalter {@code {rowCount}} und {@code {sum:Spalte}} (zusätzlich zu den statischen) auf.
      */
-    private static void writeFooterRows(SXSSFSheet sheet, List<String> footerLines,
-                                        Map<String, String> staticPlaceholders,
-                                        List<? extends Column<?>> columns, BigDecimal[] sums,
-                                        int dataRowCount, CellStyle footerStyle, int lastCol, int rowNum) {
+    private static void writeFooterRows(
+            SXSSFSheet sheet,
+            List<String> footerLines,
+            Map<String, String> staticPlaceholders,
+            Function<String, String> resolver,
+            List<? extends Column<?>> columns,
+            BigDecimal[] sums,
+            int dataRowCount,
+            CellStyle footerStyle,
+            int lastCol,
+            int rowNum) {
         if (footerLines == null || footerLines.isEmpty()) {
             return;
         }
@@ -232,13 +267,14 @@ final class XlsxWriter {
             for (int c = 0; c < columns.size(); c++) {
                 if (sums[c] != null) {
                     values.put(
-                            "sum:" + columns.get(c).name(), sumAsText(columns.get(c).type(), sums[c]));
+                            "sum:" + columns.get(c).name(),
+                            sumAsText(columns.get(c).type(), sums[c]));
                 }
             }
         }
         for (String line : footerLines) {
             Cell cell = sheet.createRow(rowNum).createCell(0);
-            cell.setCellValue(Placeholders.resolve(line, values));
+            cell.setCellValue(Placeholders.resolve(line, values, resolver));
             cell.setCellStyle(footerStyle);
             if (lastCol > 0) {
                 sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, lastCol));
@@ -258,22 +294,23 @@ final class XlsxWriter {
 
     /** Erzeugt einen für das Workbook eindeutigen, gültigen Blattnamen (Excel verbietet Duplikate). */
     private static String uniqueSheetName(SXSSFWorkbook wb, String sheetName) {
-        String base = WorkbookUtil.createSafeSheetName(
-                (sheetName == null || sheetName.isBlank()) ? "Sheet1" : sheetName);
+        String base =
+                WorkbookUtil.createSafeSheetName((sheetName == null || sheetName.isBlank()) ? "Sheet1" : sheetName);
         String unique = base;
         int n = 2;
         while (wb.getSheet(unique) != null) {
             String suffix = " (" + n++ + ")";
             String head = base.length() + suffix.length() > MAX_SHEET_NAME_LENGTH
-                    ? base.substring(0, MAX_SHEET_NAME_LENGTH - suffix.length()) : base;
+                    ? base.substring(0, MAX_SHEET_NAME_LENGTH - suffix.length())
+                    : base;
             unique = head + suffix;
         }
         return unique;
     }
 
     /** Erzeugt je Spalte einmalig den Style mit Format-Code (oder {@code null}, falls kein Format nötig). */
-    private static CellStyle[] buildColumnStyles(SXSSFWorkbook wb, CreationHelper helper,
-                                                 List<? extends Column<?>> columns) {
+    private static CellStyle[] buildColumnStyles(
+            SXSSFWorkbook wb, CreationHelper helper, List<? extends Column<?>> columns) {
         CellStyle[] styles = new CellStyle[columns.size()];
         for (int c = 0; c < columns.size(); c++) {
             Column<?> col = columns.get(c);
@@ -366,13 +403,13 @@ final class XlsxWriter {
     /** Heuristische Mindestbreite (in Zeichen) je Typ, damit formatierte Werte vollständig sichtbar sind. */
     private static int minChars(ColumnType type) {
         return switch (type) {
-            case DATETIME -> 18;                 // "31.12.2026 23:59"
+            case DATETIME -> 18; // "31.12.2026 23:59"
             case DECIMAL, DOUBLE, FORMULA -> 14; // Währung/Dezimal mit Tausendertrennung
             case INTEGER, LONG -> 12;
-            case DATE -> 11;                     // "31.12.2026"
-            case TIME -> 8;                      // "23:59:59"
+            case DATE -> 11; // "31.12.2026"
+            case TIME -> 8; // "23:59:59"
             case BOOLEAN -> 7;
-            default -> 10;                       // STRING
+            default -> 10; // STRING
         };
     }
 
@@ -383,9 +420,9 @@ final class XlsxWriter {
      */
     private static String defaultFormat(ColumnType type) {
         return switch (type) {
-            case DATE -> "yyyy-mm-dd";           // ISO 8601 Standardformat für Datumsanzeige
+            case DATE -> "yyyy-mm-dd"; // ISO 8601 Standardformat für Datumsanzeige
             case DATETIME -> "yyyy-mm-dd hh:mm"; // Datum + Zeit (12h Format)
-            case TIME -> "hh:mm:ss";             // Zeit (12h Format mit Sekunden)
+            case TIME -> "hh:mm:ss"; // Zeit (12h Format mit Sekunden)
             default -> null; // Zahlen ohne explizites Format: Excel-Standard ("General")
         };
     }
@@ -411,16 +448,15 @@ final class XlsxWriter {
         return footerStyle;
     }
 
-    private static void writeCell(org.apache.poi.ss.usermodel.Row row, int col, ColumnType type,
-                                  Object value, CellStyle style) {
+    private static void writeCell(
+            org.apache.poi.ss.usermodel.Row row, int col, ColumnType type, Object value, CellStyle style) {
         if (value == null) {
             return; // leere Zelle gar nicht erst anlegen
         }
         Cell cell = row.createCell(col);
         switch (type) {
             case STRING -> cell.setCellValue(String.valueOf(value));
-            case BOOLEAN -> cell.setCellValue(
-                    value instanceof Boolean b ? b : Boolean.parseBoolean(value.toString()));
+            case BOOLEAN -> cell.setCellValue(value instanceof Boolean b ? b : Boolean.parseBoolean(value.toString()));
             case INTEGER, LONG -> cell.setCellValue(((Number) value).longValue());
             case DOUBLE -> cell.setCellValue(((Number) value).doubleValue());
             case DECIMAL -> cell.setCellValue(
@@ -495,8 +531,8 @@ final class XlsxWriter {
     private static final class ColumnWidthEstimator {
 
         private static final int POI_UNITS_PER_CHAR = 256; // POI misst Breiten in 1/256 Zeichen
-        private static final int MAX_WIDTH_CHARS = 255;     // Excel-Obergrenze je Spalte
-        private static final int PADDING_CHARS = 2;         // etwas Polster gegen abgeschnittene Werte
+        private static final int MAX_WIDTH_CHARS = 255; // Excel-Obergrenze je Spalte
+        private static final int PADDING_CHARS = 2; // etwas Polster gegen abgeschnittene Werte
 
         private final ColumnType[] types;
         private final int[] widthChars;
@@ -535,14 +571,15 @@ final class XlsxWriter {
                 case STRING -> chars = value.toString().length();
                 case INTEGER, LONG, DOUBLE, DECIMAL -> {
                     int intDigits = integerDigits(value);
-                    int dec = formatDecimals[c] >= 0 ? formatDecimals[c]
+                    int dec = formatDecimals[c] >= 0
+                            ? formatDecimals[c]
                             : (type == ColumnType.INTEGER || type == ColumnType.LONG ? 0 : 2);
                     chars = intDigits
                             + (grouping[c] ? (intDigits - 1) / 3 : 0)
                             + (dec > 0 ? 1 + dec : 0)
                             + literalChars[c];
                 }
-                // DATE/DATETIME/TIME/BOOLEAN/FORMULA: Basisbreite genügt.
+                    // DATE/DATETIME/TIME/BOOLEAN/FORMULA: Basisbreite genügt.
                 default -> {
                     return;
                 }
@@ -560,8 +597,8 @@ final class XlsxWriter {
         /** Setzt die ermittelten Breiten endgültig auf das Blatt (Zeichen -> POI-Einheiten, mit Polster). */
         void applyTo(SXSSFSheet sheet) {
             for (int c = 0; c < widthChars.length; c++) {
-                int units = Math.min((widthChars[c] + PADDING_CHARS) * POI_UNITS_PER_CHAR,
-                        MAX_WIDTH_CHARS * POI_UNITS_PER_CHAR);
+                int units = Math.min(
+                        (widthChars[c] + PADDING_CHARS) * POI_UNITS_PER_CHAR, MAX_WIDTH_CHARS * POI_UNITS_PER_CHAR);
                 sheet.setColumnWidth(c, units);
             }
         }

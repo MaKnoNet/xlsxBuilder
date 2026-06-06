@@ -90,13 +90,17 @@ WorkbookBuilder.create()
 | `summaryLabel(name, text)` | Label in der Summenzeile (z. B. „Summe") |
 | `summaryAsFormula(boolean)` | `true` = `=SUMME(...)`-Formel, `false` (Default) = vorberechnet |
 | `placeholder(key, value)` / `placeholders(Map)` | `{key}`-Platzhalter in Titel/Kopf/Footer |
+| `placeholderResolver(Function<String,String>)` | Fallback für lazy/berechnete Platzhalter (statische Map hat Vorrang) |
 | `parallel(boolean)` | Pipeline-Parallelität (lesen/sortieren ∥ schreiben); Default `false` |
 | `data(DataProvider<T>)` | Datenquelle des Blatts (erforderlich) |
 | `writeCsv(Path[, CsvOptions])` | dieses Blatt als CSV schreiben (statt über `WorkbookBuilder` als xlsx) |
 
 **Platzhalter:** In `header(...)`/`footer(...)`-Texten werden `{key}` ersetzt – benutzerdefiniert via
 `placeholder(...)`, eingebaut `{date}`/`{datetime}` (überschreibbar) und – nur im Footer –
-`{rowCount}` sowie `{sum:Spaltenname}`. Unbekannte Tokens bleiben unverändert.
+`{rowCount}` sowie `{sum:Spaltenname}`. Unbekannte Tokens bleiben unverändert. Für lazy/berechnete
+Werte (z. B. Versionsnummer, Benutzername) ergänzt `placeholderResolver(key -> ...)` einen Fallback,
+der nur konsultiert wird, wenn die statische Map den Schlüssel nicht kennt (`null` ⇒ Token bleibt
+stehen); die Auflösung erfolgt zur Schreibzeit nur für Titel/Kopf/Footer (out-of-core-neutral).
 
 **Pipeline-Parallelität (`parallel(true)`):** Ein Hintergrund-Thread liest/sortiert, während der
 aufrufende Thread schreibt (beschränkte Queue → weiterhin out-of-core). Lohnt nur, wenn die
@@ -263,7 +267,9 @@ Die Bibliothek hat **keinen geteilten oder statischen veränderlichen Zustand**.
 laufen daher isoliert, solange jeder Thread **eigene** Builder-Instanzen verwendet:
 
 - **Builder sind nicht thread-safe und single-use.** Pro Request `WorkbookBuilder.create()` /
-  `ExcelBuilder.create()` neu erzeugen; eine Instanz nicht zwischen Threads teilen.
+  `ExcelBuilder.create()` neu erzeugen; eine Instanz nicht zwischen Threads teilen. Ein zweites
+  Schreiben derselben Instanz (`write`/`writeCsv`) wirft eine `IllegalStateException` – die
+  Datenquelle ist forward-only/einmalig.
 - **Pro `write()` entsteht ein eigenes POI-Workbook.** Zwei Aufträge dürfen nicht gleichzeitig in
   dieselbe Datei schreiben (jeweils eigener `OutputStream`/`Path`).
 - **`DataProvider` nicht teilen.** Forward-only, einmalig, pro Request eigene Quelle (z. B. eine

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Schreibt ein Blatt streamend als CSV (RFC-4180-konformes Quoting, konfigurierbar über
@@ -19,11 +20,15 @@ import java.util.Map;
  */
 final class CsvWriter {
 
-    private CsvWriter() {
-    }
+    private CsvWriter() {}
 
-    static int write(OutputStream out, List<? extends Column<?>> columns, Iterator<Row> rows,
-                     SummarySpec summary, SheetWriteOptions layout, CsvOptions options)
+    static int write(
+            OutputStream out,
+            List<? extends Column<?>> columns,
+            Iterator<Row> rows,
+            SummarySpec summary,
+            SheetWriteOptions layout,
+            CsvOptions options)
             throws IOException {
         Writer writer = new BufferedWriter(new OutputStreamWriter(out, options.charset()));
         if (options.bom()) {
@@ -32,11 +37,12 @@ final class CsvWriter {
 
         int columnCount = columns.size();
         Map<String, String> placeholders = layout.placeholders();
+        Function<String, String> resolver = layout.placeholderResolver();
 
         // Optionale Titelzeilen (einspaltig).
         if (options.includeTitleRows() && layout.headerLines() != null) {
             for (String line : layout.headerLines()) {
-                writeSingle(writer, Placeholders.resolve(line, placeholders), options);
+                writeSingle(writer, Placeholders.resolve(line, placeholders, resolver), options);
             }
         }
 
@@ -94,7 +100,7 @@ final class CsvWriter {
         if (layout.footerLines() != null && !layout.footerLines().isEmpty()) {
             Map<String, String> dynamic = footerPlaceholders(columns, sums, placeholders, dataRowCount);
             for (String line : layout.footerLines()) {
-                writeSingle(writer, Placeholders.resolve(line, dynamic), options);
+                writeSingle(writer, Placeholders.resolve(line, dynamic, resolver), options);
             }
         }
 
@@ -102,10 +108,8 @@ final class CsvWriter {
         return dataRowCount;
     }
 
-    private static Map<String, String> footerPlaceholders(List<? extends Column<?>> columns,
-                                                          BigDecimal[] sums,
-                                                          Map<String, String> staticValues,
-                                                          int rowCount) {
+    private static Map<String, String> footerPlaceholders(
+            List<? extends Column<?>> columns, BigDecimal[] sums, Map<String, String> staticValues, int rowCount) {
         Map<String, String> values = new HashMap<>(staticValues);
         values.put("rowCount", Integer.toString(rowCount));
         if (sums != null) {
@@ -138,10 +142,8 @@ final class CsvWriter {
             case STRING -> value.toString();
             case INTEGER, LONG -> Long.toString(((Number) value).longValue());
             case DOUBLE -> Double.toString(((Number) value).doubleValue());
-            case DECIMAL -> (value instanceof BigDecimal bd ? bd : new BigDecimal(value.toString()))
-                    .toPlainString();
-            case BOOLEAN -> Boolean.toString(
-                    value instanceof Boolean b ? b : Boolean.parseBoolean(value.toString()));
+            case DECIMAL -> (value instanceof BigDecimal bd ? bd : new BigDecimal(value.toString())).toPlainString();
+            case BOOLEAN -> Boolean.toString(value instanceof Boolean b ? b : Boolean.parseBoolean(value.toString()));
             case FORMULA -> ""; // CSV kennt keine Formeln
             default -> String.valueOf(value); // DATE/DATETIME/TIME -> ISO (java.time#toString)
         };
@@ -171,8 +173,7 @@ final class CsvWriter {
         writer.write(options.lineSeparator());
     }
 
-    private static void writeRecord(Writer writer, String[] fields, CsvOptions options)
-            throws IOException {
+    private static void writeRecord(Writer writer, String[] fields, CsvOptions options) throws IOException {
         StringBuilder line = new StringBuilder();
         for (int c = 0; c < fields.length; c++) {
             if (c > 0) {
@@ -189,8 +190,7 @@ final class CsvWriter {
         String v = value == null ? "" : value;
         char delim = options.delimiter();
         char q = options.quote();
-        boolean needsQuote = v.indexOf(delim) >= 0 || v.indexOf(q) >= 0
-                || v.indexOf('\n') >= 0 || v.indexOf('\r') >= 0;
+        boolean needsQuote = v.indexOf(delim) >= 0 || v.indexOf(q) >= 0 || v.indexOf('\n') >= 0 || v.indexOf('\r') >= 0;
         if (!needsQuote) {
             return v;
         }

@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -17,8 +16,7 @@ class CsvExportTest {
     @TempDir
     Path tempDir;
 
-    private record R(String name, int wert) {
-    }
+    private record R(String name, int wert) {}
 
     private static String[] lines(Path file) throws Exception {
         return Files.readString(file, StandardCharsets.UTF_8).split("\\r\\n", -1);
@@ -26,16 +24,14 @@ class CsvExportTest {
 
     @Test
     void writesHeaderDataAndRfc4180Quoting() throws Exception {
-        List<R> data = List.of(
-                new R("Plain", 1),
-                new R("Hat,Komma", 2),
-                new R("Mit\"Quote", 3),
-                new R("Zeilen\numbruch", 4));
+        List<R> data =
+                List.of(new R("Plain", 1), new R("Hat,Komma", 2), new R("Mit\"Quote", 3), new R("Zeilen\numbruch", 4));
         Path out = tempDir.resolve("basic.csv");
 
         ExcelBuilder.<R>create()
                 .column("Name", R::name)
-                .column("Wert", R::wert).ofType(ColumnType.INTEGER)
+                .column("Wert", R::wert)
+                .ofType(ColumnType.INTEGER)
                 .data(DataProviders.ofIterable(data))
                 .writeCsv(out);
 
@@ -52,12 +48,14 @@ class CsvExportTest {
         Path out = tempDir.resolve("german.csv");
         ExcelBuilder.<R>create()
                 .column("Name", R::name)
-                .column("Wert", R::wert).ofType(ColumnType.INTEGER)
+                .column("Wert", R::wert)
+                .ofType(ColumnType.INTEGER)
                 .data(DataProviders.ofIterable(List.of(new R("x", 7))))
                 .writeCsv(out, CsvOptions.excelGerman());
 
         byte[] bytes = Files.readAllBytes(out);
-        assertTrue(bytes.length >= 3
+        assertTrue(
+                bytes.length >= 3
                         && (bytes[0] & 0xFF) == 0xEF
                         && (bytes[1] & 0xFF) == 0xBB
                         && (bytes[2] & 0xFF) == 0xBF,
@@ -73,9 +71,12 @@ class CsvExportTest {
         Path out = tempDir.resolve("full.csv");
 
         ExcelBuilder.<R>create()
-                .column("Name", R::name).nullText("-")
-                .column("Wert", R::wert).ofType(ColumnType.INTEGER)
-                .sumColumn("Wert").summaryLabel("Name", "Summe")
+                .column("Name", R::name)
+                .nullText("-")
+                .column("Wert", R::wert)
+                .ofType(ColumnType.INTEGER)
+                .sumColumn("Wert")
+                .summaryLabel("Name", "Summe")
                 .footer("Zeilen {rowCount}, Summe {sum:Wert}")
                 .data(DataProviders.ofIterable(data))
                 .writeCsv(out);
@@ -87,5 +88,21 @@ class CsvExportTest {
         assertEquals("Summe,30", lines[3], "vorberechnete Summenzeile");
         // Footer enthält ein Komma (Trennzeichen) -> RFC-4180-konform gequotet.
         assertEquals("\"Zeilen 2, Summe 30\"", lines[4], "Footer mit dynamischen Platzhaltern");
+    }
+
+    @Test
+    void resolvesLazyPlaceholderInCsvFooter() throws Exception {
+        Path out = tempDir.resolve("lazyFooter.csv");
+        ExcelBuilder.<R>create()
+                .column("Name", R::name)
+                .column("Wert", R::wert)
+                .ofType(ColumnType.INTEGER)
+                .footer("Version {version}")
+                .placeholderResolver(key -> "version".equals(key) ? "1.2.3" : null)
+                .data(DataProviders.ofIterable(List.of(new R("A", 1))))
+                .writeCsv(out);
+
+        String[] lines = lines(out);
+        assertEquals("Version 1.2.3", lines[2], "Resolver-Wert erscheint im CSV-Footer");
     }
 }

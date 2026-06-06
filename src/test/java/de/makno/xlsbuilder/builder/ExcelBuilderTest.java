@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import de.makno.xlsbuilder.builder.XlsxTestReader.Grid;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,7 +24,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LogEvent;
@@ -36,32 +36,28 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import de.makno.xlsbuilder.builder.XlsxTestReader.Grid;
-
 class ExcelBuilderTest {
 
     @TempDir
     Path tempDir;
 
-    private record Person(String name, int age, boolean active) {
-    }
+    private record Person(String name, int age, boolean active) {}
 
-    private record DeptRow(String dept, int salary) {
-    }
+    private record DeptRow(String dept, int salary) {}
 
     @Test
     void writesHeaderAndColumns() throws Exception {
-        List<Person> data = List.of(
-                new Person("Alice", 30, true),
-                new Person("Bob", 25, false));
+        List<Person> data = List.of(new Person("Alice", 30, true), new Person("Bob", 25, false));
         Path out = tempDir.resolve("basic.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Person>create()
                         .sheetName("Leute")
                         .column("Name", Person::name)
-                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
-                        .column("Aktiv", Person::active).ofType(ColumnType.BOOLEAN)
+                        .column("Alter", Person::age)
+                        .ofType(ColumnType.INTEGER)
+                        .column("Aktiv", Person::active)
+                        .ofType(ColumnType.BOOLEAN)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
@@ -96,16 +92,14 @@ class ExcelBuilderTest {
 
     @Test
     void sortsDescendingByNumericColumn() throws Exception {
-        List<Person> data = List.of(
-                new Person("A", 30, true),
-                new Person("B", 25, true),
-                new Person("C", 40, true));
+        List<Person> data = List.of(new Person("A", 30, true), new Person("B", 25, true), new Person("C", 40, true));
         Path out = tempDir.resolve("sortDesc.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Person>create()
                         .column("Name", Person::name)
-                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                        .column("Alter", Person::age)
+                        .ofType(ColumnType.INTEGER)
                         .sortBy("Alter", SortOrder.DESC)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
@@ -120,17 +114,15 @@ class ExcelBuilderTest {
 
     @Test
     void appliesMultiLevelSort() throws Exception {
-        List<DeptRow> data = List.of(
-                new DeptRow("B", 100),
-                new DeptRow("A", 50),
-                new DeptRow("A", 80),
-                new DeptRow("B", 90));
+        List<DeptRow> data =
+                List.of(new DeptRow("B", 100), new DeptRow("A", 50), new DeptRow("A", 80), new DeptRow("B", 90));
         Path out = tempDir.resolve("multiSort.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<DeptRow>create()
                         .column("Abteilung", DeptRow::dept)
-                        .column("Gehalt", DeptRow::salary).ofType(ColumnType.INTEGER)
+                        .column("Gehalt", DeptRow::salary)
+                        .ofType(ColumnType.INTEGER)
                         .sortBy("Abteilung", SortOrder.ASC)
                         .sortBy("Gehalt", SortOrder.DESC)
                         .data(DataProviders.ofIterable(data)))
@@ -156,7 +148,8 @@ class ExcelBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Integer>create()
-                        .column("n", i -> i).ofType(ColumnType.INTEGER)
+                        .column("n", i -> i)
+                        .ofType(ColumnType.INTEGER)
                         .sortBy("n", SortOrder.ASC)
                         .sortChunkSize(100)
                         .data(DataProviders.ofIterable(shuffled)))
@@ -186,7 +179,8 @@ class ExcelBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Integer>create()
-                        .column("n", i -> i).ofType(ColumnType.INTEGER)
+                        .column("n", i -> i)
+                        .ofType(ColumnType.INTEGER)
                         .sortBy("n", SortOrder.ASC)
                         .sortChunkSize(2)
                         .data(DataProviders.ofIterable(shuffled)))
@@ -213,7 +207,8 @@ class ExcelBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Integer>create()
-                        .column("n", i -> i).ofType(ColumnType.INTEGER)
+                        .column("n", i -> i)
+                        .ofType(ColumnType.INTEGER)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
@@ -226,15 +221,16 @@ class ExcelBuilderTest {
 
     @Test
     void formatsDateAndDecimal() throws Exception {
-        record Sale(LocalDate date, BigDecimal amount) {
-        }
+        record Sale(LocalDate date, BigDecimal amount) {}
         LocalDate date = LocalDate.of(2026, 5, 30);
         Path out = tempDir.resolve("formats.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Sale>create()
-                        .column("Datum", Sale::date).ofType(ColumnType.DATE)
-                        .column("Betrag", Sale::amount).ofType(ColumnType.DECIMAL)
+                        .column("Datum", Sale::date)
+                        .ofType(ColumnType.DATE)
+                        .column("Betrag", Sale::amount)
+                        .ofType(ColumnType.DECIMAL)
                         .data(DataProviders.ofIterable(List.of(new Sale(date, new BigDecimal("1234.56"))))))
                 .write(out);
 
@@ -246,17 +242,22 @@ class ExcelBuilderTest {
 
     @Test
     void appliesCustomFormatsForDecimalDateAndTime() throws Exception {
-        record R(BigDecimal betrag, LocalDate datum, LocalTime zeit) {
-        }
+        record R(BigDecimal betrag, LocalDate datum, LocalTime zeit) {}
         LocalDate date = LocalDate.of(2026, 5, 30);
         LocalTime time = LocalTime.of(9, 30, 15);
         Path out = tempDir.resolve("customFormats.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<R>create()
-                        .column("Betrag", R::betrag).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
-                        .column("Datum", R::datum).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
-                        .column("Zeit", R::zeit).ofType(ColumnType.TIME).formatForType("hh:mm:ss")
+                        .column("Betrag", R::betrag)
+                        .ofType(ColumnType.DECIMAL)
+                        .formatForType("#,##0.00")
+                        .column("Datum", R::datum)
+                        .ofType(ColumnType.DATE)
+                        .formatForType("dd.mm.yyyy")
+                        .column("Zeit", R::zeit)
+                        .ofType(ColumnType.TIME)
+                        .formatForType("hh:mm:ss")
                         .data(DataProviders.ofIterable(List.of(new R(new BigDecimal("1234.5"), date, time)))))
                 .write(out);
 
@@ -274,8 +275,7 @@ class ExcelBuilderTest {
 
     @Test
     void summaryRowCanUseSumFormula() throws Exception {
-        record Item(String name, int wert) {
-        }
+        record Item(String name, int wert) {}
         List<Item> data = List.of(new Item("A", 10), new Item("B", 30), new Item("C", 20));
         Path out = tempDir.resolve("summaryFormula.xlsx");
 
@@ -283,7 +283,8 @@ class ExcelBuilderTest {
                 .sheet(ExcelBuilder.<Item>create()
                         .header("Bericht") // Titelzeile -> Datenbereich ist versetzt
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                        .column("Wert", Item::wert)
+                        .ofType(ColumnType.INTEGER)
                         .sumColumn("Wert")
                         .summaryLabel("Name", "Summe")
                         .summaryAsFormula(true)
@@ -300,15 +301,17 @@ class ExcelBuilderTest {
 
     @Test
     void writesFormulaColumnWithRowPlaceholder() throws Exception {
-        record P(int a, int b) {
-        }
+        record P(int a, int b) {}
         Path out = tempDir.resolve("formula.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<P>create()
-                        .column("A", P::a).ofType(ColumnType.INTEGER)
-                        .column("B", P::b).ofType(ColumnType.INTEGER)
-                        .column("Summe", p -> "A{row}+B{row}").ofType(ColumnType.FORMULA)
+                        .column("A", P::a)
+                        .ofType(ColumnType.INTEGER)
+                        .column("B", P::b)
+                        .ofType(ColumnType.INTEGER)
+                        .column("Summe", p -> "A{row}+B{row}")
+                        .ofType(ColumnType.FORMULA)
                         .data(DataProviders.ofIterable(List.of(new P(2, 3), new P(10, 20)))))
                 .write(out);
 
@@ -320,8 +323,7 @@ class ExcelBuilderTest {
 
     @Test
     void appendsSummaryRowWithSums() throws Exception {
-        record Item(String name, int menge, BigDecimal betrag) {
-        }
+        record Item(String name, int menge, BigDecimal betrag) {}
         List<Item> data = List.of(
                 new Item("A", 2, new BigDecimal("10.50")),
                 new Item("B", 3, new BigDecimal("5.25")),
@@ -331,8 +333,10 @@ class ExcelBuilderTest {
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Item>create()
                         .column("Name", Item::name)
-                        .column("Menge", Item::menge).ofType(ColumnType.INTEGER)
-                        .column("Betrag", Item::betrag).ofType(ColumnType.DECIMAL)
+                        .column("Menge", Item::menge)
+                        .ofType(ColumnType.INTEGER)
+                        .column("Betrag", Item::betrag)
+                        .ofType(ColumnType.DECIMAL)
                         .sumColumn("Menge")
                         .sumColumn("Betrag")
                         .summaryLabel("Name", "Summe")
@@ -360,7 +364,8 @@ class ExcelBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Integer>create()
-                        .column("n", i -> (long) i).ofType(ColumnType.LONG)
+                        .column("n", i -> (long) i)
+                        .ofType(ColumnType.LONG)
                         .sortBy("n", SortOrder.ASC)
                         .sortChunkSize(100)
                         .sumColumn("n")
@@ -374,13 +379,14 @@ class ExcelBuilderTest {
 
     @Test
     void setsColumnWidthsSoFormattedValuesAreVisible() throws Exception {
-        record R(LocalDate datum) {
-        }
+        record R(LocalDate datum) {}
         Path out = tempDir.resolve("widths.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<R>create()
-                        .column("Eintritt", R::datum).ofType(ColumnType.DATE).formatForType("dd.mm.yyyy")
+                        .column("Eintritt", R::datum)
+                        .ofType(ColumnType.DATE)
+                        .formatForType("dd.mm.yyyy")
                         .data(DataProviders.ofIterable(List.of(new R(LocalDate.of(2026, 12, 31))))))
                 .write(out);
 
@@ -391,8 +397,7 @@ class ExcelBuilderTest {
 
     @Test
     void widthsAccountForLongStringsAndSummarySum() throws Exception {
-        record Item(String name, int wert) {
-        }
+        record Item(String name, int wert) {}
         String longName = "Ein sehr langer Mitarbeitername XYZ"; // 35 Zeichen
         List<Item> data = List.of(new Item(longName, 2_000_000), new Item("Kurz", 3_000_000));
         Path out = tempDir.resolve("widths2.xlsx");
@@ -400,7 +405,9 @@ class ExcelBuilderTest {
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Item>create()
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER).formatForType("#,##0")
+                        .column("Wert", Item::wert)
+                        .ofType(ColumnType.INTEGER)
+                        .formatForType("#,##0")
                         .sumColumn("Wert")
                         .summaryLabel("Name", "Summe")
                         .data(DataProviders.ofIterable(data)))
@@ -408,8 +415,7 @@ class ExcelBuilderTest {
 
         Grid g = XlsxTestReader.read(out);
         // Name-Spalte mindestens so breit wie der längste Name.
-        assertTrue(g.columnWidth(0) >= longName.length() * 256,
-                "Name-Spalte muss den längsten Namen fassen");
+        assertTrue(g.columnWidth(0) >= longName.length() * 256, "Name-Spalte muss den längsten Namen fassen");
         // Summe = 5.000.000 -> "5.000.000" (9 Zeichen inkl. Tausenderpunkte).
         assertTrue(g.columnWidth(1) >= 9 * 256, "Wert-Spalte muss die Summe fassen");
     }
@@ -423,8 +429,10 @@ class ExcelBuilderTest {
                 .sheet(ExcelBuilder.<Person>create()
                         .header("Mitarbeiterbericht", "Stand: Mai 2026")
                         .column("Name", Person::name)
-                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
-                        .column("Aktiv", Person::active).ofType(ColumnType.BOOLEAN)
+                        .column("Alter", Person::age)
+                        .ofType(ColumnType.INTEGER)
+                        .column("Aktiv", Person::active)
+                        .ofType(ColumnType.BOOLEAN)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
@@ -445,19 +453,16 @@ class ExcelBuilderTest {
 
     @Test
     void combinesHeaderSortAndSummary() throws Exception {
-        record Item(String name, int wert) {
-        }
-        List<Item> data = List.of(
-                new Item("A", 10),
-                new Item("B", 30),
-                new Item("C", 20));
+        record Item(String name, int wert) {}
+        List<Item> data = List.of(new Item("A", 10), new Item("B", 30), new Item("C", 20));
         Path out = tempDir.resolve("combined.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Item>create()
                         .header("Bericht")
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                        .column("Wert", Item::wert)
+                        .ofType(ColumnType.INTEGER)
                         .sortBy("Wert", SortOrder.DESC)
                         .sumColumn("Wert")
                         .summaryLabel("Name", "Summe")
@@ -482,14 +487,14 @@ class ExcelBuilderTest {
     @Test
     void convertsRawValueToTargetColumnType() throws Exception {
         // Rohwert int (Sekunden seit Mitternacht) -> als Uhrzeit (TIME) schreiben.
-        record Task(String name, int sekunden) {
-        }
+        record Task(String name, int sekunden) {}
         Path out = tempDir.resolve("convert.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Task>create()
                         .column("Name", Task::name)
-                        .column("Start", Task::sekunden).ofType(ColumnType.TIME)
+                        .column("Start", Task::sekunden)
+                        .ofType(ColumnType.TIME)
                         .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
                         .data(DataProviders.ofIterable(List.of(new Task("A", 34215))))) // 09:30:15
                 .write(out);
@@ -501,18 +506,19 @@ class ExcelBuilderTest {
 
     @Test
     void writesMultipleSheets() throws Exception {
-        record Emp(String name, int age) {
-        }
-        record Dept(String code) {
-        }
+        record Emp(String name, int age) {}
+        record Dept(String code) {}
         Path out = tempDir.resolve("multi.xlsx");
 
         WorkbookBuilder.create()
-                .sheet(ExcelBuilder.<Emp>create().sheetName("Mitarbeiter")
+                .sheet(ExcelBuilder.<Emp>create()
+                        .sheetName("Mitarbeiter")
                         .column("Name", Emp::name)
-                        .column("Alter", Emp::age).ofType(ColumnType.INTEGER)
+                        .column("Alter", Emp::age)
+                        .ofType(ColumnType.INTEGER)
                         .data(DataProviders.ofIterable(List.of(new Emp("Alice", 30), new Emp("Bob", 25)))))
-                .sheet(ExcelBuilder.<Dept>create().sheetName("Abteilungen")
+                .sheet(ExcelBuilder.<Dept>create()
+                        .sheetName("Abteilungen")
                         .column("Kürzel", Dept::code)
                         .data(DataProviders.ofIterable(List.of(new Dept("IT"), new Dept("HR")))))
                 .write(out);
@@ -532,14 +538,17 @@ class ExcelBuilderTest {
 
     @Test
     void deduplicatesSheetNames() throws Exception {
-        record R(String v) {
-        }
+        record R(String v) {}
         Path out = tempDir.resolve("dupe.xlsx");
 
         WorkbookBuilder.create()
-                .sheet(ExcelBuilder.<R>create().sheetName("Daten").column("V", R::v)
+                .sheet(ExcelBuilder.<R>create()
+                        .sheetName("Daten")
+                        .column("V", R::v)
                         .data(DataProviders.ofIterable(List.of(new R("a")))))
-                .sheet(ExcelBuilder.<R>create().sheetName("Daten").column("V", R::v)
+                .sheet(ExcelBuilder.<R>create()
+                        .sheetName("Daten")
+                        .column("V", R::v)
                         .data(DataProviders.ofIterable(List.of(new R("b")))))
                 .write(out);
 
@@ -553,71 +562,56 @@ class ExcelBuilderTest {
 
     @Test
     void throwsIfNoColumnsConfigured() {
-        assertThrows(
-                IllegalStateException.class,
-                () -> WorkbookBuilder.create()
-                        .sheet(ExcelBuilder.<Person>create()
-                                .data(DataProviders.ofIterable(List.of())))
-                        .write(tempDir.resolve("noColumns.xlsx")));
+        assertThrows(IllegalStateException.class, () -> WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create().data(DataProviders.ofIterable(List.of())))
+                .write(tempDir.resolve("noColumns.xlsx")));
     }
 
     @Test
     void throwsIfNoDataProviderSet() {
-        assertThrows(
-                IllegalStateException.class,
-                () -> WorkbookBuilder.create()
-                        .sheet(ExcelBuilder.<Person>create().column("Name", Person::name))
-                        .write(tempDir.resolve("noProvider.xlsx")));
+        assertThrows(IllegalStateException.class, () -> WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create().column("Name", Person::name))
+                .write(tempDir.resolve("noProvider.xlsx")));
     }
 
     @Test
     void throwsIfSumColumnIsNotNumeric() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> WorkbookBuilder.create()
-                        .sheet(ExcelBuilder.<Person>create()
-                                .column("Name", Person::name)
-                                .sumColumn("Name")
-                                .data(DataProviders.ofIterable(
-                                        List.of(new Person("A", 1, true)))))
-                        .write(tempDir.resolve("badSum.xlsx")));
+        assertThrows(IllegalArgumentException.class, () -> WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .column("Name", Person::name)
+                        .sumColumn("Name")
+                        .data(DataProviders.ofIterable(List.of(new Person("A", 1, true)))))
+                .write(tempDir.resolve("badSum.xlsx")));
     }
 
     @Test
     void throwsIfSortChunkSizeLessThanOne() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> ExcelBuilder.<Person>create()
-                        .column("Name", Person::name)
-                        .sortChunkSize(0));
+                () -> ExcelBuilder.<Person>create().column("Name", Person::name).sortChunkSize(0));
     }
 
     @Test
     void throwsIfWorkbookHasNoSheets() {
         assertThrows(
-                IllegalStateException.class,
-                () -> WorkbookBuilder.create().write(tempDir.resolve("noSheets.xlsx")));
+                IllegalStateException.class, () -> WorkbookBuilder.create().write(tempDir.resolve("noSheets.xlsx")));
     }
 
     @Test
     void throwsIfSortKeyColumnUnknown() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> WorkbookBuilder.create()
-                        .sheet(ExcelBuilder.<Person>create()
-                                .column("Name", Person::name)
-                                .sortBy("NichtVorhanden", SortOrder.ASC)
-                                .data(DataProviders.ofIterable(
-                                        List.of(new Person("A", 1, true)))))
-                        .write(tempDir.resolve("badSortKey.xlsx")));
+        assertThrows(IllegalArgumentException.class, () -> WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .column("Name", Person::name)
+                        .sortBy("NichtVorhanden", SortOrder.ASC)
+                        .data(DataProviders.ofIterable(List.of(new Person("A", 1, true)))))
+                .write(tempDir.resolve("badSortKey.xlsx")));
     }
 
     // ========== Gruppe B – Null-Handling im Comparator ==========
 
     @Test
     void sortsNullsLastAscending() throws Exception {
-        record NullRow(String label) {
-        }
+        record NullRow(String label) {}
         List<NullRow> data = List.of(new NullRow("B"), new NullRow(null), new NullRow("A"));
         Path out = tempDir.resolve("nullsAsc.xlsx");
 
@@ -639,8 +633,7 @@ class ExcelBuilderTest {
     void sortsNullsFirstInDescending() throws Exception {
         // Null wird intern als „größter Wert" behandelt (nulls-last bei ASC).
         // Bei DESC (Vorzeichen-Flip) erscheint null daher am Anfang.
-        record NullRow(String label) {
-        }
+        record NullRow(String label) {}
         List<NullRow> data = List.of(new NullRow("B"), new NullRow(null), new NullRow("A"));
         Path out = tempDir.resolve("nullsDesc.xlsx");
 
@@ -662,15 +655,15 @@ class ExcelBuilderTest {
 
     @Test
     void writesDateTimeColumn() throws Exception {
-        record Event(String name, LocalDateTime when) {
-        }
+        record Event(String name, LocalDateTime when) {}
         LocalDateTime dt = LocalDateTime.of(2026, 3, 15, 14, 30);
         Path out = tempDir.resolve("datetime.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Event>create()
                         .column("Name", Event::name)
-                        .column("Zeitpunkt", Event::when).ofType(ColumnType.DATETIME)
+                        .column("Zeitpunkt", Event::when)
+                        .ofType(ColumnType.DATETIME)
                         .data(DataProviders.ofIterable(List.of(new Event("Test", dt)))))
                 .write(out);
 
@@ -681,16 +674,15 @@ class ExcelBuilderTest {
 
     @Test
     void writesDoubleColumn() throws Exception {
-        record Measurement(String label, double value) {
-        }
+        record Measurement(String label, double value) {}
         Path out = tempDir.resolve("doubleCol.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Measurement>create()
                         .column("Label", Measurement::label)
-                        .column("Wert", Measurement::value).ofType(ColumnType.DOUBLE)
-                        .data(DataProviders.ofIterable(
-                                List.of(new Measurement("pi", 3.14159)))))
+                        .column("Wert", Measurement::value)
+                        .ofType(ColumnType.DOUBLE)
+                        .data(DataProviders.ofIterable(List.of(new Measurement("pi", 3.14159)))))
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
@@ -699,16 +691,18 @@ class ExcelBuilderTest {
 
     @Test
     void writesFormulaColumnWithoutRowPlaceholder() throws Exception {
-        record R(int a, int b) {
-        }
+        record R(int a, int b) {}
         Path out = tempDir.resolve("staticFormula.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<R>create()
-                        .column("A", R::a).ofType(ColumnType.INTEGER)
-                        .column("B", R::b).ofType(ColumnType.INTEGER)
+                        .column("A", R::a)
+                        .ofType(ColumnType.INTEGER)
+                        .column("B", R::b)
+                        .ofType(ColumnType.INTEGER)
                         // Statische Formel ohne {row}-Platzhalter
-                        .column("Summe", r -> "A2+B2").ofType(ColumnType.FORMULA)
+                        .column("Summe", r -> "A2+B2")
+                        .ofType(ColumnType.FORMULA)
                         .data(DataProviders.ofIterable(List.of(new R(5, 7)))))
                 .write(out);
 
@@ -741,7 +735,8 @@ class ExcelBuilderTest {
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Person>create()
                         .column("Name", Person::name)
-                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                        .column("Alter", Person::age)
+                        .ofType(ColumnType.INTEGER)
                         .data(DataProviders.ofIterable(List.of())))
                 .write(out);
 
@@ -753,19 +748,16 @@ class ExcelBuilderTest {
 
     @Test
     void summaryWithPrecomputedDecimal() throws Exception {
-        record Item(String name, BigDecimal betrag) {
-        }
-        List<Item> data = List.of(
-                new Item("X", new BigDecimal("10.50")),
-                new Item("Y", new BigDecimal("5.25")));
+        record Item(String name, BigDecimal betrag) {}
+        List<Item> data = List.of(new Item("X", new BigDecimal("10.50")), new Item("Y", new BigDecimal("5.25")));
         Path out = tempDir.resolve("sumDecimal.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Item>create()
                         .column("Name", Item::name)
                         .column("Betrag", Item::betrag)
-                                .ofType(ColumnType.DECIMAL)
-                                .formatForType("#,##0.00")
+                        .ofType(ColumnType.DECIMAL)
+                        .formatForType("#,##0.00")
                         .sumColumn("Betrag")
                         .summaryLabel("Name", "Gesamt")
                         // summaryAsFormula(false) ist der Default → vorberechneter Wert
@@ -803,9 +795,7 @@ class ExcelBuilderTest {
         var iterator = List.of("Eins", "Zwei").iterator();
 
         WorkbookBuilder.create()
-                .sheet(ExcelBuilder.<String>create()
-                        .column("Wert", s -> s)
-                        .data(DataProviders.ofIterator(iterator)))
+                .sheet(ExcelBuilder.<String>create().column("Wert", s -> s).data(DataProviders.ofIterator(iterator)))
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
@@ -820,7 +810,8 @@ class ExcelBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Integer>create()
-                        .column("n", i -> i).ofType(ColumnType.INTEGER)
+                        .column("n", i -> i)
+                        .ofType(ColumnType.INTEGER)
                         .sortBy("n", SortOrder.ASC)
                         .data(DataProviders.ofIterable(List.of())))
                 .write(out);
@@ -834,8 +825,7 @@ class ExcelBuilderTest {
     void externalSortChunkSizeValidation() {
         // ExternalMergeSort direkt (package-private, gleicher Package) instanziieren.
         var comparator = new RowComparator(
-                List.of(new Column<>("n", ColumnType.INTEGER, i -> i)),
-                List.of(new SortKey("n", SortOrder.ASC)));
+                List.of(new Column<>("n", ColumnType.INTEGER, i -> i)), List.of(new SortKey("n", SortOrder.ASC)));
         assertThrows(IllegalArgumentException.class, () -> new ExternalMergeSort(comparator, 0));
     }
 
@@ -853,7 +843,8 @@ class ExcelBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Integer>create()
-                        .column("n", i -> i).ofType(ColumnType.INTEGER)
+                        .column("n", i -> i)
+                        .ofType(ColumnType.INTEGER)
                         .sortBy("n", SortOrder.ASC)
                         .sortChunkSize(50) // erzwingt Auslagern in das konfigurierte Verzeichnis
                         .sortTempDir(customTmp)
@@ -893,7 +884,8 @@ class ExcelBuilderTest {
                     WorkbookBuilder.create()
                             .sheet(ExcelBuilder.<Integer>create()
                                     .sheetName("S" + id)
-                                    .column("n", i -> i).ofType(ColumnType.INTEGER)
+                                    .column("n", i -> i)
+                                    .ofType(ColumnType.INTEGER)
                                     .sortBy("n", SortOrder.ASC)
                                     .sortChunkSize(32) // erzwingt Auslagern + Merge je Thread
                                     .data(DataProviders.ofIterable(data)))
@@ -947,8 +939,7 @@ class ExcelBuilderTest {
             RowCodec.writeRow(out, original);
         }
         Row restored;
-        try (var in =
-                new java.io.DataInputStream(new java.io.ByteArrayInputStream(buffer.toByteArray()))) {
+        try (var in = new java.io.DataInputStream(new java.io.ByteArrayInputStream(buffer.toByteArray()))) {
             restored = RowCodec.readRow(in);
         }
 
@@ -966,13 +957,12 @@ class ExcelBuilderTest {
         // Hängt einen In-Memory-Appender an den Builder-Logger und prüft, dass ein sortierter Lauf
         // die Performance-Log-Zeilen (Sort, Blatt, Workbook) auf DEBUG erzeugt.
         List<String> messages = java.util.Collections.synchronizedList(new ArrayList<>());
-        AbstractAppender appender =
-                new AbstractAppender("perfCapture", null, null, true, Property.EMPTY_ARRAY) {
-                    @Override
-                    public void append(LogEvent event) {
-                        messages.add(event.getMessage().getFormattedMessage());
-                    }
-                };
+        AbstractAppender appender = new AbstractAppender("perfCapture", null, null, true, Property.EMPTY_ARRAY) {
+            @Override
+            public void append(LogEvent event) {
+                messages.add(event.getMessage().getFormattedMessage());
+            }
+        };
         appender.start();
         String loggerName = "de.makno.xlsbuilder.builder";
         org.apache.logging.log4j.core.Logger logger =
@@ -990,7 +980,8 @@ class ExcelBuilderTest {
             WorkbookBuilder.create()
                     .sheet(ExcelBuilder.<Integer>create()
                             .sheetName("L")
-                            .column("n", i -> i).ofType(ColumnType.INTEGER)
+                            .column("n", i -> i)
+                            .ofType(ColumnType.INTEGER)
                             .sortBy("n", SortOrder.ASC)
                             .sortChunkSize(10) // erzwingt Auslagern -> ExternalMergeSort-Log
                             .data(DataProviders.ofIterable(data)))
@@ -1001,11 +992,12 @@ class ExcelBuilderTest {
             Configurator.setLevel(loggerName, previous);
         }
 
-        assertTrue(messages.stream().anyMatch(m -> m.contains("External Merge Sort")),
+        assertTrue(
+                messages.stream().anyMatch(m -> m.contains("External Merge Sort")),
                 "Sort-Performance-Log fehlt: " + messages);
-        assertTrue(messages.stream().anyMatch(m -> m.contains("Blatt '")),
-                "Blatt-Performance-Log fehlt: " + messages);
-        assertTrue(messages.stream().anyMatch(m -> m.contains("Workbook:")),
+        assertTrue(messages.stream().anyMatch(m -> m.contains("Blatt '")), "Blatt-Performance-Log fehlt: " + messages);
+        assertTrue(
+                messages.stream().anyMatch(m -> m.contains("Workbook:")),
                 "Workbook-Performance-Log fehlt: " + messages);
     }
 
@@ -1024,7 +1016,8 @@ class ExcelBuilderTest {
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Person>create()
                         .column("Name", Person::name)
-                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                        .column("Alter", Person::age)
+                        .ofType(ColumnType.INTEGER)
                         .filter(Person::active) // nur aktive Mitarbeiter
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
@@ -1038,20 +1031,16 @@ class ExcelBuilderTest {
 
     @Test
     void filterCombinesWithSortAndSummary() throws Exception {
-        record Item(String name, int wert) {
-        }
-        List<Item> data = List.of(
-                new Item("A", 5),
-                new Item("B", 20),
-                new Item("C", 15),
-                new Item("D", 8),
-                new Item("E", 30));
+        record Item(String name, int wert) {}
+        List<Item> data =
+                List.of(new Item("A", 5), new Item("B", 20), new Item("C", 15), new Item("D", 8), new Item("E", 30));
         Path out = tempDir.resolve("filterSortSum.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Item>create()
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                        .column("Wert", Item::wert)
+                        .ofType(ColumnType.INTEGER)
                         .filter(i -> i.wert() > 10) // behält B(20), C(15), E(30)
                         .sortBy("Wert", SortOrder.DESC)
                         .sumColumn("Wert")
@@ -1073,16 +1062,17 @@ class ExcelBuilderTest {
 
     @Test
     void nullTextPerColumnAndDefault() throws Exception {
-        record R(String a, String b, Integer c) {
-        }
+        record R(String a, String b, Integer c) {}
         Path out = tempDir.resolve("nullText.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<R>create()
                         .defaultNullText("-")
                         .column("A", R::a)
-                        .column("B", R::b).nullText("n/a") // Spalten-Override
-                        .column("C", R::c).ofType(ColumnType.INTEGER)
+                        .column("B", R::b)
+                        .nullText("n/a") // Spalten-Override
+                        .column("C", R::c)
+                        .ofType(ColumnType.INTEGER)
                         .data(DataProviders.ofIterable(List.of(new R(null, null, null)))))
                 .write(out);
 
@@ -1094,8 +1084,7 @@ class ExcelBuilderTest {
 
     @Test
     void noNullTextLeavesCellEmpty() throws Exception {
-        record R(String a) {
-        }
+        record R(String a) {}
         Path out = tempDir.resolve("noNullText.xlsx");
 
         WorkbookBuilder.create()
@@ -1113,14 +1102,14 @@ class ExcelBuilderTest {
     void nullWritesExplicitBlankCell() throws Exception {
         // Ohne Platzhalter wird eine explizite leere Zelle (Excel-Zelltyp BLANK/"Empty") angelegt –
         // nicht einfach weggelassen. Die Zelle existiert also und hat den Typ BLANK.
-        record R(String a, Integer b) {
-        }
+        record R(String a, Integer b) {}
         Path out = tempDir.resolve("blankCell.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<R>create()
                         .column("A", R::a)
-                        .column("B", R::b).ofType(ColumnType.INTEGER)
+                        .column("B", R::b)
+                        .ofType(ColumnType.INTEGER)
                         .data(DataProviders.ofIterable(java.util.Arrays.asList(new R(null, null)))))
                 .write(out);
 
@@ -1137,16 +1126,17 @@ class ExcelBuilderTest {
 
     @Test
     void writesFooterRowsMergedAfterSummary() throws Exception {
-        record Item(String name, int wert) {
-        }
+        record Item(String name, int wert) {}
         List<Item> data = List.of(new Item("A", 10), new Item("B", 20));
         Path out = tempDir.resolve("footer.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Item>create()
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
-                        .sumColumn("Wert").summaryLabel("Name", "Summe")
+                        .column("Wert", Item::wert)
+                        .ofType(ColumnType.INTEGER)
+                        .sumColumn("Wert")
+                        .summaryLabel("Name", "Summe")
                         .footer("Ende des Berichts")
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
@@ -1160,8 +1150,7 @@ class ExcelBuilderTest {
 
     @Test
     void resolvesHeaderAndFooterPlaceholders() throws Exception {
-        record Item(String name, int wert) {
-        }
+        record Item(String name, int wert) {}
         List<Item> data = List.of(new Item("A", 10), new Item("B", 30));
         Path out = tempDir.resolve("placeholders.xlsx");
 
@@ -1169,8 +1158,10 @@ class ExcelBuilderTest {
                 .sheet(ExcelBuilder.<Item>create()
                         .header("Bericht {firma}", "Stand: {date}")
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
-                        .sumColumn("Wert").summaryLabel("Name", "Summe")
+                        .column("Wert", Item::wert)
+                        .ofType(ColumnType.INTEGER)
+                        .sumColumn("Wert")
+                        .summaryLabel("Name", "Summe")
                         .footer("Zeilen: {rowCount}, Summe Wert: {sum:Wert}")
                         .placeholder("firma", "ACME")
                         .data(DataProviders.ofIterable(data)))
@@ -1246,12 +1237,10 @@ class ExcelBuilderTest {
         // Zwei Zeilen mit inkompatiblen Werttypen in der Sortierspalte -> aussagekräftige Exception
         // statt roher ClassCastException.
         var comparator = new RowComparator(
-                List.of(new Column<>("v", ColumnType.STRING, x -> x)),
-                List.of(new SortKey("v", SortOrder.ASC)));
+                List.of(new Column<>("v", ColumnType.STRING, x -> x)), List.of(new SortKey("v", SortOrder.ASC)));
         Row textRow = new Row(new Object[] {"abc"});
         Row numberRow = new Row(new Object[] {123});
-        assertThrows(
-                IllegalArgumentException.class, () -> comparator.compare(textRow, numberRow));
+        assertThrows(IllegalArgumentException.class, () -> comparator.compare(textRow, numberRow));
     }
 
     // ========== Spaltenüberschriften-Schalter ==========
@@ -1265,7 +1254,8 @@ class ExcelBuilderTest {
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Person>create()
                         .column("Name", Person::name)
-                        .column("Alter", Person::age).ofType(ColumnType.INTEGER)
+                        .column("Alter", Person::age)
+                        .ofType(ColumnType.INTEGER)
                         .columnHeaders(false)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
@@ -1280,15 +1270,15 @@ class ExcelBuilderTest {
     @Test
     void summaryFormulaWithoutColumnHeaders() throws Exception {
         // Ohne Kopfzeile beginnen die Daten in Excel-Zeile 1 → Formel muss SUM(B1:B2) lauten.
-        record Item(String name, int wert) {
-        }
+        record Item(String name, int wert) {}
         List<Item> data = List.of(new Item("A", 10), new Item("B", 20));
         Path out = tempDir.resolve("noHeaderSum.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(ExcelBuilder.<Item>create()
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                        .column("Wert", Item::wert)
+                        .ofType(ColumnType.INTEGER)
                         .sumColumn("Wert")
                         .summaryAsFormula(true)
                         .columnHeaders(false)
@@ -1299,5 +1289,84 @@ class ExcelBuilderTest {
         // Ohne Kopfzeile: Daten in Excel-Zeilen 1–2, Summenzeile in Zeile 3
         assertEquals(3, g.rowCount());
         assertEquals("SUM(B1:B2)", g.formula(2, 1));
+    }
+
+    // ========== Einmal-Nutzung (Single-Use-Guard) ==========
+
+    @Test
+    void rejectsReuseAfterWrite() throws Exception {
+        // Dieselbe ExcelBuilder-Instanz darf nicht zweimal geschrieben werden – auch nicht über
+        // unterschiedliche Senken (xlsx danach CSV).
+        ExcelBuilder<Person> sheet = ExcelBuilder.<Person>create()
+                .column("Name", Person::name)
+                .data(DataProviders.ofIterable(List.of(new Person("Alice", 30, true))));
+
+        WorkbookBuilder.create().sheet(sheet).write(tempDir.resolve("once.xlsx"));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> sheet.writeCsv(tempDir.resolve("again.csv")),
+                "zweites Schreiben derselben Instanz muss scheitern");
+    }
+
+    @Test
+    void rejectsWorkbookReuse() throws Exception {
+        WorkbookBuilder wb = WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Person>create()
+                        .column("Name", Person::name)
+                        .data(DataProviders.ofIterable(List.of(new Person("Alice", 30, true)))));
+
+        wb.write(tempDir.resolve("wb-once.xlsx"));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> wb.write(tempDir.resolve("wb-again.xlsx")),
+                "zweiter write(...)-Aufruf desselben WorkbookBuilder muss scheitern");
+    }
+
+    // ========== Lazy/berechnete Platzhalter (placeholderResolver) ==========
+
+    @Test
+    void resolvesLazyPlaceholderInHeader() throws Exception {
+        record Item(String name, int wert) {}
+        List<Item> data = List.of(new Item("A", 10));
+        Path out = tempDir.resolve("lazyHeader.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .header("Build {version}, User {user}")
+                        .column("Name", Item::name)
+                        .column("Wert", Item::wert)
+                        .ofType(ColumnType.INTEGER)
+                        .placeholderResolver(key -> "version".equals(key) ? "1.2.3" : null)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals(
+                "Build 1.2.3, User {user}",
+                g.string(0, 0),
+                "Resolver löst {version} auf; unbekanntes {user} bleibt stehen");
+    }
+
+    @Test
+    void staticPlaceholderWinsOverResolver() throws Exception {
+        record Item(String name, int wert) {}
+        List<Item> data = List.of(new Item("A", 10));
+        Path out = tempDir.resolve("lazyPrecedence.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .header("Env {env}")
+                        .column("Name", Item::name)
+                        .column("Wert", Item::wert)
+                        .ofType(ColumnType.INTEGER)
+                        .placeholder("env", "PROD")
+                        .placeholderResolver(key -> "OVERRIDDEN")
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        assertEquals("Env PROD", g.string(0, 0), "statische Map hat Vorrang vor dem Resolver");
     }
 }
