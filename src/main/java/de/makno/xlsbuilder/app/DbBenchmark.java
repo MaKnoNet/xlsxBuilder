@@ -38,6 +38,7 @@ public final class DbBenchmark {
     public static void main(String[] args) throws IOException, SQLException {
         long rowCount = args.length > 0 ? Long.parseLong(args[0]) : 1_000_000L;
         Path out = Path.of(args.length > 1 ? args[1] : "build/employees-db.xlsx");
+        boolean parallel = args.length > 2 && "parallel".equalsIgnoreCase(args[2]);
 
         Files.createDirectories(DB_DIR);
         Runtime runtime = Runtime.getRuntime();
@@ -56,15 +57,15 @@ public final class DbBenchmark {
             }
 
             long exportStart = System.nanoTime();
-            export(conn, out);
+            export(conn, out, parallel);
 
             double seconds = (System.nanoTime() - exportStart) / 1_000_000_000.0;
             long usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);
             long fileMb = Files.size(out) / (1024 * 1024);
             System.out.printf(
-                    "Export: %,d Zeilen DB -> %s (%d MB) in %.1fs, belegter Heap ~%d MB, max Heap %d MB%n",
-                    rowCount, out.toAbsolutePath(), fileMb, seconds, usedMb,
-                    runtime.maxMemory() / (1024 * 1024));
+                    "Export%s: %,d Zeilen DB -> %s (%d MB) in %.1fs, belegter Heap ~%d MB, max Heap %d MB%n",
+                    parallel ? " (parallel)" : "", rowCount, out.toAbsolutePath(), fileMb, seconds,
+                    usedMb, runtime.maxMemory() / (1024 * 1024));
         }
     }
 
@@ -131,7 +132,8 @@ public final class DbBenchmark {
     }
 
     /** Liest die Tabelle forward-only/streamend und exportiert sie über den Builder nach {@code out}. */
-    private static void export(Connection conn, Path out) throws SQLException, IOException {
+    private static void export(Connection conn, Path out, boolean parallel)
+            throws SQLException, IOException {
         try (Statement st =
                 conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
             st.setFetchSize(1_000);
@@ -139,8 +141,8 @@ public final class DbBenchmark {
             // im Builder (External Merge Sort).
             ResultSet rs = st.executeQuery("SELECT * FROM employee");
             WorkbookBuilder.create()
-                    .sheet(EmployeeData.sheet(
-                            "Mitarbeiter", DataProviders.ofResultSet(rs, EmployeeData::map)))
+                    .sheet(EmployeeData.sheet("Mitarbeiter", DataProviders.ofResultSet(rs, EmployeeData::map))
+                            .parallel(parallel))
                     .write(out); // schließt das ResultSet via DataProvider.close()
         }
     }

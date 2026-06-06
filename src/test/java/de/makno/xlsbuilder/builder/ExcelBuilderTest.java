@@ -1133,6 +1133,114 @@ class ExcelBuilderTest {
         }
     }
 
+    // ========== Footer / Platzhalter ==========
+
+    @Test
+    void writesFooterRowsMergedAfterSummary() throws Exception {
+        record Item(String name, int wert) {
+        }
+        List<Item> data = List.of(new Item("A", 10), new Item("B", 20));
+        Path out = tempDir.resolve("footer.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .column("Name", Item::name)
+                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                        .sumColumn("Wert").summaryLabel("Name", "Summe")
+                        .footer("Ende des Berichts")
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Kopf(0) + 2 Daten(1,2) + Summe(3) + Footer(4)
+        assertEquals(5, g.rowCount());
+        assertEquals("Ende des Berichts", g.string(4, 0));
+        assertTrue(g.mergeRefs().contains("A5:B5"), "Footer gemerged über die Breite: " + g.mergeRefs());
+    }
+
+    @Test
+    void resolvesHeaderAndFooterPlaceholders() throws Exception {
+        record Item(String name, int wert) {
+        }
+        List<Item> data = List.of(new Item("A", 10), new Item("B", 30));
+        Path out = tempDir.resolve("placeholders.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<Item>create()
+                        .header("Bericht {firma}", "Stand: {date}")
+                        .column("Name", Item::name)
+                        .column("Wert", Item::wert).ofType(ColumnType.INTEGER)
+                        .sumColumn("Wert").summaryLabel("Name", "Summe")
+                        .footer("Zeilen: {rowCount}, Summe Wert: {sum:Wert}")
+                        .placeholder("firma", "ACME")
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid g = XlsxTestReader.read(out);
+        // Titel(0,1) + Kopf(2) + Daten(3,4) + Summe(5) + Footer(6)
+        assertEquals("Bericht ACME", g.string(0, 0), "benutzerdefinierter Platzhalter");
+        assertEquals("Stand: " + java.time.LocalDate.now(), g.string(1, 0), "eingebautes {date}");
+        assertEquals("Zeilen: 2, Summe Wert: 40", g.string(6, 0), "dynamische Footer-Platzhalter");
+    }
+
+    // ========== Pipeline-Parallelität ==========
+
+    @Test
+    void parallelProducesSameOutputAsSequential() throws Exception {
+        List<String> data = new ArrayList<>();
+        for (int i = 0; i < 500; i++) {
+            data.add(String.format("N%03d", (i * 137) % 500)); // Permutation -> 500 eindeutige Werte
+        }
+        Path seq = tempDir.resolve("seq.xlsx");
+        Path par = tempDir.resolve("par.xlsx");
+        writeSortedStrings(seq, data, false);
+        writeSortedStrings(par, data, true);
+
+        Grid gs = XlsxTestReader.read(seq);
+        Grid gp = XlsxTestReader.read(par);
+        assertEquals(gs.rowCount(), gp.rowCount(), "gleiche Zeilenanzahl");
+        for (int r = 0; r < gs.rowCount(); r++) {
+            assertEquals(gs.string(r, 0), gp.string(r, 0), "Zeile " + r + " identisch");
+        }
+    }
+
+    private void writeSortedStrings(Path out, List<String> data, boolean parallel) throws Exception {
+        WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<String>create()
+                        .column("Wert", s -> s)
+                        .sortBy("Wert", SortOrder.ASC)
+                        .sortChunkSize(32) // erzwingt Auslagern -> Sort + Prefetch laufen parallel
+                        .parallel(parallel)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+    }
+
+    @Test
+    void parallelPropagatesSourceErrors() {
+        DataProvider<String> failing = new DataProvider<>() {
+            private int n = 0;
+
+            @Override
+            public boolean hasNext() {
+                return true;
+            }
+
+            @Override
+            public String next() {
+                if (n++ > 5) {
+                    throw new IllegalStateException("boom");
+                }
+                return "x";
+            }
+        };
+        assertThrows(IllegalStateException.class, () -> WorkbookBuilder.create()
+                .sheet(ExcelBuilder.<String>create()
+                        .column("V", s -> s)
+                        .parallel(true)
+                        .data(failing))
+                .write(tempDir.resolve("fail.xlsx")));
+    }
+
     @Test
     void comparatorRejectsIncompatibleValueTypes() {
         // Zwei Zeilen mit inkompatiblen Werttypen in der Sortierspalte -> aussagekräftige Exception

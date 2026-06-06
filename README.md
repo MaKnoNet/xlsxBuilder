@@ -19,7 +19,9 @@ werden gestreamt geschrieben und (falls nötig) per External Merge Sort sortiert
 - **Formate** – frei wählbare Excel-Format-Codes je Spalte (`#,##0.00 "€"`, `dd.mm.yyyy`, `hh:mm`, …).
 - **Wert-Konverter** – Rohwerte vor dem Schreiben umwandeln (z. B. `int`-Sekunden → Uhrzeit).
 - **Summenzeile** – vorberechnet **oder** als echte `=SUMME(...)`-Formel.
-- **Titelzeilen** – optionale, über die Tabellenbreite zusammengeführte Überschriften.
+- **Titel-/Fußzeilen** – optionale, über die Tabellenbreite zusammengeführte Kopf-/Footer-Texte mit
+  `{platzhaltern}` (inkl. `{date}`, `{rowCount}`, `{sum:Spalte}`).
+- **CSV-Export** – dasselbe Blatt streamend als CSV (RFC 4180, konfigurierbar) statt xlsx.
 - **Automatische Spaltenbreiten** – inhaltsbasiert, damit nichts als `#####` erscheint.
 
 ## Voraussetzungen
@@ -72,6 +74,7 @@ WorkbookBuilder.create()
 |---|---|
 | `sheetName(String)` | Blattname (eindeutig erzwungen; Duplikate erhalten ein Suffix) |
 | `header(String...)` | optionale Titelzeile(n), je über die volle Breite zusammengeführt + zentriert |
+| `footer(String...)` | optionale Fußzeile(n) unter Daten/Summe, je über die volle Breite zusammengeführt |
 | `column(name, extractor)` | Spalte; Standardtyp **Text** |
 | `.ofType(ColumnType)` | Typ der zuletzt definierten Spalte |
 | `.formatForType(String)` | Excel-Format-Code der zuletzt definierten Spalte |
@@ -86,7 +89,20 @@ WorkbookBuilder.create()
 | `sumColumn(name)` | numerische Spalte summieren (aktiviert Summenzeile) |
 | `summaryLabel(name, text)` | Label in der Summenzeile (z. B. „Summe") |
 | `summaryAsFormula(boolean)` | `true` = `=SUMME(...)`-Formel, `false` (Default) = vorberechnet |
+| `placeholder(key, value)` / `placeholders(Map)` | `{key}`-Platzhalter in Titel/Kopf/Footer |
+| `parallel(boolean)` | Pipeline-Parallelität (lesen/sortieren ∥ schreiben); Default `false` |
 | `data(DataProvider<T>)` | Datenquelle des Blatts (erforderlich) |
+| `writeCsv(Path[, CsvOptions])` | dieses Blatt als CSV schreiben (statt über `WorkbookBuilder` als xlsx) |
+
+**Platzhalter:** In `header(...)`/`footer(...)`-Texten werden `{key}` ersetzt – benutzerdefiniert via
+`placeholder(...)`, eingebaut `{date}`/`{datetime}` (überschreibbar) und – nur im Footer –
+`{rowCount}` sowie `{sum:Spaltenname}`. Unbekannte Tokens bleiben unverändert.
+
+**Pipeline-Parallelität (`parallel(true)`):** Ein Hintergrund-Thread liest/sortiert, während der
+aufrufende Thread schreibt (beschränkte Queue → weiterhin out-of-core). Lohnt nur, wenn die
+Producer-Seite (langsame Remote-DB, schwere Konvertierungen) der Flaschenhals ist; bei
+POI-dominierten Lasten bringt es nichts (POI schreibt single-threaded). Auf einem Multiuser-Server
+besser **zwischen** Requests parallelisieren als hier einzuschalten.
 
 ### `DataProvider<T>` / `DataProviders`
 Forward-only Datenquelle (wird genau einmal gelesen → streamingfähig). Adapter:
@@ -151,6 +167,28 @@ Datensätze lazy beim Abruf entstehen.
 
 Die Umwandlung greift bei der Projektion – also auch für Sortierung und Summenzeile. Den
 Lambda-Parametertyp explizit angeben.
+
+### CSV-Export
+
+Ein einzelnes Blatt lässt sich statt als xlsx auch als CSV schreiben (streamend, out-of-core; Filter,
+Sortierung, Summenzeile, Footer und Platzhalter gelten ebenso):
+
+```java
+ExcelBuilder.<Employee>create()
+    .column("Name", Employee::name)
+    .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL)
+    .sortBy("Gehalt", SortOrder.DESC)
+    .data(provider)
+    .writeCsv(Path.of("export.csv"));                 // RFC 4180: Komma, UTF-8, CRLF
+
+// konfigurierbar:
+.writeCsv(Path.of("export.csv"), CsvOptions.excelGerman());            // ; + UTF-8-BOM
+.writeCsv(out, CsvOptions.DEFAULT.withDelimiter('\t').withBom(true));  // frei kombinierbar
+```
+
+Hinweise: CSV ist einblättrig (für mehrere Blätter je Blatt eine Datei). Werte werden als Text
+gerendert (Excel-Format-Codes greifen nicht); `FORMULA`-Spalten bleiben leer; die Summenzeile ist
+immer vorberechnet. Felder mit Trennzeichen/Quote/Zeilenumbruch werden RFC-4180-konform gequotet.
 
 ## Bauen & Ausführen
 

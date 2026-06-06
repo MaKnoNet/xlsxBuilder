@@ -5,8 +5,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -48,28 +50,34 @@ final class XlsxWriter {
      * @return Anzahl geschriebener Datenzeilen (ohne Titel-/Kopf-/Summenzeile) – für Performance-Logs.
      */
     static int addSheet(SXSSFWorkbook wb, String sheetName, List<? extends Column<?>> columns,
-                         List<String> headerLines, Iterator<Row> rows, SummarySpec summary,
-                         boolean showColumnHeaders, String defaultNullText) {
+                         Iterator<Row> rows, SummarySpec summary, SheetWriteOptions layout) {
         SXSSFSheet sheet = wb.createSheet(uniqueSheetName(wb, sheetName));
         enableFormulaRecalculationIfNeeded(sheet, columns, summary);
 
         CreationHelper helper = wb.getCreationHelper();
         CellStyle[] columnStyles = buildColumnStyles(wb, helper, columns);
         CellStyle titleStyle = buildTitleStyle(wb);
-        ColumnWidthEstimator widths = new ColumnWidthEstimator(columns, showColumnHeaders);
+        CellStyle footerStyle = buildFooterStyle(wb);
+        boolean showHeaders = layout.showColumnHeaders();
+        Map<String, String> placeholders = layout.placeholders();
+        ColumnWidthEstimator widths = new ColumnWidthEstimator(columns, showHeaders);
 
         int lastCol = columns.size() - 1;
-        int rowNum = writeTitleRows(sheet, headerLines, titleStyle, lastCol);
-        rowNum = writeColumnHeaders(sheet, columns, rowNum, showColumnHeaders);
+        int rowNum = writeTitleRows(sheet, layout.headerLines(), placeholders, titleStyle, lastCol);
+        rowNum = writeColumnHeaders(sheet, columns, rowNum, showHeaders);
 
         BigDecimal[] sums = initSums(columns, summary);
         int firstDataRow0 = rowNum; // 0-basierter Index der ersten Datenzeile
-        rowNum = writeDataRows(sheet, columns, rows, columnStyles, widths, sums, rowNum, defaultNullText);
+        rowNum = writeDataRows(
+                sheet, columns, rows, columnStyles, widths, sums, rowNum, layout.defaultNullText());
 
         int dataRowCount = rowNum - firstDataRow0;
         // Excel-Zeilennummern sind 1-basiert: erste Datenzeile = firstDataRow0 + 1, letzte = rowNum.
-        writeSummaryRow(sheet, columns, columnStyles, widths, summary, sums,
+        rowNum = writeSummaryRow(sheet, columns, columnStyles, widths, summary, sums,
                 rowNum, firstDataRow0 + 1, rowNum, dataRowCount);
+
+        writeFooterRows(sheet, layout.footerLines(), placeholders, columns, sums, dataRowCount,
+                footerStyle, lastCol, rowNum);
 
         widths.applyTo(sheet);
         return dataRowCount;
@@ -93,12 +101,13 @@ final class XlsxWriter {
 
     /** Schreibt die optionalen Titelzeilen (je über die volle Breite zusammengeführt). Gibt die nächste Zeile zurück. */
     private static int writeTitleRows(SXSSFSheet sheet, List<String> headerLines,
-                                      CellStyle titleStyle, int lastCol) {
+                                      Map<String, String> placeholders, CellStyle titleStyle,
+                                      int lastCol) {
         int rowNum = 0;
         if (headerLines != null) {
             for (String line : headerLines) {
                 Cell cell = sheet.createRow(rowNum).createCell(0);
-                cell.setCellValue(line);
+                cell.setCellValue(Placeholders.resolve(line, placeholders));
                 cell.setCellStyle(titleStyle);
                 if (lastCol > 0) {
                     sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, lastCol));
@@ -170,13 +179,16 @@ final class XlsxWriter {
         return rowNum;
     }
 
-    /** Schreibt die optionale Summenzeile (vorberechneter Wert oder echte {@code =SUM(...)}-Formel). */
-    private static void writeSummaryRow(SXSSFSheet sheet, List<? extends Column<?>> columns,
+    /**
+     * Schreibt die optionale Summenzeile (vorberechneter Wert oder echte {@code =SUM(...)}-Formel).
+     * Gibt die nächste freie Zeile zurück (für die Footer-Zeilen).
+     */
+    private static int writeSummaryRow(SXSSFSheet sheet, List<? extends Column<?>> columns,
                                         CellStyle[] columnStyles, ColumnWidthEstimator widths,
                                         SummarySpec summary, BigDecimal[] sums, int rowNum,
                                         int firstDataRowNum, int lastDataRowNum, int dataRowCount) {
         if (summary == null) {
-            return;
+            return rowNum;
         }
         org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum);
         boolean asFormula = summary.useFormula() && dataRowCount > 0;
@@ -200,6 +212,48 @@ final class XlsxWriter {
                 widths.ensureAtLeast(c, summary.labelText().length());
             }
         }
+        return rowNum + 1;
+    }
+
+    /**
+     * Schreibt die optionalen Footer-Zeilen (je über die volle Breite zusammengeführt). Löst dabei die
+     * dynamischen Platzhalter {@code {rowCount}} und {@code {sum:Spalte}} (zusätzlich zu den statischen) auf.
+     */
+    private static void writeFooterRows(SXSSFSheet sheet, List<String> footerLines,
+                                        Map<String, String> staticPlaceholders,
+                                        List<? extends Column<?>> columns, BigDecimal[] sums,
+                                        int dataRowCount, CellStyle footerStyle, int lastCol, int rowNum) {
+        if (footerLines == null || footerLines.isEmpty()) {
+            return;
+        }
+        Map<String, String> values = new HashMap<>(staticPlaceholders);
+        values.put("rowCount", Integer.toString(dataRowCount));
+        if (sums != null) {
+            for (int c = 0; c < columns.size(); c++) {
+                if (sums[c] != null) {
+                    values.put(
+                            "sum:" + columns.get(c).name(), sumAsText(columns.get(c).type(), sums[c]));
+                }
+            }
+        }
+        for (String line : footerLines) {
+            Cell cell = sheet.createRow(rowNum).createCell(0);
+            cell.setCellValue(Placeholders.resolve(line, values));
+            cell.setCellStyle(footerStyle);
+            if (lastCol > 0) {
+                sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, lastCol));
+            }
+            rowNum++;
+        }
+    }
+
+    /** Textdarstellung einer Summe für {@code {sum:Spalte}}-Platzhalter. */
+    private static String sumAsText(ColumnType type, BigDecimal sum) {
+        return switch (type) {
+            case DOUBLE -> Double.toString(sum.doubleValue());
+            case INTEGER, LONG -> Long.toString(sum.longValue());
+            default -> sum.toPlainString();
+        };
     }
 
     /** Erzeugt einen für das Workbook eindeutigen, gültigen Blattnamen (Excel verbietet Duplikate). */
@@ -345,6 +399,16 @@ final class XlsxWriter {
         titleStyle.setAlignment(HorizontalAlignment.CENTER);
         titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
         return titleStyle;
+    }
+
+    private static CellStyle buildFooterStyle(SXSSFWorkbook wb) {
+        Font footerFont = wb.createFont();
+        footerFont.setItalic(true);
+        footerFont.setFontHeightInPoints((short) 10);
+        CellStyle footerStyle = wb.createCellStyle();
+        footerStyle.setFont(footerFont);
+        footerStyle.setAlignment(HorizontalAlignment.CENTER);
+        return footerStyle;
     }
 
     private static void writeCell(org.apache.poi.ss.usermodel.Row row, int col, ColumnType type,

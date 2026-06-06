@@ -1,10 +1,16 @@
 package de.makno.xlsbuilder.builder;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
@@ -57,9 +63,11 @@ public final class ExcelBuilder<T> {
 
     private String sheetName = "Sheet1";
     private final List<String> headerLines = new ArrayList<>();
+    private final List<String> footerLines = new ArrayList<>();
     private final List<Column<T>> columns = new ArrayList<>();
     private final List<SortKey> sortKeys = new ArrayList<>();
     private final List<String> sumColumnNames = new ArrayList<>();
+    private final Map<String, String> placeholders = new LinkedHashMap<>();
     private String summaryLabelColumn;
     private String summaryLabelText;
     private boolean summaryAsFormula;
@@ -68,7 +76,14 @@ public final class ExcelBuilder<T> {
     private Path sortTempDir; // null = System-Temp (java.io.tmpdir)
     private Predicate<? super T> filter; // null = keine Filterung (alle Objekte)
     private String defaultNullText; // sheet-weiter Platzhalter für null; null = leere Zelle
+    private boolean parallel; // Pipeline-Parallelität (Producer/Consumer); Default aus
     private DataProvider<T> dataProvider;
+
+    /** Senke für den projizierten/sortierten Zeilenstrom (xlsx oder CSV); liefert die Zeilenanzahl. */
+    @FunctionalInterface
+    private interface RowSink {
+        int write(Iterator<Row> rows) throws IOException;
+    }
 
     private ExcelBuilder() {
     }
@@ -244,6 +259,45 @@ public final class ExcelBuilder<T> {
         return this;
     }
 
+    /**
+     * Optionale Fußzeile(n) unterhalb der Daten (und einer evtl. Summenzeile), je über die volle Breite
+     * zusammengeführt. Mehrfacher Aufruf hängt weitere Zeilen an. Unterstützt Platzhalter (siehe
+     * {@link #placeholder(String, String)}), inkl. dynamisch {@code {rowCount}} und {@code {sum:Spalte}}.
+     */
+    public ExcelBuilder<T> footer(String... lines) {
+        for (String line : lines) {
+            footerLines.add(Objects.requireNonNull(line, "line"));
+        }
+        return this;
+    }
+
+    /**
+     * Definiert einen Platzhalter {@code {key}}, der in Titel-, Kopf- und Footer-Texten ersetzt wird.
+     * Eingebaut sind zusätzlich {@code {date}}/{@code {datetime}} (überschreibbar) sowie – nur im Footer –
+     * {@code {rowCount}} und {@code {sum:Spaltenname}}.
+     */
+    public ExcelBuilder<T> placeholder(String key, String value) {
+        placeholders.put(Objects.requireNonNull(key, "key"), Objects.requireNonNull(value, "value"));
+        return this;
+    }
+
+    /** Fügt mehrere Platzhalter auf einmal hinzu (siehe {@link #placeholder(String, String)}). */
+    public ExcelBuilder<T> placeholders(Map<String, String> values) {
+        values.forEach(this::placeholder);
+        return this;
+    }
+
+    /**
+     * Aktiviert die optionale Pipeline-Parallelität für dieses Blatt: ein Hintergrund-Thread liest/
+     * sortiert, während der aufrufende Thread schreibt (Producer/Consumer über eine beschränkte Queue).
+     * Default {@code false}. Kostet einen Zusatz-Thread je Blatt – bei hoher Request-Nebenläufigkeit
+     * bewusst einsetzen. Das Ergebnis ist identisch zum sequenziellen Modus.
+     */
+    public ExcelBuilder<T> parallel(boolean enabled) {
+        this.parallel = enabled;
+        return this;
+    }
+
     /** Setzt die Datenquelle dieses Blatts. Erforderlich, bevor das Blatt geschrieben wird. */
     public ExcelBuilder<T> data(DataProvider<T> provider) {
         this.dataProvider = Objects.requireNonNull(provider, "provider");
@@ -251,48 +305,92 @@ public final class ExcelBuilder<T> {
     }
 
     /**
+     * Schreibt dieses <em>eine</em> Blatt als CSV ({@link CsvOptions#DEFAULT}, RFC 4180). Für mehrere
+     * Blätter je Blatt eine eigene CSV-Datei erzeugen.
+     */
+    public void writeCsv(Path out) throws IOException {
+        writeCsv(out, CsvOptions.DEFAULT);
+    }
+
+    /** Schreibt dieses Blatt als CSV in die Datei {@code out} mit den angegebenen {@link CsvOptions}. */
+    public void writeCsv(Path out, CsvOptions options) throws IOException {
+        Objects.requireNonNull(out, "out");
+        try (OutputStream os = Files.newOutputStream(out)) {
+            writeCsv(os, options);
+        }
+    }
+
+    /** Schreibt dieses Blatt als CSV in den {@code OutputStream} (wird nicht geschlossen). */
+    public void writeCsv(OutputStream out, CsvOptions options) throws IOException {
+        Objects.requireNonNull(out, "out");
+        Objects.requireNonNull(options, "options");
+        SummarySpec summary = buildSummarySpec();
+        SheetWriteOptions layout = buildLayout();
+        long start = System.nanoTime();
+        int rows = process(r -> CsvWriter.write(out, columns, r, summary, layout, options));
+        LOG.debug("Blatt '{}': {} Zeilen als CSV{} in {} ms",
+                sheetName, rows, parallel ? ", parallel" : "", (System.nanoTime() - start) / 1_000_000);
+    }
+
+    /**
      * Rendert dieses Blatt in ein vorhandenes Workbook (vom {@link WorkbookBuilder} aufgerufen).
      * Verarbeitet die Datenquelle gestreamt; bei Sortierung via {@link ExternalMergeSort} out-of-core.
      */
     void renderInto(SXSSFWorkbook wb) throws IOException {
+        SummarySpec summary = buildSummarySpec();
+        SheetWriteOptions layout = buildLayout();
+        long start = System.nanoTime();
+        int rows = process(r -> XlsxWriter.addSheet(wb, sheetName, columns, r, summary, layout));
+        LOG.debug("Blatt '{}': {} Zeilen ({}{}) in {} ms",
+                sheetName, rows, sortKeys.isEmpty() ? "unsortiert" : "sortiert",
+                parallel ? ", parallel" : "", (System.nanoTime() - start) / 1_000_000);
+    }
+
+    /**
+     * Gemeinsame Verarbeitung für xlsx und CSV: Validierung, Projektion (+ Filter), optionale
+     * Out-of-core-Sortierung und Lifecycle; übergibt den finalen {@link Row}-Strom an die Senke.
+     */
+    private int process(RowSink sink) throws IOException {
         if (columns.isEmpty()) {
             throw new IllegalStateException("Mindestens eine Spalte muss definiert sein");
         }
         if (dataProvider == null) {
             throw new IllegalStateException("Kein DataProvider gesetzt (.data(...)) für Blatt: " + sheetName);
         }
-
-        SummarySpec summary = buildSummarySpec();
-        List<String> header = headerLines.isEmpty() ? null : headerLines;
-
         try (DataProvider<T> p = dataProvider) {
             Iterator<Row> projected = projection(p);
             if (sortKeys.isEmpty()) {
-                long writeStart = System.nanoTime();
-                int rows = XlsxWriter.addSheet(wb, sheetName, columns, header, projected, summary,
-                        showColumnHeaders, defaultNullText);
-                LOG.debug("Blatt '{}': {} Zeilen, unsortiert – Schreibphase {} ms",
-                        sheetName, rows, (System.nanoTime() - writeStart) / 1_000_000);
-            } else {
-                RowComparator comparator = new RowComparator(columns, sortKeys);
-                try (ExternalMergeSort sorter =
-                        new ExternalMergeSort(comparator, sortChunkSize, sortTempDir)) {
-                    // sort() konsumiert die Projektion (und damit den Provider) vollständig ...
-                    long sortStart = System.nanoTime();
-                    CloseableIterator<Row> sorted = sorter.sort(projected);
-                    long sortMs = (System.nanoTime() - sortStart) / 1_000_000;
-                    // ... danach wird der sortierte Strom in das Blatt geschrieben (inkl. finalem Merge).
-                    long writeStart = System.nanoTime();
-                    try (sorted) {
-                        int rows = XlsxWriter.addSheet(wb, sheetName, columns, header, sorted, summary,
-                                showColumnHeaders, defaultNullText);
-                        LOG.debug("Blatt '{}': {} Zeilen, sortiert – Sortierphase {} ms, "
-                                        + "Schreibphase {} ms",
-                                sheetName, rows, sortMs, (System.nanoTime() - writeStart) / 1_000_000);
-                    }
+                return consume(projected, sink);
+            }
+            RowComparator comparator = new RowComparator(columns, sortKeys);
+            try (ExternalMergeSort sorter =
+                    new ExternalMergeSort(comparator, sortChunkSize, sortTempDir)) {
+                CloseableIterator<Row> sorted = sorter.sort(projected);
+                try (sorted) {
+                    return consume(sorted, sink);
                 }
             }
         }
+    }
+
+    /** Schreibt den Strom – optional über eine Prefetch-Pipeline (lesen/sortieren ∥ schreiben). */
+    private int consume(Iterator<Row> rows, RowSink sink) throws IOException {
+        if (!parallel) {
+            return sink.write(rows);
+        }
+        try (PrefetchingRowIterator prefetch = new PrefetchingRowIterator(rows)) {
+            return sink.write(prefetch);
+        }
+    }
+
+    /** Baut die Layout-Optionen inkl. der statisch auflösbaren Platzhalter ({@code {date}}/{@code {datetime}}). */
+    private SheetWriteOptions buildLayout() {
+        List<String> header = headerLines.isEmpty() ? null : headerLines;
+        Map<String, String> staticPlaceholders = new LinkedHashMap<>(placeholders);
+        staticPlaceholders.putIfAbsent("date", LocalDate.now().toString());
+        staticPlaceholders.putIfAbsent("datetime", LocalDateTime.now().withNano(0).toString());
+        return new SheetWriteOptions(
+                header, footerLines, staticPlaceholders, showColumnHeaders, defaultNullText);
     }
 
     /** Baut die Summenzeilen-Konfiguration oder {@code null}, falls keine Summenzeile gewünscht ist. */
