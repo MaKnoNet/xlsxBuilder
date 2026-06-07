@@ -1295,8 +1295,7 @@ class ExcelBuilderTest {
 
     @Test
     void rejectsReuseAfterWrite() throws Exception {
-        // Dieselbe ExcelBuilder-Instanz darf nicht zweimal geschrieben werden – auch nicht über
-        // unterschiedliche Senken (xlsx danach CSV).
+        // Dieselbe ExcelBuilder-Instanz darf nicht zweimal geschrieben werden (forward-only Quelle).
         ExcelBuilder<Person> sheet = ExcelBuilder.<Person>create()
                 .column("Name", Person::name)
                 .data(DataProviders.ofIterable(List.of(new Person("Alice", 30, true))));
@@ -1305,7 +1304,7 @@ class ExcelBuilderTest {
 
         assertThrows(
                 IllegalStateException.class,
-                () -> sheet.writeCsv(tempDir.resolve("again.csv")),
+                () -> WorkbookBuilder.create().sheet(sheet).write(tempDir.resolve("again.xlsx")),
                 "zweites Schreiben derselben Instanz muss scheitern");
     }
 

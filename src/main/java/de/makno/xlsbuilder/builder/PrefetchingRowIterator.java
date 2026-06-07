@@ -9,7 +9,7 @@ import java.util.concurrent.BlockingQueue;
  * Überlappt das Erzeugen der Zeilen (Projektion/DB-Read + k-way-Merge) mit dem Schreiben: ein
  * Daemon-Hintergrund-Thread zieht aus der Quelle und füllt eine beschränkte {@link BlockingQueue},
  * der konsumierende (Schreib-)Thread entnimmt. So bleibt der Speicher out-of-core (Queue ist
- * begrenzt), während Lese-/Sortier-I/O und POI/CSV-Schreiben parallel laufen.
+ * begrenzt), während Lese-/Sortier-I/O und POI-Schreiben parallel laufen.
  *
  * <p>Nur ein Zusatz-Thread je Blatt. {@link #close()} stoppt den Thread sauber (kein Leak) und wird
  * via try-with-resources <em>vor</em> Sorter/DataProvider geschlossen.

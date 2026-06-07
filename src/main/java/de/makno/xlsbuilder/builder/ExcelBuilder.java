@@ -1,8 +1,6 @@
 package de.makno.xlsbuilder.builder;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,14 +37,13 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  *   <li>Summenzeile ({@link #sumColumn}), Titelzeilen ({@link #header}) und Fußzeilen
  *       ({@link #footer}) – je mit {@code {platzhaltern}} ({@link #placeholder});</li>
  *   <li>Null-Wert-Platzhalter ({@link #defaultNullText}/{@link #nullText});</li>
- *   <li>Ausgabe als {@code .xlsx} (über den {@link WorkbookBuilder}) <em>oder</em> als CSV
- *       ({@link #writeCsv(java.nio.file.Path)});</li>
+ *   <li>Ausgabe als {@code .xlsx} (über den {@link WorkbookBuilder});</li>
  *   <li>optionale Pipeline-Parallelität ({@link #parallel(boolean)}).</li>
  * </ul>
  *
  * <p>Ein {@code ExcelBuilder} beschreibt genau <em>ein</em> Blatt (inkl. Datenquelle via
- * {@link #data(DataProvider)}). Als {@code .xlsx} wird über den {@link WorkbookBuilder} geschrieben
- * (ein oder mehrere Blätter je Datei); als CSV direkt über {@link #writeCsv(java.nio.file.Path)}.
+ * {@link #data(DataProvider)}). Geschrieben wird als {@code .xlsx} über den {@link WorkbookBuilder}
+ * (ein oder mehrere Blätter je Datei).
  *
  * <pre>{@code
  * WorkbookBuilder.create()
@@ -66,7 +63,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  * Zeilen je Sortierung im Speicher – bei vielen gleichzeitigen Aufträgen summiert sich das, daher
  * ggf. die Nebenläufigkeit begrenzen oder {@code sortChunkSize} kleiner wählen. Der übergebene
  * {@link DataProvider} darf ebenfalls nicht zwischen Threads geteilt werden. Ein zweites Schreiben
- * derselben Instanz (erneutes {@code write}/{@link #writeCsv(java.nio.file.Path)}) wirft eine
+ * derselben Instanz (erneutes Schreiben über den {@link WorkbookBuilder}) wirft eine
  * {@link IllegalStateException}, da die Datenquelle forward-only/einmalig ist.
  */
 public final class ExcelBuilder<T> {
@@ -92,10 +89,10 @@ public final class ExcelBuilder<T> {
     private Predicate<? super T> filter; // null = keine Filterung (alle Objekte)
     private String defaultNullText; // sheet-weiter Platzhalter für null; null = leere Zelle
     private boolean parallel; // Pipeline-Parallelität (Producer/Consumer); Default aus
-    private boolean consumed; // Einmal-Nutzung: nach write/writeCsv nicht erneut verwendbar
+    private boolean consumed; // Einmal-Nutzung: nach dem Schreiben nicht erneut verwendbar
     private DataProvider<T> dataProvider;
 
-    /** Senke für den projizierten/sortierten Zeilenstrom (xlsx oder CSV); liefert die Zeilenanzahl. */
+    /** Senke für den projizierten/sortierten Zeilenstrom (xlsx); liefert die Zeilenanzahl. */
     @FunctionalInterface
     private interface RowSink {
         int write(Iterator<Row> rows) throws IOException;
@@ -360,38 +357,6 @@ public final class ExcelBuilder<T> {
     }
 
     /**
-     * Schreibt dieses <em>eine</em> Blatt als CSV ({@link CsvOptions#DEFAULT}, RFC 4180). Für mehrere
-     * Blätter je Blatt eine eigene CSV-Datei erzeugen.
-     */
-    public void writeCsv(Path out) throws IOException {
-        writeCsv(out, CsvOptions.DEFAULT);
-    }
-
-    /** Schreibt dieses Blatt als CSV in die Datei {@code out} mit den angegebenen {@link CsvOptions}. */
-    public void writeCsv(Path out, CsvOptions options) throws IOException {
-        Objects.requireNonNull(out, "out");
-        try (OutputStream os = Files.newOutputStream(out)) {
-            writeCsv(os, options);
-        }
-    }
-
-    /** Schreibt dieses Blatt als CSV in den {@code OutputStream} (wird nicht geschlossen). */
-    public void writeCsv(OutputStream out, CsvOptions options) throws IOException {
-        Objects.requireNonNull(out, "out");
-        Objects.requireNonNull(options, "options");
-        SummarySpec summary = buildSummarySpec();
-        SheetWriteOptions layout = buildLayout();
-        long start = System.nanoTime();
-        int rows = process(r -> CsvWriter.write(out, columns, r, summary, layout, options));
-        LOG.debug(
-                "Blatt '{}': {} Zeilen als CSV{} in {} ms",
-                sheetName,
-                rows,
-                parallel ? ", parallel" : "",
-                (System.nanoTime() - start) / 1_000_000);
-    }
-
-    /**
      * Rendert dieses Blatt in ein vorhandenes Workbook (vom {@link WorkbookBuilder} aufgerufen).
      * Verarbeitet die Datenquelle gestreamt; bei Sortierung via {@link ExternalMergeSort} out-of-core.
      */
@@ -410,7 +375,7 @@ public final class ExcelBuilder<T> {
     }
 
     /**
-     * Gemeinsame Verarbeitung für xlsx und CSV: Validierung, Projektion (+ Filter), optionale
+     * Gemeinsame Verarbeitung des xlsx-Schreibens: Validierung, Projektion (+ Filter), optionale
      * Out-of-core-Sortierung und Lifecycle; übergibt den finalen {@link Row}-Strom an die Senke.
      */
     private int process(RowSink sink) throws IOException {

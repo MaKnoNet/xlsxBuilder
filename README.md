@@ -21,7 +21,6 @@ werden gestreamt geschrieben und (falls nötig) per External Merge Sort sortiert
 - **Summenzeile** – vorberechnet **oder** als echte `=SUMME(...)`-Formel.
 - **Titel-/Fußzeilen** – optionale, über die Tabellenbreite zusammengeführte Kopf-/Footer-Texte mit
   `{platzhaltern}` (inkl. `{date}`, `{rowCount}`, `{sum:Spalte}`).
-- **CSV-Export** – dasselbe Blatt streamend als CSV (RFC 4180, konfigurierbar) statt xlsx.
 - **Automatische Spaltenbreiten** – inhaltsbasiert, damit nichts als `#####` erscheint.
 
 ## Voraussetzungen
@@ -93,7 +92,6 @@ WorkbookBuilder.create()
 | `placeholderResolver(Function<String,String>)` | Fallback für lazy/berechnete Platzhalter (statische Map hat Vorrang) |
 | `parallel(boolean)` | Pipeline-Parallelität (lesen/sortieren ∥ schreiben); Default `false` |
 | `data(DataProvider<T>)` | Datenquelle des Blatts (erforderlich) |
-| `writeCsv(Path[, CsvOptions])` | dieses Blatt als CSV schreiben (statt über `WorkbookBuilder` als xlsx) |
 
 **Platzhalter:** In `header(...)`/`footer(...)`-Texten werden `{key}` ersetzt – benutzerdefiniert via
 `placeholder(...)`, eingebaut `{date}`/`{datetime}` (überschreibbar) und – nur im Footer –
@@ -172,28 +170,6 @@ Datensätze lazy beim Abruf entstehen.
 Die Umwandlung greift bei der Projektion – also auch für Sortierung und Summenzeile. Den
 Lambda-Parametertyp explizit angeben.
 
-### CSV-Export
-
-Ein einzelnes Blatt lässt sich statt als xlsx auch als CSV schreiben (streamend, out-of-core; Filter,
-Sortierung, Summenzeile, Footer und Platzhalter gelten ebenso):
-
-```java
-ExcelBuilder.<Employee>create()
-    .column("Name", Employee::name)
-    .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL)
-    .sortBy("Gehalt", SortOrder.DESC)
-    .data(provider)
-    .writeCsv(Path.of("export.csv"));                 // RFC 4180: Komma, UTF-8, CRLF
-
-// konfigurierbar:
-.writeCsv(Path.of("export.csv"), CsvOptions.excelGerman());            // ; + UTF-8-BOM
-.writeCsv(out, CsvOptions.DEFAULT.withDelimiter('\t').withBom(true));  // frei kombinierbar
-```
-
-Hinweise: CSV ist einblättrig (für mehrere Blätter je Blatt eine Datei). Werte werden als Text
-gerendert (Excel-Format-Codes greifen nicht); `FORMULA`-Spalten bleiben leer; die Summenzeile ist
-immer vorberechnet. Felder mit Trennzeichen/Quote/Zeilenumbruch werden RFC-4180-konform gequotet.
-
 ## Bauen & Ausführen
 
 ```bash
@@ -268,7 +244,7 @@ laufen daher isoliert, solange jeder Thread **eigene** Builder-Instanzen verwend
 
 - **Builder sind nicht thread-safe und single-use.** Pro Request `WorkbookBuilder.create()` /
   `ExcelBuilder.create()` neu erzeugen; eine Instanz nicht zwischen Threads teilen. Ein zweites
-  Schreiben derselben Instanz (`write`/`writeCsv`) wirft eine `IllegalStateException` – die
+  Schreiben derselben Instanz (`write`) wirft eine `IllegalStateException` – die
   Datenquelle ist forward-only/einmalig.
 - **Pro `write()` entsteht ein eigenes POI-Workbook.** Zwei Aufträge dürfen nicht gleichzeitig in
   dieselbe Datei schreiben (jeweils eigener `OutputStream`/`Path`).

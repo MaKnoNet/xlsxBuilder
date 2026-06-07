@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Bündelt die Layout-Parameter für das Schreiben eines Blatts (xlsx oder CSV) und hält die
+ * Bündelt die Layout-Parameter für das Schreiben eines Blatts (xlsx) und hält die
  * Writer-Signaturen schlank.
  *
  * @param headerLines         optionale Titelzeilen oberhalb der Kopfzeile (oder {@code null})
