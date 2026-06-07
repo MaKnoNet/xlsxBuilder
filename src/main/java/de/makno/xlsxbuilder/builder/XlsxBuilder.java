@@ -338,6 +338,11 @@ public final class XlsxBuilder<T> {
      * consider: every enabled export costs an extra thread – there you scale throughput better
      * <em>between</em> requests (thread pool) than by enabling this individually. When in doubt, measure
      * with and without.
+     *
+     * <p><b>Contract:</b> with {@code parallel(true)} the {@link DataProvider} (and any conversion) is
+     * read on a background thread and should be reasonably bounded and honor thread interruption. A
+     * {@code next()} that blocks uninterruptibly can delay shutdown; the stop is then best-effort and a
+     * warning is logged.
      */
     public XlsxBuilder<T> parallel(boolean enabled) {
         this.parallel = enabled;

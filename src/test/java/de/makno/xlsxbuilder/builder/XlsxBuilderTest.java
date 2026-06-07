@@ -281,7 +281,7 @@ class XlsxBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Item>create()
-                        .header("Bericht") // Titelzeile -> Datenbereich ist versetzt
+                        .header("Bericht") // title row -> the data area is shifted
                         .column("Name", Item::name)
                         .column("Wert", Item::wert)
                         .ofType(ColumnType.INTEGER)
@@ -846,7 +846,7 @@ class XlsxBuilderTest {
                         .column("n", i -> i)
                         .ofType(ColumnType.INTEGER)
                         .sortBy("n", SortOrder.ASC)
-                        .sortChunkSize(50) // erzwingt Auslagern in das konfigurierte Verzeichnis
+                        .sortChunkSize(50) // forces spilling into the configured directory
                         .sortTempDir(customTmp)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
@@ -876,7 +876,7 @@ class XlsxBuilderTest {
                 futures.add(pool.submit(() -> {
                     List<Integer> data = new ArrayList<>();
                     for (int i = 0; i < rowsPerTask; i++) {
-                        data.add(id * 1_000 + i); // pro Task eindeutiger Wertebereich
+                        data.add(id * 1_000 + i); // per-task unique value range
                     }
                     Collections.shuffle(data, new java.util.Random(id));
                     Path out = tempDir.resolve("concurrent-" + id + ".xlsx");
@@ -887,7 +887,7 @@ class XlsxBuilderTest {
                                     .column("n", i -> i)
                                     .ofType(ColumnType.INTEGER)
                                     .sortBy("n", SortOrder.ASC)
-                                    .sortChunkSize(32) // erzwingt Auslagern + Merge je Thread
+                                    .sortChunkSize(32) // forces spilling + merge per thread
                                     .data(DataProviders.ofIterable(data)))
                             .write(out);
 
@@ -904,7 +904,7 @@ class XlsxBuilderTest {
         }
         assertTrue(pool.awaitTermination(60, TimeUnit.SECONDS), "Alle Tasks müssen fertig werden");
         for (Future<?> f : futures) {
-            f.get(); // propagiert etwaige AssertionErrors aus den Threads -> Test schlägt fehl
+            f.get(); // propagates any AssertionErrors from the threads -> test fails
         }
     }
 
@@ -983,7 +983,7 @@ class XlsxBuilderTest {
                             .column("n", i -> i)
                             .ofType(ColumnType.INTEGER)
                             .sortBy("n", SortOrder.ASC)
-                            .sortChunkSize(10) // erzwingt Auslagern -> ExternalMergeSort-Log
+                            .sortChunkSize(10) // forces spilling -> ExternalMergeSort log
                             .data(DataProviders.ofIterable(data)))
                     .write(out);
         } finally {
@@ -1018,7 +1018,7 @@ class XlsxBuilderTest {
                         .column("Name", Person::name)
                         .column("Alter", Person::age)
                         .ofType(ColumnType.INTEGER)
-                        .filter(Person::active) // nur aktive Mitarbeiter
+                        .filter(Person::active) // only active employees
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
@@ -1041,7 +1041,7 @@ class XlsxBuilderTest {
                         .column("Name", Item::name)
                         .column("Wert", Item::wert)
                         .ofType(ColumnType.INTEGER)
-                        .filter(i -> i.wert() > 10) // behält B(20), C(15), E(30)
+                        .filter(i -> i.wert() > 10) // keeps B(20), C(15), E(30)
                         .sortBy("Wert", SortOrder.DESC)
                         .sumColumn("Wert")
                         .summaryLabel("Name", "Summe")
@@ -1070,7 +1070,7 @@ class XlsxBuilderTest {
                         .defaultNullText("-")
                         .column("A", R::a)
                         .column("B", R::b)
-                        .nullText("n/a") // Spalten-Override
+                        .nullText("n/a") // column override
                         .column("C", R::c)
                         .ofType(ColumnType.INTEGER)
                         .data(DataProviders.ofIterable(List.of(new R(null, null, null)))))
@@ -1114,7 +1114,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         try (Workbook wb = WorkbookFactory.create(Files.newInputStream(out))) {
-            var dataRow = wb.getSheetAt(0).getRow(1); // erste Datenzeile (nach Kopfzeile)
+            var dataRow = wb.getSheetAt(0).getRow(1); // first data row (after the header)
             assertNotNull(dataRow.getCell(0), "Zelle A muss als Empty existieren");
             assertEquals(CellType.BLANK, dataRow.getCell(0).getCellType());
             assertNotNull(dataRow.getCell(1), "Zelle B muss als Empty existieren");
@@ -1180,7 +1180,7 @@ class XlsxBuilderTest {
     void parallelProducesSameOutputAsSequential() throws Exception {
         List<String> data = new ArrayList<>();
         for (int i = 0; i < 500; i++) {
-            data.add(String.format("N%03d", (i * 137) % 500)); // Permutation -> 500 eindeutige Werte
+            data.add(String.format("N%03d", (i * 137) % 500)); // permutation -> 500 unique values
         }
         Path seq = tempDir.resolve("seq.xlsx");
         Path par = tempDir.resolve("par.xlsx");
@@ -1200,7 +1200,7 @@ class XlsxBuilderTest {
                 .sheet(XlsxBuilder.<String>create()
                         .column("Wert", s -> s)
                         .sortBy("Wert", SortOrder.ASC)
-                        .sortChunkSize(32) // erzwingt Auslagern -> Sort + Prefetch laufen parallel
+                        .sortChunkSize(32) // forces spilling -> sort + prefetch run in parallel
                         .parallel(parallel)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
@@ -1407,5 +1407,56 @@ class XlsxBuilderTest {
 
         assertTrue(Files.isDirectory(sheetDir), "per-sheet sortTempDir is used");
         assertFalse(Files.exists(wbDefault), "the sheet's own sortTempDir overrides the workbook default");
+    }
+
+    // ========== Parallel pipeline: exception hardening ==========
+
+    @Test
+    void prefetchLogsWarningWhenProducerDoesNotStop() {
+        // A source whose next() blocks uninterruptibly (on a lock the test holds) makes close()'s join
+        // time out, so the producer is still alive -> a WARN is logged instead of failing silently.
+        List<String> warns = java.util.Collections.synchronizedList(new ArrayList<>());
+        AbstractAppender appender = new AbstractAppender("warnCapture", null, null, true, Property.EMPTY_ARRAY) {
+            @Override
+            public void append(LogEvent event) {
+                warns.add(event.getMessage().getFormattedMessage());
+            }
+        };
+        appender.start();
+        String loggerName = "de.makno.xlsxbuilder.builder";
+        org.apache.logging.log4j.core.Logger logger =
+                (org.apache.logging.log4j.core.Logger) LogManager.getLogger(loggerName);
+        Level previous = logger.getLevel();
+        logger.addAppender(appender);
+        Configurator.setLevel(loggerName, Level.WARN);
+
+        java.util.concurrent.locks.ReentrantLock lock = new java.util.concurrent.locks.ReentrantLock();
+        lock.lock();
+        try {
+            java.util.Iterator<Row> blocked = new java.util.Iterator<>() {
+                @Override
+                public boolean hasNext() {
+                    return true;
+                }
+
+                @Override
+                public Row next() {
+                    lock.lock(); // uninterruptible block until the test releases the lock
+                    lock.unlock();
+                    return new Row(new Object[] {"x"});
+                }
+            };
+            // Producer cannot finish next() while the test holds the lock -> it stays alive.
+            PrefetchingRowIterator it = new PrefetchingRowIterator(blocked, 100); // short join timeout
+            it.close(); // join(100) times out, producer still alive -> WARN
+            assertTrue(
+                    warns.stream().anyMatch(m -> m.contains("Prefetch-Producer")),
+                    "warning for a non-stopping producer is missing: " + warns);
+        } finally {
+            lock.unlock();
+            logger.removeAppender(appender);
+            appender.stop();
+            Configurator.setLevel(loggerName, previous);
+        }
     }
 }
