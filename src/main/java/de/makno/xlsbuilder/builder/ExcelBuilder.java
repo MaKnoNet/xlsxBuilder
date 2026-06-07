@@ -5,16 +5,12 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 /**
@@ -68,8 +64,6 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  */
 public final class ExcelBuilder<T> {
 
-    private static final Logger LOG = LogManager.getLogger(ExcelBuilder.class);
-
     private static final int DEFAULT_CHUNK_SIZE = 100_000;
 
     private String sheetName = "Sheet1";
@@ -91,12 +85,6 @@ public final class ExcelBuilder<T> {
     private boolean parallel; // Pipeline-Parallelität (Producer/Consumer); Default aus
     private boolean consumed; // Einmal-Nutzung: nach dem Schreiben nicht erneut verwendbar
     private DataProvider<T> dataProvider;
-
-    /** Senke für den projizierten/sortierten Zeilenstrom (xlsx); liefert die Zeilenanzahl. */
-    @FunctionalInterface
-    private interface RowSink {
-        int write(Iterator<Row> rows) throws IOException;
-    }
 
     private ExcelBuilder() {}
 
@@ -361,24 +349,6 @@ public final class ExcelBuilder<T> {
      * Verarbeitet die Datenquelle gestreamt; bei Sortierung via {@link ExternalMergeSort} out-of-core.
      */
     void renderInto(SXSSFWorkbook wb) throws IOException {
-        SummarySpec summary = buildSummarySpec();
-        SheetWriteOptions layout = buildLayout();
-        long start = System.nanoTime();
-        int rows = process(r -> XlsxWriter.addSheet(wb, sheetName, columns, r, summary, layout));
-        LOG.debug(
-                "Blatt '{}': {} Zeilen ({}{}) in {} ms",
-                sheetName,
-                rows,
-                sortKeys.isEmpty() ? "unsortiert" : "sortiert",
-                parallel ? ", parallel" : "",
-                (System.nanoTime() - start) / 1_000_000);
-    }
-
-    /**
-     * Gemeinsame Verarbeitung des xlsx-Schreibens: Validierung, Projektion (+ Filter), optionale
-     * Out-of-core-Sortierung und Lifecycle; übergibt den finalen {@link Row}-Strom an die Senke.
-     */
-    private int process(RowSink sink) throws IOException {
         if (consumed) {
             throw new IllegalStateException(
                     "ExcelBuilder ist Einmal-Nutzung: bereits geschrieben – pro Auftrag eine neue Instanz erstellen"
@@ -393,29 +363,16 @@ public final class ExcelBuilder<T> {
         }
         // Ab hier wird die (forward-only, einmalige) Datenquelle konsumiert -> Wiederverwendung sperren.
         consumed = true;
-        try (DataProvider<T> p = dataProvider) {
-            Iterator<Row> projected = projection(p);
-            if (sortKeys.isEmpty()) {
-                return consume(projected, sink);
-            }
-            RowComparator comparator = new RowComparator(columns, sortKeys);
-            try (ExternalMergeSort sorter = new ExternalMergeSort(comparator, sortChunkSize, sortTempDir)) {
-                CloseableIterator<Row> sorted = sorter.sort(projected);
-                try (sorted) {
-                    return consume(sorted, sink);
-                }
-            }
-        }
-    }
-
-    /** Schreibt den Strom – optional über eine Prefetch-Pipeline (lesen/sortieren ∥ schreiben). */
-    private int consume(Iterator<Row> rows, RowSink sink) throws IOException {
-        if (!parallel) {
-            return sink.write(rows);
-        }
-        try (PrefetchingRowIterator prefetch = new PrefetchingRowIterator(rows)) {
-            return sink.write(prefetch);
-        }
+        RenderJob<T> job = new RenderJob<>(
+                sheetName,
+                List.copyOf(columns),
+                filter,
+                dataProvider,
+                new SortSpec(List.copyOf(sortKeys), sortChunkSize, sortTempDir),
+                buildSummarySpec(),
+                buildLayout(),
+                parallel);
+        SheetRenderer.render(wb, job);
     }
 
     /** Baut die Layout-Optionen inkl. der statisch auflösbaren Platzhalter ({@code {date}}/{@code {datetime}}). */
@@ -469,46 +426,5 @@ public final class ExcelBuilder<T> {
             case INTEGER, LONG, DOUBLE, DECIMAL -> true;
             default -> false;
         };
-    }
-
-    /**
-     * Projiziert jeden (vom optionalen {@link #filter} akzeptierten) Datensatz früh auf eine
-     * {@link Row} aus den extrahierten Zellenwerten. Look-ahead-Iterator, da die Quelle forward-only
-     * ist und nicht passende Datensätze übersprungen werden.
-     */
-    private Iterator<Row> projection(DataProvider<T> provider) {
-        return new Iterator<>() {
-            private Row pending; // vorausgelesene, gefilterte Zeile oder null
-
-            @Override
-            public boolean hasNext() {
-                while (pending == null && provider.hasNext()) {
-                    T record = provider.next();
-                    if (filter == null || filter.test(record)) {
-                        pending = project(record);
-                    }
-                }
-                return pending != null;
-            }
-
-            @Override
-            public Row next() {
-                if (!hasNext()) {
-                    throw new NoSuchElementException();
-                }
-                Row row = pending;
-                pending = null;
-                return row;
-            }
-        };
-    }
-
-    /** Projiziert einen Datensatz auf eine {@link Row} aus den extrahierten Zellenwerten. */
-    private Row project(T record) {
-        Object[] values = new Object[columns.size()];
-        for (int i = 0; i < columns.size(); i++) {
-            values[i] = columns.get(i).extract(record);
-        }
-        return new Row(values);
     }
 }
