@@ -15,9 +15,9 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 
 /**
- * Geteilte Helfer rund um {@link Employee}: ein deterministischer Lazy-Generator, die einheitliche
- * Blatt-Konfiguration (Spalten/Sortierung/Summe) sowie das Mapping einer JDBC-{@link ResultSet}-Zeile.
- * Wird von {@link XlsxBuilderDemo} (In-Memory) und {@link DbBenchmark} (aus H2) gemeinsam genutzt.
+ * Shared helpers around {@link Employee}: a deterministic lazy generator, the unified sheet
+ * configuration (columns/sorting/summary) and the mapping of a JDBC {@link ResultSet} row. Shared by
+ * {@link XlsxBuilderDemo} (in-memory) and {@link DbBenchmark} (from H2).
  */
 public final class EmployeeData {
 
@@ -25,7 +25,7 @@ public final class EmployeeData {
 
     private EmployeeData() {}
 
-    /** Lazy-Generator: erzeugt {@code count} Datensätze erst beim Abruf, nie als komplette Liste. */
+    /** Lazy generator: produces {@code count} records only on demand, never as a complete list. */
     public static DataProvider<Employee> generator(long count) {
         Random random = new Random(42);
         return new DataProvider<>() {
@@ -52,23 +52,23 @@ public final class EmployeeData {
                         .setScale(2, RoundingMode.HALF_UP);
                 boolean active = random.nextBoolean();
                 LocalDate hire = LocalDate.of(2000, 1, 1).plusDays(random.nextInt(9000));
-                LocalDateTime lastLogin = LocalDateTime.of(2026, 1, 1, 0, 0)
-                        .plusMinutes(random.nextInt(525_600)); // irgendwann im Jahr 2026
-                // Kommt-Zeit zwischen 06:00 und 09:59 als Sekunden seit Mitternacht.
+                LocalDateTime lastLogin =
+                        LocalDateTime.of(2026, 1, 1, 0, 0).plusMinutes(random.nextInt(525_600)); // sometime in 2026
+                // check-in time between 06:00 and 09:59 as seconds since midnight.
                 int checkInSeconds = (6 + random.nextInt(4)) * 3600 + random.nextInt(60) * 60;
                 return new Employee(id, name, dept, age, rating, salary, active, hire, lastLogin, checkInSeconds);
             }
         };
     }
 
-    /** Einheitliche Blatt-Konfiguration: je eine Spalte pro {@link ColumnType}, sortiert, mit Summenzeile. */
+    /** Unified sheet configuration: one column per {@link ColumnType}, sorted, with a summary row. */
     public static XlsxBuilder<Employee> sheet(String sheetName, DataProvider<Employee> data) {
         return XlsxBuilder.<Employee>create()
                 .sheetName(sheetName)
                 .header("Mitarbeiterbericht", "Erstellt am " + LocalDate.now())
                 .column("ID", Employee::id)
                 .ofType(ColumnType.LONG)
-                .column("Name", Employee::name) // STRING (Default)
+                .column("Name", Employee::name) // STRING (default)
                 .column("Abteilung", Employee::department) // STRING
                 .column("Alter", Employee::age)
                 .ofType(ColumnType.INTEGER)
@@ -86,12 +86,12 @@ public final class EmployeeData {
                 .column("Letzter Login", Employee::lastLogin)
                 .ofType(ColumnType.DATETIME)
                 .formatForType("dd.mm.yyyy hh:mm")
-                // Rohwert int (Sekunden seit Mitternacht) wird zur Uhrzeit (TIME) konvertiert.
+                // raw value int (seconds since midnight) is converted to a time of day (TIME).
                 .column("Kommt", Employee::checkInSeconds)
                 .ofType(ColumnType.TIME)
                 .formatForType("hh:mm")
                 .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
-                // Formelspalte: Bonus = 10 % vom Gehalt (Spalte F); {row} = aktuelle Zeilennummer.
+                // formula column: bonus = 10% of salary (column F); {row} = current row number.
                 .column("Bonus", e -> "F{row}*0.1")
                 .ofType(ColumnType.FORMULA)
                 .formatForType("#,##0.00 \"€\"")
@@ -100,11 +100,11 @@ public final class EmployeeData {
                 .sortChunkSize(100_000)
                 .sumColumn("Gehalt")
                 .summaryLabel("Name", "Summe")
-                .summaryAsFormula(true) // Summenzeile als echte =SUMME(...)-Formel
+                .summaryAsFormula(true) // summary row as a real =SUM(...) formula
                 .data(data);
     }
 
-    /** Mappt die aktuelle Zeile eines {@link ResultSet} (Spalten der {@code employee}-Tabelle) auf {@link Employee}. */
+    /** Maps the current row of a {@link ResultSet} (columns of the {@code employee} table) to {@link Employee}. */
     public static Employee map(ResultSet rs) throws SQLException {
         return new Employee(
                 rs.getLong("id"),

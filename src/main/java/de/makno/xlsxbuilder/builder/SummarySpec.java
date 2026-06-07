@@ -1,12 +1,12 @@
 package de.makno.xlsxbuilder.builder;
 
 /**
- * Konfiguration der optionalen Summenzeile.
+ * Configuration of the optional summary row.
  *
- * @param sum              je Spaltenindex: soll diese (numerische) Spalte summiert werden?
- * @param labelColumnIndex Spaltenindex für ein Label (z. B. "Summe") oder {@code -1}, wenn keines.
- * @param labelText        der Label-Text (nur relevant, wenn {@code labelColumnIndex >= 0}).
- * @param useFormula       {@code true} = als Excel-Formel {@code =SUM(...)} schreiben; sonst
- *                         vorberechneter Wert.
+ * @param sum              per column index: should this (numeric) column be summed?
+ * @param labelColumnIndex column index for a label (e.g. "Summe") or {@code -1} if none.
+ * @param labelText        the label text (only relevant if {@code labelColumnIndex >= 0}).
+ * @param useFormula       {@code true} = write as an Excel formula {@code =SUM(...)}; otherwise a
+ *                         pre-computed value.
  */
 record SummarySpec(boolean[] sum, int labelColumnIndex, String labelText, boolean useFormula) {}

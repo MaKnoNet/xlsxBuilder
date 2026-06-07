@@ -24,29 +24,29 @@ import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 /**
- * Schreibt eine {@code .xlsx}-Datei mit Apache POI im Streaming-Modus (SXSSF).
+ * Writes a {@code .xlsx} file with Apache POI in streaming mode (SXSSF).
  *
- * <p>SXSSF hält nur ein gleitendes Fenster von Zeilen im Speicher und lagert den
- * Rest auf temporäre Dateien aus; mit Inline-Strings (Default von SXSSF) wächst auch keine
- * Shared-Strings-Tabelle. Dadurch bleibt der Speicherbedarf konstant, unabhängig von der Zeilenzahl.
- * Die Summen der optionalen Summenzeile werden beim Streamen mitgeführt (kein zweiter Durchlauf).
+ * <p>SXSSF keeps only a sliding window of rows in memory and spills the rest to temporary files; with
+ * inline strings (the SXSSF default) no shared-strings table grows either. This keeps memory usage
+ * constant, independent of the row count. The sums of the optional summary row are accumulated while
+ * streaming (no second pass).
  *
- * <p>Pro Spalte wird einmalig ein {@link CellStyle} mit dem gewünschten Zahlen-/Datumsformat erzeugt
- * (expliziter Format-Code der Spalte oder, für Datums-/Zeittypen, ein Standardformat).
+ * <p>Per column a {@link CellStyle} with the desired number/date format is created once (the column's
+ * explicit format code, or a default format for date/time types).
  */
 final class XlsxWriter {
 
     private static final double NANOS_PER_DAY = 86_400d * 1_000_000_000d;
 
-    /** Maximale Länge eines Excel-Blattnamens. */
+    /** Maximum length of an Excel sheet name. */
     private static final int MAX_SHEET_NAME_LENGTH = 31;
 
     private XlsxWriter() {}
 
     /**
-     * Fügt ein Worksheet in ein vorhandenes (vom {@code WorkbookBuilder} verwaltetes) Workbook ein.
+     * Adds a worksheet to an existing workbook (managed by the {@code WorkbookBuilder}).
      *
-     * @return Anzahl geschriebener Datenzeilen (ohne Titel-/Kopf-/Summenzeile) – für Performance-Logs.
+     * @return number of data rows written (excluding title/header/summary rows) – for performance logs.
      */
     static int addSheet(
             SXSSFWorkbook wb,
@@ -72,11 +72,11 @@ final class XlsxWriter {
         rowNum = writeColumnHeaders(sheet, columns, rowNum, showHeaders);
 
         BigDecimal[] sums = initSums(columns, summary);
-        int firstDataRow0 = rowNum; // 0-basierter Index der ersten Datenzeile
+        int firstDataRow0 = rowNum; // 0-based index of the first data row
         rowNum = writeDataRows(sheet, columns, rows, columnStyles, widths, sums, rowNum, layout.defaultNullText());
 
         int dataRowCount = rowNum - firstDataRow0;
-        // Excel-Zeilennummern sind 1-basiert: erste Datenzeile = firstDataRow0 + 1, letzte = rowNum.
+        // Excel row numbers are 1-based: first data row = firstDataRow0 + 1, last = rowNum.
         rowNum = writeSummaryRow(
                 sheet, columns, columnStyles, widths, summary, sums, rowNum, firstDataRow0 + 1, rowNum, dataRowCount);
 
@@ -96,7 +96,7 @@ final class XlsxWriter {
         return dataRowCount;
     }
 
-    /** Bei Formelspalten/-summen Excel anweisen, beim Öffnen neu zu berechnen (Werte sind nicht gecacht). */
+    /** For formula columns/sums, tell Excel to recompute on open (the values are not cached). */
     private static void enableFormulaRecalculationIfNeeded(
             SXSSFSheet sheet, List<? extends Column<?>> columns, SummarySpec summary) {
         boolean hasFormula = false;
@@ -111,7 +111,7 @@ final class XlsxWriter {
         }
     }
 
-    /** Schreibt die optionalen Titelzeilen (je über die volle Breite zusammengeführt). Gibt die nächste Zeile zurück. */
+    /** Writes the optional title rows (each merged across the full width). Returns the next row. */
     private static int writeTitleRows(
             SXSSFSheet sheet,
             List<String> headerLines,
@@ -134,7 +134,7 @@ final class XlsxWriter {
         return rowNum;
     }
 
-    /** Schreibt die Spaltenüberschriften (sofern aktiviert). Gibt die nächste Zeile zurück. */
+    /** Writes the column headers (if enabled). Returns the next row. */
     private static int writeColumnHeaders(
             SXSSFSheet sheet, List<? extends Column<?>> columns, int rowNum, boolean showColumnHeaders) {
         if (!showColumnHeaders) {
@@ -147,7 +147,7 @@ final class XlsxWriter {
         return rowNum;
     }
 
-    /** Akkumulatoren der Summenzeile (konstanter Speicher, wird beim Streamen mitgeführt) oder {@code null}. */
+    /** Accumulators of the summary row (constant memory, carried along while streaming), or {@code null}. */
     private static BigDecimal[] initSums(List<? extends Column<?>> columns, SummarySpec summary) {
         if (summary == null) {
             return null;
@@ -161,7 +161,7 @@ final class XlsxWriter {
         return sums;
     }
 
-    /** Streamt die Datenzeilen, misst dabei die Spaltenbreiten und führt die Summen mit. Gibt die nächste Zeile zurück. */
+    /** Streams the data rows, measuring column widths and accumulating the sums. Returns the next row. */
     private static int writeDataRows(
             SXSSFSheet sheet,
             List<? extends Column<?>> columns,
@@ -178,13 +178,13 @@ final class XlsxWriter {
                 Object value = dataRow.get(c);
                 Column<?> col = columns.get(c);
                 if (value == null) {
-                    // Null-Wert-Handler: spalten-spezifischer Platzhalter vor sheet-weitem Default.
+                    // Null-value handler: column-specific placeholder before the sheet-wide default.
                     String nullText = col.nullText() != null ? col.nullText() : defaultNullText;
                     if (nullText != null) {
                         r.createCell(c).setCellValue(nullText);
                         widths.ensureAtLeast(c, nullText.length());
                     } else {
-                        // Ohne Platzhalter: explizit eine leere Zelle (Excel-Zelltyp BLANK/"Empty") anlegen.
+                        // Without a placeholder: explicitly create an empty cell (Excel cell type BLANK/"Empty").
                         r.createCell(c, CellType.BLANK);
                     }
                     continue;
@@ -201,8 +201,8 @@ final class XlsxWriter {
     }
 
     /**
-     * Schreibt die optionale Summenzeile (vorberechneter Wert oder echte {@code =SUM(...)}-Formel).
-     * Gibt die nächste freie Zeile zurück (für die Footer-Zeilen).
+     * Writes the optional summary row (a pre-computed value or a real {@code =SUM(...)} formula). Returns
+     * the next free row (for the footer rows).
      */
     private static int writeSummaryRow(
             SXSSFSheet sheet,
@@ -223,7 +223,7 @@ final class XlsxWriter {
         for (int c = 0; c < columns.size(); c++) {
             ColumnType type = columns.get(c).type();
             if (sums[c] != null) {
-                Object value = summaryValue(type, sums[c]); // für Breitenschätzung
+                Object value = summaryValue(type, sums[c]); // for width estimation
                 if (asFormula) {
                     String col = CellReference.convertNumToColString(c);
                     Cell cell = r.createCell(c);
@@ -244,8 +244,8 @@ final class XlsxWriter {
     }
 
     /**
-     * Schreibt die optionalen Footer-Zeilen (je über die volle Breite zusammengeführt). Löst dabei die
-     * dynamischen Platzhalter {@code {rowCount}} und {@code {sum:Spalte}} (zusätzlich zu den statischen) auf.
+     * Writes the optional footer rows (each merged across the full width). Resolves the dynamic
+     * placeholders {@code {rowCount}} and {@code {sum:Column}} (in addition to the static ones).
      */
     private static void writeFooterRows(
             SXSSFSheet sheet,
@@ -283,7 +283,7 @@ final class XlsxWriter {
         }
     }
 
-    /** Textdarstellung einer Summe für {@code {sum:Spalte}}-Platzhalter. */
+    /** Text representation of a sum for {@code {sum:Column}} placeholders. */
     private static String sumAsText(ColumnType type, BigDecimal sum) {
         return switch (type) {
             case DOUBLE -> Double.toString(sum.doubleValue());
@@ -292,7 +292,7 @@ final class XlsxWriter {
         };
     }
 
-    /** Erzeugt einen für das Workbook eindeutigen, gültigen Blattnamen (Excel verbietet Duplikate). */
+    /** Creates a valid sheet name unique within the workbook (Excel forbids duplicates). */
     private static String uniqueSheetName(SXSSFWorkbook wb, String sheetName) {
         String base =
                 WorkbookUtil.createSafeSheetName((sheetName == null || sheetName.isBlank()) ? "Sheet1" : sheetName);
@@ -308,7 +308,7 @@ final class XlsxWriter {
         return unique;
     }
 
-    /** Erzeugt je Spalte einmalig den Style mit Format-Code (oder {@code null}, falls kein Format nötig). */
+    /** Creates the style with format code once per column (or {@code null} if no format is needed). */
     private static CellStyle[] buildColumnStyles(
             SXSSFWorkbook wb, CreationHelper helper, List<? extends Column<?>> columns) {
         CellStyle[] styles = new CellStyle[columns.size()];
@@ -331,10 +331,10 @@ final class XlsxWriter {
         };
     }
 
-    /** Anzahl Stellen des ganzzahligen Anteils (ohne Vorzeichen), ohne Zwischen-Strings zu allokieren. */
+    /** Number of integer-part digits (without sign), without allocating intermediate strings. */
     private static int integerDigits(Object value) {
         if (value instanceof BigDecimal bd) {
-            // precision - scale = Anzahl Vorkommastellen; für |x| < 1 mindestens eine ("0").
+            // precision - scale = number of integer digits; for |x| < 1 at least one ("0").
             return Math.max(1, bd.precision() - bd.scale());
         }
         long magnitude;
@@ -346,7 +346,7 @@ final class XlsxWriter {
         return decimalDigits(magnitude);
     }
 
-    /** Anzahl Dezimalstellen eines nicht-negativen {@code long} (allokationsfrei). */
+    /** Number of decimal digits of a non-negative {@code long} (allocation-free). */
     private static int decimalDigits(long v) {
         int digits = 1;
         while (v >= 10) {
@@ -356,7 +356,7 @@ final class XlsxWriter {
         return digits;
     }
 
-    /** Dezimalstellen aus einem Format-Code, {@code 0} ohne Dezimalpunkt, {@code -1} ohne Format. */
+    /** Decimal places from a format code, {@code 0} without a decimal point, {@code -1} without a format. */
     private static int decimalsOf(String format) {
         if (format == null) {
             return -1;
@@ -377,7 +377,7 @@ final class XlsxWriter {
         return n;
     }
 
-    /** Geschätzte Anzahl sichtbarer Literalzeichen eines Zahlenformats (Währungszeichen, Leerzeichen, %, ...). */
+    /** Estimated number of visible literal characters of a number format (currency sign, space, %, ...). */
     private static int literalCharsOf(String format) {
         if (format == null) {
             return 0;
@@ -400,11 +400,11 @@ final class XlsxWriter {
         return n;
     }
 
-    /** Heuristische Mindestbreite (in Zeichen) je Typ, damit formatierte Werte vollständig sichtbar sind. */
+    /** Heuristic minimum width (in characters) per type, so formatted values are fully visible. */
     private static int minChars(ColumnType type) {
         return switch (type) {
             case DATETIME -> 18; // "31.12.2026 23:59"
-            case DECIMAL, DOUBLE, FORMULA -> 14; // Währung/Dezimal mit Tausendertrennung
+            case DECIMAL, DOUBLE, FORMULA -> 14; // currency/decimal with thousands separators
             case INTEGER, LONG -> 12;
             case DATE -> 11; // "31.12.2026"
             case TIME -> 8; // "23:59:59"
@@ -414,16 +414,16 @@ final class XlsxWriter {
     }
 
     /**
-     * Liefert den Standard-Excel-Format-Code für Datums- und Zeittypen.
-     * Hinweis: Excel-Format-Codes verwenden {@code mm} für Monat (nicht {@code MM}) und
-     * {@code hh} für 12-Stunden-Format (oder {@code HH} für 24-Stunden-Format).
+     * Returns the default Excel format code for date and time types. Note: Excel format codes use
+     * {@code mm} for month (not {@code MM}) and {@code hh} for 12-hour format (or {@code HH} for 24-hour
+     * format).
      */
     private static String defaultFormat(ColumnType type) {
         return switch (type) {
-            case DATE -> "yyyy-mm-dd"; // ISO 8601 Standardformat für Datumsanzeige
-            case DATETIME -> "yyyy-mm-dd hh:mm"; // Datum + Zeit (12h Format)
-            case TIME -> "hh:mm:ss"; // Zeit (12h Format mit Sekunden)
-            default -> null; // Zahlen ohne explizites Format: Excel-Standard ("General")
+            case DATE -> "yyyy-mm-dd"; // ISO 8601 default format for date display
+            case DATETIME -> "yyyy-mm-dd hh:mm"; // date + time (12h format)
+            case TIME -> "hh:mm:ss"; // time (12h format with seconds)
+            default -> null; // numbers without an explicit format: Excel default ("General")
         };
     }
 
@@ -451,7 +451,7 @@ final class XlsxWriter {
     private static void writeCell(
             org.apache.poi.ss.usermodel.Row row, int col, ColumnType type, Object value, CellStyle style) {
         if (value == null) {
-            return; // leere Zelle gar nicht erst anlegen
+            return; // don't even create an empty cell
         }
         Cell cell = row.createCell(col);
         switch (type) {
@@ -489,7 +489,7 @@ final class XlsxWriter {
         }
     }
 
-    /** Uhrzeit als Tagesbruchteil (0..1) speichern – Excel stellt das mit einem Zeitformat als Uhrzeit dar. */
+    /** Stores the time of day as a fraction of a day (0..1) – Excel shows it as a time with a time format. */
     private static void setTimeValue(Cell cell, Object value) {
         LocalTime time;
         if (value instanceof LocalTime t) {
@@ -503,12 +503,12 @@ final class XlsxWriter {
         cell.setCellValue(time.toNanoOfDay() / NANOS_PER_DAY);
     }
 
-    /** Liefert den summierten Wert im passenden Java-Typ, damit {@link #writeCell} ihn korrekt schreibt. */
+    /** Returns the summed value in the matching Java type, so {@link #writeCell} writes it correctly. */
     private static Object summaryValue(ColumnType type, BigDecimal sum) {
         return switch (type) {
             case DOUBLE -> sum.doubleValue();
             case INTEGER, LONG -> sum.longValue();
-            default -> sum; // DECIMAL (und andere) als BigDecimal
+            default -> sum; // DECIMAL (and others) as BigDecimal
         };
     }
 
@@ -523,16 +523,16 @@ final class XlsxWriter {
     }
 
     /**
-     * Schätzt die Spaltenbreiten inhaltsbasiert, damit nichts als "#####" erscheint. Da SXSSF-Autosize
-     * ausgelagerte Zeilen nicht sehen kann, wird die Breite beim Streamen mitgemessen: Stringlängen
-     * exakt, Zahlenbreite aus Stellenzahl + Format (inkl. der großen Summenwerte). Die endgültige
-     * Breite wird erst nach allen Zeilen gesetzt (in SXSSF jederzeit möglich).
+     * Estimates column widths based on content, so that nothing shows as "#####". Since SXSSF autosize
+     * cannot see spilled rows, the width is measured while streaming: string lengths exactly, number
+     * width from digit count + format (incl. the large summary values). The final width is set only
+     * after all rows (always possible in SXSSF).
      */
     private static final class ColumnWidthEstimator {
 
-        private static final int POI_UNITS_PER_CHAR = 256; // POI misst Breiten in 1/256 Zeichen
-        private static final int MAX_WIDTH_CHARS = 255; // Excel-Obergrenze je Spalte
-        private static final int PADDING_CHARS = 2; // etwas Polster gegen abgeschnittene Werte
+        private static final int POI_UNITS_PER_CHAR = 256; // POI measures widths in 1/256 of a character
+        private static final int MAX_WIDTH_CHARS = 255; // Excel upper bound per column
+        private static final int PADDING_CHARS = 2; // a little padding against truncated values
 
         private final ColumnType[] types;
         private final int[] widthChars;
@@ -560,7 +560,7 @@ final class XlsxWriter {
             }
         }
 
-        /** Aktualisiert die geschätzte Breite einer Spalte anhand des konkret geschriebenen Werts. */
+        /** Updates the estimated width of a column based on the concretely written value. */
         void track(int c, Object value) {
             if (value == null) {
                 return;
@@ -579,7 +579,7 @@ final class XlsxWriter {
                             + (dec > 0 ? 1 + dec : 0)
                             + literalChars[c];
                 }
-                    // DATE/DATETIME/TIME/BOOLEAN/FORMULA: Basisbreite genügt.
+                    // DATE/DATETIME/TIME/BOOLEAN/FORMULA: the base width is enough.
                 default -> {
                     return;
                 }
@@ -587,14 +587,14 @@ final class XlsxWriter {
             ensureAtLeast(c, chars);
         }
 
-        /** Stellt sicher, dass die Spalte mindestens {@code chars} Zeichen breit ist. */
+        /** Ensures the column is at least {@code chars} characters wide. */
         void ensureAtLeast(int c, int chars) {
             if (chars > widthChars[c]) {
                 widthChars[c] = chars;
             }
         }
 
-        /** Setzt die ermittelten Breiten endgültig auf das Blatt (Zeichen -> POI-Einheiten, mit Polster). */
+        /** Sets the determined widths onto the sheet (characters -> POI units, with padding). */
         void applyTo(SXSSFSheet sheet) {
             for (int c = 0; c < widthChars.length; c++) {
                 int units = Math.min(

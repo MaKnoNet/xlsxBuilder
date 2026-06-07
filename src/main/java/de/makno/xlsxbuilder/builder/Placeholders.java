@@ -6,8 +6,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Ersetzt {@code {key}}-Platzhalter in Titel-, Kopf- und Footer-Texten durch konfigurierte Werte.
- * Unbekannte Platzhalter bleiben unverändert stehen (sichtbar, statt still verschluckt).
+ * Replaces {@code {key}} placeholders in title, header and footer texts with configured values.
+ * Unknown placeholders are left unchanged (visible, instead of silently swallowed).
  */
 final class Placeholders {
 
@@ -15,16 +15,16 @@ final class Placeholders {
 
     private Placeholders() {}
 
-    /** Ersetzt alle {@code {key}}-Tokens in {@code text} anhand von {@code values}. */
+    /** Replaces all {@code {key}} tokens in {@code text} using {@code values}. */
     static String resolve(String text, Map<String, String> values) {
         return resolve(text, values, null);
     }
 
     /**
-     * Ersetzt alle {@code {key}}-Tokens in {@code text}. Je Token gilt die Reihenfolge: zuerst die
-     * statische {@code values}-Map, dann – falls dort nicht vorhanden – der optionale
-     * {@code fallback}-Resolver (lazy/berechnete Werte). Liefert auch dieser {@code null}, bleibt das
-     * Token unverändert stehen. Die statische Map hat damit Vorrang vor dem Resolver.
+     * Replaces all {@code {key}} tokens in {@code text}. Per token the order is: first the static
+     * {@code values} map, then – if not present there – the optional {@code fallback} resolver
+     * (lazy/computed values). If that too returns {@code null}, the token is left unchanged. The static
+     * map therefore takes precedence over the resolver.
      */
     static String resolve(String text, Map<String, String> values, Function<String, String> fallback) {
         if (text == null || text.indexOf('{') < 0 || (values.isEmpty() && fallback == null)) {

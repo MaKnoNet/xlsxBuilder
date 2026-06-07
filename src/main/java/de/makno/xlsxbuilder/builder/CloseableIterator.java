@@ -3,7 +3,7 @@ package de.makno.xlsxbuilder.builder;
 import java.io.Closeable;
 import java.util.Iterator;
 
-/** Iterator, der Ressourcen hält (z. B. offene Run-Dateien) und ohne checked Exception schließt. */
+/** Iterator that holds resources (e.g. open run files) and closes without a checked exception. */
 public interface CloseableIterator<T> extends Iterator<T>, Closeable {
     @Override
     void close();

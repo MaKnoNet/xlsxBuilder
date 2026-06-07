@@ -4,9 +4,9 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Baut aus den {@link SortKey}s einen {@link Comparator} über projizierte {@link Row}s.
- * Vergleicht die Zellenwerte über deren natürliche Ordnung ({@link Comparable}), null-sicher
- * (nulls last bei ASC), und unterstützt mehrstufige Sortierung sowie DESC.
+ * Builds a {@link Comparator} over projected {@link Row}s from the {@link SortKey}s. Compares the cell
+ * values by their natural ordering ({@link Comparable}), null-safe (nulls last for ASC), and supports
+ * multi-level sorting as well as DESC.
  */
 final class RowComparator implements Comparator<Row> {
 
@@ -60,7 +60,7 @@ final class RowComparator implements Comparator<Row> {
             return 0;
         }
         if (x == null) {
-            return 1; // nulls last (bei ASC)
+            return 1; // nulls last (for ASC)
         }
         if (y == null) {
             return -1;

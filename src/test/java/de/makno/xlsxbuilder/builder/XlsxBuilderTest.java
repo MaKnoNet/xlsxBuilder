@@ -138,7 +138,7 @@ class XlsxBuilderTest {
 
     @Test
     void externalMergeSortAcrossManyRuns() throws Exception {
-        // 1000 gemischte Werte, Chunk-Größe 100 => 10 Runs + k-way-Merge.
+        // 1000 mixed values, chunk size 100 => 10 runs + k-way merge.
         List<Integer> shuffled = new ArrayList<>();
         for (int i = 0; i < 1000; i++) {
             shuffled.add(i);
@@ -168,8 +168,8 @@ class XlsxBuilderTest {
 
     @Test
     void externalMergeSortWithMultiplePasses() throws Exception {
-        // 600 Werte bei Chunk-Größe 2 => 300 Runs. Bei Fan-in 16 erzwingt das mehrstufiges
-        // Vormerging (300 -> 19 -> 2 Runs), bevor der finale k-way-Merge läuft.
+        // 600 values at chunk size 2 => 300 runs. At fan-in 16 this forces multi-pass
+        // pre-merging (300 -> 19 -> 2 runs) before the final k-way merge runs.
         List<Integer> shuffled = new ArrayList<>();
         for (int i = 0; i < 600; i++) {
             shuffled.add(i);
@@ -292,10 +292,10 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Titel(1) + Überschrift(2) + Daten(3-5) + Summe(6)
+        // title(1) + header(2) + data(3-5) + sum(6)
         assertEquals(6, g.rowCount());
         assertEquals("Summe", g.string(5, 0));
-        // Wert ist Spalte B; Datenzeilen sind Excel-Zeilen 3..5.
+        // value is column B; data rows are Excel rows 3..5.
         assertEquals("SUM(B3:B5)", g.formula(5, 1));
     }
 
@@ -316,7 +316,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Kopfzeile = Zeile 1; Datenzeilen sind Excel-Zeilen 2 und 3.
+        // header = row 1; data rows are Excel rows 2 and 3.
         assertEquals("A2+B2", g.formula(1, 2));
         assertEquals("A3+B3", g.formula(2, 2));
     }
@@ -352,7 +352,7 @@ class XlsxBuilderTest {
 
     @Test
     void summaryRowSumsAcrossSortedAndSpilledData() throws Exception {
-        // Summe muss über ALLE Zeilen gebildet werden, auch wenn extern sortiert/ausgelagert wird.
+        // the sum must cover ALL rows, even when sorted/spilled externally.
         List<Integer> data = new ArrayList<>();
         long expectedSum = 0;
         for (int i = 1; i <= 1000; i++) {
@@ -391,7 +391,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Deutlich breiter als die POI-Standardbreite (~2048), damit kein "#####" entsteht.
+        // clearly wider than the POI default width (~2048) so that no "#####" appears.
         assertTrue(g.columnWidth(0) >= 3000, "Datumsspalte muss breit genug sein");
     }
 
@@ -414,9 +414,9 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Name-Spalte mindestens so breit wie der längste Name.
+        // name column at least as wide as the longest name.
         assertTrue(g.columnWidth(0) >= longName.length() * 256, "Name-Spalte muss den längsten Namen fassen");
-        // Summe = 5.000.000 -> "5.000.000" (9 Zeichen inkl. Tausenderpunkte).
+        // sum = 5,000,000 -> "5.000.000" (9 characters incl. thousands separators).
         assertTrue(g.columnWidth(1) >= 9 * 256, "Wert-Spalte muss die Summe fassen");
     }
 
@@ -437,7 +437,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // 2 Titelzeilen + Spaltenüberschriften + 1 Datenzeile
+        // 2 title rows + column headers + 1 data row
         assertEquals(4, g.rowCount());
         assertEquals("Mitarbeiterbericht", g.string(0, 0));
         assertTrue(g.bold(0, 0), "Titel ist fett formatiert");
@@ -447,7 +447,7 @@ class XlsxBuilderTest {
         assertEquals(30, g.number(3, 1));
         assertTrue(g.bool(3, 2));
 
-        // Titel über die volle Breite (3 Spalten -> A..C) zusammengeführt.
+        // title merged across the full width (3 columns -> A..C).
         assertEquals(List.of("A1:C1", "A2:C2"), g.mergeRefs());
     }
 
@@ -470,7 +470,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Titel + Spaltenüberschriften + 3 Daten + Summenzeile
+        // title + column headers + 3 data + summary row
         assertEquals(6, g.rowCount());
         assertEquals("Bericht", g.string(0, 0));
         assertEquals(List.of("Name", "Wert"), g.strings(1));
@@ -486,7 +486,7 @@ class XlsxBuilderTest {
 
     @Test
     void convertsRawValueToTargetColumnType() throws Exception {
-        // Rohwert int (Sekunden seit Mitternacht) -> als Uhrzeit (TIME) schreiben.
+        // raw value int (seconds since midnight) -> write as time of day (TIME).
         record Task(String name, int sekunden) {}
         Path out = tempDir.resolve("convert.xlsx");
 
@@ -558,7 +558,7 @@ class XlsxBuilderTest {
         assertNotEquals("Daten", names.get(1), "zweites Blatt muss eindeutigen Namen erhalten");
     }
 
-    // ========== Gruppe A – Exception / Validation ==========
+    // ========== Group A – Exception / Validation ==========
 
     @Test
     void throwsIfNoColumnsConfigured() {
@@ -607,7 +607,7 @@ class XlsxBuilderTest {
                 .write(tempDir.resolve("badSortKey.xlsx")));
     }
 
-    // ========== Gruppe B – Null-Handling im Comparator ==========
+    // ========== Group B – Null handling in the comparator ==========
 
     @Test
     void sortsNullsLastAscending() throws Exception {
@@ -631,8 +631,8 @@ class XlsxBuilderTest {
 
     @Test
     void sortsNullsFirstInDescending() throws Exception {
-        // Null wird intern als „größter Wert" behandelt (nulls-last bei ASC).
-        // Bei DESC (Vorzeichen-Flip) erscheint null daher am Anfang.
+        // null is treated internally as the "greatest value" (nulls-last for ASC).
+        // with DESC (sign flip) null therefore appears at the beginning.
         record NullRow(String label) {}
         List<NullRow> data = List.of(new NullRow("B"), new NullRow(null), new NullRow("A"));
         Path out = tempDir.resolve("nullsDesc.xlsx");
@@ -645,13 +645,13 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // DESC: null (= größter Wert) steht ganz vorne, dann B, dann A
+        // DESC: null (= greatest value) comes first, then B, then A
         assertNull(g.string(1, 0), "null kommt bei DESC-Sortierung zuerst");
         assertEquals("B", g.string(2, 0));
         assertEquals("A", g.string(3, 0));
     }
 
-    // ========== Gruppe C – Weitere Typen und XlsxWriter-Zweige ==========
+    // ========== Group C – More types and XlsxWriter branches ==========
 
     @Test
     void writesDateTimeColumn() throws Exception {
@@ -700,14 +700,14 @@ class XlsxBuilderTest {
                         .ofType(ColumnType.INTEGER)
                         .column("B", R::b)
                         .ofType(ColumnType.INTEGER)
-                        // Statische Formel ohne {row}-Platzhalter
+                        // static formula without a {row} placeholder
                         .column("Summe", r -> "A2+B2")
                         .ofType(ColumnType.FORMULA)
                         .data(DataProviders.ofIterable(List.of(new R(5, 7)))))
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Formel darf kein {row} enthalten → unveränderter Text wird als Formel gesetzt.
+        // the formula must not contain {row} -> unchanged text is set as the formula.
         assertEquals("A2+B2", g.formula(1, 2));
     }
 
@@ -724,7 +724,7 @@ class XlsxBuilderTest {
 
         Grid g = XlsxTestReader.read(out);
         assertEquals("Nur eine Spalte", g.string(0, 0));
-        // Nur 1 Spalte → kein Merge-Bereich
+        // only 1 column -> no merge region
         assertTrue(g.mergeRefs().isEmpty(), "Einzel-Spalte darf keinen Merge erzeugen");
     }
 
@@ -741,7 +741,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Nur Kopfzeile, keine Datenzeilen
+        // only the header row, no data rows
         assertEquals(1, g.rowCount(), "Leere Quelle erzeugt nur Kopfzeile");
         assertEquals(List.of("Name", "Alter"), g.strings(0));
     }
@@ -760,7 +760,7 @@ class XlsxBuilderTest {
                         .formatForType("#,##0.00")
                         .sumColumn("Betrag")
                         .summaryLabel("Name", "Gesamt")
-                        // summaryAsFormula(false) ist der Default → vorberechneter Wert
+                        // summaryAsFormula(false) is the default -> pre-computed value
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
@@ -770,7 +770,7 @@ class XlsxBuilderTest {
         assertEquals(15.75, g.dbl(3, 1), 0.001);
     }
 
-    // ========== Gruppe D – DataProviders & ExternalMergeSort ==========
+    // ========== Group D – DataProviders & ExternalMergeSort ==========
 
     @Test
     void dataProviderOfStreamAdapter() throws Exception {
@@ -817,13 +817,13 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Sortierung mit leerer Quelle → kein Run, MergeIterator leer, nur Kopfzeile
+        // sorting with an empty source -> no run, MergeIterator empty, only the header row
         assertEquals(1, g.rowCount(), "Leere sortierte Quelle erzeugt nur Kopfzeile");
     }
 
     @Test
     void externalSortChunkSizeValidation() {
-        // ExternalMergeSort direkt (package-private, gleicher Package) instanziieren.
+        // instantiate ExternalMergeSort directly (package-private, same package).
         var comparator = new RowComparator(
                 List.of(new Column<>("n", ColumnType.INTEGER, i -> i)), List.of(new SortKey("n", SortOrder.ASC)));
         assertThrows(IllegalArgumentException.class, () -> new ExternalMergeSort(comparator, 0));
@@ -831,8 +831,8 @@ class XlsxBuilderTest {
 
     @Test
     void usesConfiguredSortTempDir() throws Exception {
-        // Eigenes (noch nicht existierendes) Sortier-Temp-Verzeichnis -> wird angelegt und nach
-        // dem Schreiben wieder geleert (das je Sortierung erzeugte Unterverzeichnis verschwindet).
+        // a dedicated (not-yet-existing) sort temp directory -> is created and emptied
+        // again after writing (the per-sort subdirectory disappears).
         Path customTmp = tempDir.resolve("sortwork");
         List<Integer> data = new ArrayList<>();
         for (int i = 0; i < 300; i++) {
@@ -864,8 +864,8 @@ class XlsxBuilderTest {
 
     @Test
     void concurrentBuildsAreIsolated() throws Exception {
-        // Viele Builder parallel: jeder Thread schreibt mit eigenen Instanzen seine eigene Datei.
-        // Verifiziert, dass es keinen geteilten Zustand gibt (kein Cross-Talk zwischen Threads).
+        // many builders in parallel: each thread writes its own file with its own instances.
+        // verifies that there is no shared state (no cross-talk between threads).
         int tasks = 16;
         int rowsPerTask = 200;
         ExecutorService pool = Executors.newFixedThreadPool(8);
@@ -910,7 +910,7 @@ class XlsxBuilderTest {
 
     @Test
     void streamProviderThrowsWhenExhausted() {
-        // ofStream().next() ohne weiteres Element -> NoSuchElementException (Guard wie bei ofIterator).
+        // ofStream().next() without a further element -> NoSuchElementException (guard as in ofIterator).
         DataProvider<String> provider = DataProviders.ofStream(Stream.of("einziger"));
         assertEquals("einziger", provider.next());
         assertThrows(NoSuchElementException.class, provider::next);
@@ -918,7 +918,7 @@ class XlsxBuilderTest {
 
     @Test
     void rowCodecRoundTripsAllValueTypes() throws Exception {
-        // Deckt alle Typtags des RowCodec ab, inkl. UTF-8-String und Java-Serialisierungs-Fallback.
+        // covers all type tags of the RowCodec, incl. UTF-8 string and Java-serialization fallback.
         Object[] values = {
             null,
             "Käse äöü ß€",
@@ -947,15 +947,15 @@ class XlsxBuilderTest {
         for (int i = 0; i < values.length; i++) {
             assertEquals(values[i], restored.get(i), "Wert an Index " + i);
         }
-        // Laufzeittyp muss exakt erhalten bleiben (sonst bräche der Vergleich Integer vs. Long).
+        // the runtime type must be preserved exactly (otherwise the Integer vs. Long comparison would break).
         assertTrue(restored.get(2) instanceof Integer, "Integer bleibt Integer");
         assertTrue(restored.get(3) instanceof Long, "Long bleibt Long");
     }
 
     @Test
     void emitsPerformanceLogsOnSortedBuild() throws Exception {
-        // Hängt einen In-Memory-Appender an den Builder-Logger und prüft, dass ein sortierter Lauf
-        // die Performance-Log-Zeilen (Sort, Blatt, Workbook) auf DEBUG erzeugt.
+        // attaches an in-memory appender to the builder logger and checks that a sorted run
+        // produces the performance log lines (sort, sheet, workbook) at DEBUG.
         List<String> messages = java.util.Collections.synchronizedList(new ArrayList<>());
         AbstractAppender appender = new AbstractAppender("perfCapture", null, null, true, Property.EMPTY_ARRAY) {
             @Override
@@ -1049,7 +1049,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Kopf + 3 gefilterte Datenzeilen + Summenzeile
+        // header + 3 filtered data rows + summary row
         assertEquals(5, g.rowCount());
         assertEquals(30, g.number(1, 1));
         assertEquals(20, g.number(2, 1));
@@ -1058,7 +1058,7 @@ class XlsxBuilderTest {
         assertEquals(65, g.number(4, 1), "Summe nur über die gefilterten Zeilen");
     }
 
-    // ========== Null-Wert-Handler ==========
+    // ========== Null-value handler ==========
 
     @Test
     void nullTextPerColumnAndDefault() throws Exception {
@@ -1100,8 +1100,8 @@ class XlsxBuilderTest {
 
     @Test
     void nullWritesExplicitBlankCell() throws Exception {
-        // Ohne Platzhalter wird eine explizite leere Zelle (Excel-Zelltyp BLANK/"Empty") angelegt –
-        // nicht einfach weggelassen. Die Zelle existiert also und hat den Typ BLANK.
+        // without a placeholder an explicit empty cell (Excel cell type BLANK/"Empty") is created -
+        // not simply omitted. So the cell exists and has type BLANK.
         record R(String a, Integer b) {}
         Path out = tempDir.resolve("blankCell.xlsx");
 
@@ -1122,7 +1122,7 @@ class XlsxBuilderTest {
         }
     }
 
-    // ========== Footer / Platzhalter ==========
+    // ========== Footer / placeholders ==========
 
     @Test
     void writesFooterRowsMergedAfterSummary() throws Exception {
@@ -1142,7 +1142,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Kopf(0) + 2 Daten(1,2) + Summe(3) + Footer(4)
+        // header(0) + 2 data(1,2) + sum(3) + footer(4)
         assertEquals(5, g.rowCount());
         assertEquals("Ende des Berichts", g.string(4, 0));
         assertTrue(g.mergeRefs().contains("A5:B5"), "Footer gemerged über die Breite: " + g.mergeRefs());
@@ -1168,13 +1168,13 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Titel(0,1) + Kopf(2) + Daten(3,4) + Summe(5) + Footer(6)
+        // title(0,1) + header(2) + data(3,4) + sum(5) + footer(6)
         assertEquals("Bericht ACME", g.string(0, 0), "benutzerdefinierter Platzhalter");
         assertEquals("Stand: " + java.time.LocalDate.now(), g.string(1, 0), "eingebautes {date}");
         assertEquals("Zeilen: 2, Summe Wert: 40", g.string(6, 0), "dynamische Footer-Platzhalter");
     }
 
-    // ========== Pipeline-Parallelität ==========
+    // ========== Pipeline parallelism ==========
 
     @Test
     void parallelProducesSameOutputAsSequential() throws Exception {
@@ -1234,8 +1234,8 @@ class XlsxBuilderTest {
 
     @Test
     void comparatorRejectsIncompatibleValueTypes() {
-        // Zwei Zeilen mit inkompatiblen Werttypen in der Sortierspalte -> aussagekräftige Exception
-        // statt roher ClassCastException.
+        // two rows with incompatible value types in the sort column -> meaningful exception
+        // instead of a raw ClassCastException.
         var comparator = new RowComparator(
                 List.of(new Column<>("v", ColumnType.STRING, x -> x)), List.of(new SortKey("v", SortOrder.ASC)));
         Row textRow = new Row(new Object[] {"abc"});
@@ -1243,11 +1243,11 @@ class XlsxBuilderTest {
         assertThrows(IllegalArgumentException.class, () -> comparator.compare(textRow, numberRow));
     }
 
-    // ========== Spaltenüberschriften-Schalter ==========
+    // ========== Column-headers toggle ==========
 
     @Test
     void writesWithoutColumnHeaders() throws Exception {
-        // columnHeaders(false) → erste Zeile ist direkt eine Datenzeile, keine Überschrift.
+        // columnHeaders(false) -> the first row is directly a data row, no header.
         List<Person> data = List.of(new Person("Alice", 30, true), new Person("Bob", 25, false));
         Path out = tempDir.resolve("noHeader.xlsx");
 
@@ -1269,7 +1269,7 @@ class XlsxBuilderTest {
 
     @Test
     void summaryFormulaWithoutColumnHeaders() throws Exception {
-        // Ohne Kopfzeile beginnen die Daten in Excel-Zeile 1 → Formel muss SUM(B1:B2) lauten.
+        // without a header the data starts in Excel row 1 -> formula must be SUM(B1:B2).
         record Item(String name, int wert) {}
         List<Item> data = List.of(new Item("A", 10), new Item("B", 20));
         Path out = tempDir.resolve("noHeaderSum.xlsx");
@@ -1286,16 +1286,16 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        // Ohne Kopfzeile: Daten in Excel-Zeilen 1–2, Summenzeile in Zeile 3
+        // without a header: data in Excel rows 1-2, summary row in row 3
         assertEquals(3, g.rowCount());
         assertEquals("SUM(B1:B2)", g.formula(2, 1));
     }
 
-    // ========== Einmal-Nutzung (Single-Use-Guard) ==========
+    // ========== Single-use guard ==========
 
     @Test
     void rejectsReuseAfterWrite() throws Exception {
-        // Dieselbe XlsxBuilder-Instanz darf nicht zweimal geschrieben werden (forward-only Quelle).
+        // the same XlsxBuilder instance must not be written twice (forward-only source).
         XlsxBuilder<Person> sheet = XlsxBuilder.<Person>create()
                 .column("Name", Person::name)
                 .data(DataProviders.ofIterable(List.of(new Person("Alice", 30, true))));
@@ -1323,7 +1323,7 @@ class XlsxBuilderTest {
                 "zweiter write(...)-Aufruf desselben WorkbookBuilder muss scheitern");
     }
 
-    // ========== Lazy/berechnete Platzhalter (placeholderResolver) ==========
+    // ========== Lazy/computed placeholders (placeholderResolver) ==========
 
     @Test
     void resolvesLazyPlaceholderInHeader() throws Exception {

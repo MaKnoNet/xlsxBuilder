@@ -4,19 +4,19 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * Unveränderlicher Ausführungsauftrag für ein einzelnes Blatt: alle vom {@link XlsxBuilder}
- * kompilierten Bausteine, die der {@link SheetRenderer} zum Schreiben benötigt. Trennt die fluente
- * Konfiguration ({@link XlsxBuilder}) von der Ausführung ({@link SheetRenderer}).
+ * Immutable execution job for a single sheet: all building blocks compiled by the {@link XlsxBuilder}
+ * that the {@link SheetRenderer} needs in order to write. Separates the fluent configuration
+ * ({@link XlsxBuilder}) from the execution ({@link SheetRenderer}).
  *
- * @param sheetName    Blattname
- * @param columns      Spaltendefinitionen (Extraktor/Typ/Format/Null-Text)
- * @param filter       optionaler Datensatzfilter auf dem Rohobjekt (oder {@code null} = alle)
- * @param dataProvider forward-only Datenquelle (wird vom Renderer geschlossen)
- * @param sort         Sortier-Konfiguration (leere {@code sortKeys} = unsortiert)
- * @param summary      Summenzeilen-Konfiguration (oder {@code null})
- * @param layout       Titel-/Footer-/Platzhalter-/Null-Layout
- * @param parallel     Producer/Consumer-Pipeline aktivieren?
- * @param <T>          Typ der Datensätze der Datenquelle
+ * @param sheetName    sheet name
+ * @param columns      column definitions (extractor/type/format/null text)
+ * @param filter       optional record filter on the raw object (or {@code null} = all)
+ * @param dataProvider forward-only data source (closed by the renderer)
+ * @param sort         sort configuration (empty {@code sortKeys} = unsorted)
+ * @param summary      summary-row configuration (or {@code null})
+ * @param layout       title/footer/placeholder/null layout
+ * @param parallel     enable the producer/consumer pipeline?
+ * @param <T>          type of the data source's records
  */
 record RenderJob<T>(
         String sheetName,

@@ -12,12 +12,12 @@ import org.apache.logging.log4j.Logger;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 /**
- * Fasst ein oder mehrere Worksheets in einer {@code .xlsx}-Datei zusammen. Jedes Blatt wird durch
- * einen eigenständigen {@link XlsxBuilder} beschrieben (mit eigenem Datentyp, eigenen Spalten,
- * Sortierung, Summenzeile usw.) und liefert seine Daten über {@link XlsxBuilder#data(DataProvider)}.
+ * Combines one or more worksheets into a single {@code .xlsx} file. Each sheet is described by its own
+ * {@link XlsxBuilder} (with its own data type, columns, sorting, summary row, etc.) and supplies its
+ * data via {@link XlsxBuilder#data(DataProvider)}.
  *
- * <p>Die Blätter werden nacheinander gestreamt geschrieben (inkl. External Merge Sort je Blatt),
- * sodass der Speicherbedarf out-of-core/beschränkt bleibt.
+ * <p>The sheets are written one after another in a streaming fashion (incl. an external merge sort per
+ * sheet), so that the memory footprint stays out-of-core/bounded.
  *
  * <pre>{@code
  * WorkbookBuilder.create()
@@ -30,28 +30,28 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  *     .write(Path.of("report.xlsx"));
  * }</pre>
  *
- * <p><b>Thread-Sicherheit:</b> nicht thread-safe und auf Einmal-Nutzung ausgelegt – pro Auftrag eine
- * eigene Instanz erzeugen, nicht zwischen Threads teilen und nicht gleichzeitig in dieselbe Datei
- * schreiben. Da die Bibliothek keinen geteilten/statischen Zustand hat, laufen nebenläufige Aufträge
- * mit jeweils eigenen Instanzen isoliert; pro {@link #write} entsteht ein eigenes POI-Workbook.
+ * <p><b>Thread safety:</b> not thread-safe and designed for single use – create a separate instance
+ * per job, do not share it between threads and do not write to the same file concurrently. As the
+ * library has no shared/static state, concurrent jobs each with their own instances run isolated; each
+ * {@link #write} creates its own POI workbook.
  *
- * <p><b>Einmal-Nutzung:</b> Eine Instanz darf nur einmal geschrieben werden; ein erneuter
- * {@link #write}-Aufruf wirft eine {@link IllegalStateException} (die Datenquellen der Blätter sind
- * forward-only und nach dem ersten Schreiben erschöpft).
+ * <p><b>Single use:</b> an instance may only be written once; a second {@link #write} call throws an
+ * {@link IllegalStateException} (the sheets' data sources are forward-only and exhausted after the
+ * first write).
  */
 public final class WorkbookBuilder {
 
     private static final Logger LOG = LogManager.getLogger(WorkbookBuilder.class);
 
     /**
-     * Standard-Anzahl Zeilen, die SXSSF je Blatt gleichzeitig im Speicher hält (Rest wird
-     * ausgelagert). Dies ist ein guter Kompromiss für die meisten Anwendungsfälle.
+     * Default number of rows SXSSF keeps in memory per sheet at once (the rest is spilled to disk).
+     * This is a good compromise for most use cases.
      */
     private static final int DEFAULT_ROW_WINDOW = 100;
 
     private final List<XlsxBuilder<?>> sheets = new ArrayList<>();
     private int sxssfRowWindow = DEFAULT_ROW_WINDOW;
-    private boolean written; // Einmal-Nutzung: nach write(...) nicht erneut verwendbar
+    private boolean written; // single-use: not reusable after write(...)
 
     private WorkbookBuilder() {}
 
@@ -60,20 +60,20 @@ public final class WorkbookBuilder {
     }
 
     /**
-     * Setzt die Anzahl Zeilen, die SXSSF je Blatt gleichzeitig im Speicher hält (der Rest wird auf
-     * Temp-Dateien ausgelagert). Der Speicherbedarf steigt mit dieser Größe, aber auch die
-     * Schreib-Performance. Default ist {@value #DEFAULT_ROW_WINDOW}.
+     * Sets the number of rows SXSSF keeps in memory per sheet at once (the rest is spilled to temp
+     * files). Memory usage grows with this size, but so does write performance. Default is
+     * {@value #DEFAULT_ROW_WINDOW}.
      *
-     * <p><b>Typische Werte:</b>
+     * <p><b>Typical values:</b>
      * <ul>
-     *   <li>50–100: sehr sparsam mit RAM, gut für sehr große Dateien mit limitiertem Heap;</li>
-     *   <li>100–500: Standard, guter Balance zwischen Speicher und Performance;</li>
-     *   <li>1000+: mehr RAM, aber auch mehr Performance (wenn Heap groß genug).</li>
+     *   <li>50–100: very memory-frugal, good for very large files with a limited heap;</li>
+     *   <li>100–500: standard, a good balance between memory and performance;</li>
+     *   <li>1000+: more RAM, but also more performance (if the heap is large enough).</li>
      * </ul>
      *
-     * @param window Anzahl Zeilen im Speicher (>= 1)
-     * @return this für Fluent API
-     * @throws IllegalArgumentException wenn window < 1
+     * @param window number of rows in memory (>= 1)
+     * @return this for the fluent API
+     * @throws IllegalArgumentException if window &lt; 1
      */
     public WorkbookBuilder sxssfRowWindow(int window) {
         if (window < 1) {
@@ -83,7 +83,7 @@ public final class WorkbookBuilder {
         return this;
     }
 
-    /** Fügt ein Blatt hinzu. Der {@link XlsxBuilder} muss eine Datenquelle ({@code .data(...)}) haben. */
+    /** Adds a sheet. The {@link XlsxBuilder} must have a data source ({@code .data(...)}). */
     public WorkbookBuilder sheet(XlsxBuilder<?> sheet) {
         sheets.add(Objects.requireNonNull(sheet, "sheet"));
         return this;

@@ -1,8 +1,8 @@
 package de.makno.xlsxbuilder.builder;
 
 /**
- * Ungeprüfte Hülle für eine {@link java.sql.SQLException}, die in den {@link DataProvider}-Methoden
- * ({@code hasNext()}/{@code next()}) auftritt – deren Signaturen erlauben keine geprüfte Ausnahme.
+ * Unchecked wrapper for a {@link java.sql.SQLException} occurring inside the {@link DataProvider}
+ * methods ({@code hasNext()}/{@code next()}) – whose signatures do not allow a checked exception.
  */
 public class DataAccessException extends RuntimeException {
 

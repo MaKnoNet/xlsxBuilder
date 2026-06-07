@@ -15,14 +15,14 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 
 /**
- * Liest erzeugte {@code .xlsx}-Dateien mit Apache POI zurück und stellt sie als in-memory
- * {@link Grid} bereit (Workbook wird sofort wieder geschlossen). Zur Verifikation in den Tests.
+ * Reads back generated {@code .xlsx} files with Apache POI and exposes them as an in-memory
+ * {@link Grid} (the workbook is closed again immediately). For verification in the tests.
  */
 final class XlsxTestReader {
 
     private XlsxTestReader() {}
 
-    /** Eine einzelne Zelle, typisiert eingelesen. */
+    /** A single cell, read in typed form. */
     record CellData(
             CellType type,
             String string,
@@ -34,7 +34,7 @@ final class XlsxTestReader {
             String format,
             String formula) {}
 
-    /** Komplettes Blatt als Zeilen/Spalten plus Metadaten. */
+    /** A complete sheet as rows/columns plus metadata. */
     static final class Grid {
         private final List<List<CellData>> rows;
         private final List<String> mergeRefs;
@@ -48,7 +48,7 @@ final class XlsxTestReader {
             this.columnWidths = columnWidths;
         }
 
-        /** Spaltenbreite in POI-Einheiten (1/256 Zeichen). */
+        /** Column width in POI units (1/256 of a character). */
         int columnWidth(int c) {
             return columnWidths[c];
         }
@@ -74,7 +74,7 @@ final class XlsxTestReader {
             return cell(r, c).string();
         }
 
-        /** Numerischer Wert als long (für INTEGER/LONG-Spalten und ganzzahlige Summen). */
+        /** Numeric value as long (for INTEGER/LONG columns and integer sums). */
         long number(int r, int c) {
             return (long) cell(r, c).number();
         }
@@ -103,12 +103,12 @@ final class XlsxTestReader {
             return cell(r, c).format();
         }
 
-        /** Formeltext (ohne {@code =}) oder {@code null}, falls keine Formelzelle. */
+        /** Formula text (without {@code =}) or {@code null} if not a formula cell. */
         String formula(int r, int c) {
             return cell(r, c).formula();
         }
 
-        /** Alle Zellen einer Zeile als String-Werte (für Kopf-/Überschriftszeilen). */
+        /** All cells of a row as string values (for header/title rows). */
         List<String> strings(int r) {
             List<String> out = new ArrayList<>();
             for (CellData cd : rows.get(r)) {
@@ -118,12 +118,12 @@ final class XlsxTestReader {
         }
     }
 
-    /** Liest das erste Blatt (Index 0). */
+    /** Reads the first sheet (index 0). */
     static Grid read(Path xlsx) throws Exception {
         return read(xlsx, 0);
     }
 
-    /** Liest ein bestimmtes Blatt (0-basierter Index). */
+    /** Reads a specific sheet (0-based index). */
     static Grid read(Path xlsx, int sheetIndex) throws Exception {
         try (Workbook wb = WorkbookFactory.create(Files.newInputStream(xlsx))) {
             Sheet sheet = wb.getSheetAt(sheetIndex);
@@ -162,7 +162,7 @@ final class XlsxTestReader {
         return read(xlsx).sheetName();
     }
 
-    /** Namen aller Blätter in Reihenfolge. */
+    /** Names of all sheets in order. */
     static List<String> sheetNames(Path xlsx) throws Exception {
         try (Workbook wb = WorkbookFactory.create(Files.newInputStream(xlsx))) {
             List<String> names = new ArrayList<>();

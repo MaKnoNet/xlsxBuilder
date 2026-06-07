@@ -15,17 +15,17 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 /**
- * Kompakte, typ-getaggte (De-)Serialisierung einer {@link Row} für die Run-Dateien des
+ * Compact, type-tagged (de)serialization of a {@link Row} for the run files of the
  * {@link ExternalMergeSort}.
  *
- * <p>Statt Javas {@code ObjectOutputStream} (das je Objekt Klassendeskriptoren schreibt und mit
- * {@code reset()} teuer ist) wird jeder Zellenwert mit einem 1-Byte-Typtag plus kompakter
- * Primitiv-Kodierung geschrieben. Das ist deutlich schneller und erzeugt erheblich kleinere Dateien
- * (weniger Disk-I/O, v. a. beim mehrstufigen Merging). Die gängigen Zellentypen werden direkt
- * kodiert; unbekannte (aber {@link java.io.Serializable}) Typen fallen auf Java-Serialisierung zurück.
+ * <p>Instead of Java's {@code ObjectOutputStream} (which writes class descriptors per object and is
+ * expensive with {@code reset()}), each cell value is written with a 1-byte type tag plus a compact
+ * primitive encoding. This is much faster and produces considerably smaller files (less disk I/O,
+ * especially during multi-pass merging). The common cell types are encoded directly; unknown (but
+ * {@link java.io.Serializable}) types fall back to Java serialization.
  *
- * <p>Wichtig: Der konkrete Laufzeittyp bleibt erhalten (z. B. {@code Integer} vs. {@code Long}),
- * damit Vergleich ({@link RowComparator}) und Breitenschätzung identisch zum In-Memory-Fall sind.
+ * <p>Important: the concrete runtime type is preserved (e.g. {@code Integer} vs. {@code Long}), so
+ * that comparison ({@link RowComparator}) and width estimation are identical to the in-memory case.
  */
 final class RowCodec {
 
@@ -39,7 +39,7 @@ final class RowCodec {
     private static final byte LDATE = 7;
     private static final byte LDATETIME = 8;
     private static final byte LTIME = 9;
-    private static final byte JAVA = 99; // Fallback: beliebiges Serializable
+    private static final byte JAVA = 99; // fallback: any Serializable
 
     private RowCodec() {}
 

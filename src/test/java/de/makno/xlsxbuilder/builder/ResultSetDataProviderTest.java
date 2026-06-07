@@ -12,7 +12,7 @@ import java.sql.Statement;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/** Verifiziert den JDBC-Adapter {@link DataProviders#ofResultSet} gegen eine In-Memory-H2-DB. */
+/** Verifies the JDBC adapter {@link DataProviders#ofResultSet} against an in-memory H2 DB. */
 class ResultSetDataProviderTest {
 
     @TempDir

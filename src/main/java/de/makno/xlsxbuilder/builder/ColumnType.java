@@ -1,8 +1,8 @@
 package de.makno.xlsxbuilder.builder;
 
 /**
- * Logischer Typ einer Spalte. Steuert, wie der projizierte Wert als Excel-Zelle
- * geschrieben wird (Zelltyp/Format) und wie er beim Sortieren verglichen wird.
+ * Logical type of a column. Controls how the projected value is written as an Excel cell
+ * (cell type/format) and how it is compared when sorting.
  */
 public enum ColumnType {
     STRING(true),
@@ -13,16 +13,16 @@ public enum ColumnType {
     BOOLEAN(true),
     DATE(true),
     DATETIME(true),
-    /** Uhrzeit (Tageszeit ohne Datum), erwartet {@link java.time.LocalTime} oder {@link java.time.LocalDateTime}. */
+    /** Time of day (without a date); expects {@link java.time.LocalTime} or {@link java.time.LocalDateTime}. */
     TIME(true),
     /**
-     * Excel-Formel. Der Extraktor liefert den Formeltext ohne führendes {@code =} (z. B.
-     * {@code "F{row}*0.1"}); der Platzhalter {@code {row}} wird durch die tatsächliche Zeilennummer
-     * ersetzt. Excel berechnet die Werte beim Öffnen. Formeln sind nicht sortierbar.
+     * Excel formula. The extractor supplies the formula text without a leading {@code =} (e.g.
+     * {@code "F{row}*0.1"}); the placeholder {@code {row}} is replaced with the actual row number.
+     * Excel computes the values when the file is opened. Formulas are not sortable.
      */
     FORMULA(false);
 
-    /** Gibt an, ob dieser Spaltentyp sortierbar ist. Formeln sind z.B. nicht sortierbar. */
+    /** Whether this column type is sortable. Formulas, for instance, are not sortable. */
     private final boolean sortable;
 
     ColumnType(boolean sortable) {
@@ -30,9 +30,9 @@ public enum ColumnType {
     }
 
     /**
-     * Gibt an, ob dieser Spaltentyp sortierbar ist.
+     * Whether this column type is sortable.
      *
-     * @return {@code true} wenn der Typ sortiert werden kann, {@code false} sonst
+     * @return {@code true} if the type can be sorted, {@code false} otherwise
      */
     public boolean isSortable() {
         return sortable;

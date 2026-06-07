@@ -18,34 +18,33 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * External Merge Sort über {@link Row}s. Funktioniert auch für Datenmengen, die nicht in den
- * Speicher passen:
+ * External merge sort over {@link Row}s. Works even for data sets that do not fit in memory:
  * <ol>
- *   <li>Die Quelle wird in Chunks fester Größe gelesen; jeder Chunk wird in-memory sortiert und
- *       als sortierter "Run" auf eine Temp-Datei serialisiert.</li>
- *   <li>Übersteigt die Anzahl der Runs den maximalen Fan-in ({@value #MAX_FAN_IN}), werden sie in
- *       mehreren Durchgängen vorgemerged, bis höchstens {@value #MAX_FAN_IN} Runs übrig sind. So
- *       sind nie mehr als {@value #MAX_FAN_IN} Dateien gleichzeitig offen (OS-File-Handle-Limit).</li>
- *   <li>Die verbleibenden Runs werden per k-way-Merge (eine {@link PriorityQueue} über die Köpfe
- *       der Runs) zusammengeführt und als sortierter Strom geliefert.</li>
+ *   <li>The source is read in fixed-size chunks; each chunk is sorted in memory and serialized as a
+ *       sorted "run" to a temp file.</li>
+ *   <li>If the number of runs exceeds the maximum fan-in ({@value #MAX_FAN_IN}), they are pre-merged in
+ *       several passes until at most {@value #MAX_FAN_IN} runs remain. This way at most
+ *       {@value #MAX_FAN_IN} files are ever open at once (OS file-handle limit).</li>
+ *   <li>The remaining runs are combined by a k-way merge (a {@link PriorityQueue} over the run heads)
+ *       and delivered as a sorted stream.</li>
  * </ol>
- * Der Speicherbedarf ist durch die Chunk-Größe und den Fan-in begrenzt, unabhängig von der
- * Gesamtzeilenzahl. Temp-Dateien werden bei {@link #close()} gelöscht.
+ * Memory usage is bounded by the chunk size and the fan-in, independent of the total row count. Temp
+ * files are deleted on {@link #close()}.
  */
 final class ExternalMergeSort implements Closeable {
 
     private static final Logger LOG = LogManager.getLogger(ExternalMergeSort.class);
 
-    /** Maximale Anzahl gleichzeitig offener Runs beim Merge (begrenzt offene File-Handles). */
+    /** Maximum number of runs open at once during the merge (bounds open file handles). */
     private static final int MAX_FAN_IN = 16;
 
     private final Comparator<Row> comparator;
     private final int chunkSize;
-    private final Path baseTempDir; // Basisverzeichnis für Runs; null = System-Temp
+    private final Path baseTempDir; // base directory for runs; null = system temp
     private final List<Path> runFiles = new ArrayList<>();
     private Path tempDir;
 
-    // Performance-Kennzahlen (nur für Logging).
+    // Performance metrics (for logging only).
     private long rowsRead;
     private int initialRuns;
     private int mergePasses;
@@ -55,8 +54,8 @@ final class ExternalMergeSort implements Closeable {
     }
 
     /**
-     * @param baseTempDir Basisverzeichnis für die Run-Dateien; {@code null} = System-Temp
-     *                    ({@code java.io.tmpdir}). Wird bei Bedarf angelegt.
+     * @param baseTempDir base directory for the run files; {@code null} = system temp
+     *                    ({@code java.io.tmpdir}). Created on demand.
      */
     ExternalMergeSort(Comparator<Row> comparator, int chunkSize, Path baseTempDir) {
         if (chunkSize < 1) {
@@ -68,8 +67,8 @@ final class ExternalMergeSort implements Closeable {
     }
 
     /**
-     * Konsumiert die Quelle vollständig (erzeugt die Runs) und liefert den sortierten Merge-Strom.
-     * Bei Fehlern werden alle erstellten Temp-Dateien automatisch gelöscht ({@link #close()} wird aufgerufen).
+     * Consumes the source fully (creating the runs) and returns the sorted merge stream. On error all
+     * created temp files are deleted automatically ({@link #close()} is called).
      */
     CloseableIterator<Row> sort(java.util.Iterator<Row> source) throws IOException {
         long startNanos = System.nanoTime();
@@ -94,7 +93,7 @@ final class ExternalMergeSort implements Closeable {
                 runs.add(flushRun(buffer));
             }
             initialRuns = runs.size();
-            // Fan-in begrenzen, damit der finale Merge nie zu viele Dateien gleichzeitig offen hält.
+            // Bound the fan-in so the final merge never keeps too many files open at once.
             runs = reduceToFanIn(runs);
             CloseableIterator<Row> merged = new MergeIterator(runs, comparator);
             LOG.debug(
@@ -108,24 +107,24 @@ final class ExternalMergeSort implements Closeable {
                     tempDir);
             return merged;
         } catch (IOException e) {
-            // Cleanup bei Fehler: alle bis jetzt erstellten Temp-Dateien löschen
+            // Cleanup on error: delete all temp files created so far.
             close();
             throw e;
         }
     }
 
-    /** Sortiert den Puffer in-memory und schreibt ihn als sortierten Run auf eine neue Temp-Datei. */
+    /** Sorts the buffer in memory and writes it as a sorted run to a new temp file. */
     private Path flushRun(List<Row> buffer) throws IOException {
         buffer.sort(comparator);
         Path run = Files.createTempFile(tempDir, "run-", ".bin");
-        runFiles.add(run); // sofort vormerken, damit close() auch bei Schreibfehler aufräumt
+        runFiles.add(run); // register immediately, so close() also cleans up on a write error
         writeRun(run, buffer.iterator(), buffer.size());
         return run;
     }
 
     /**
-     * Reduziert die Run-Liste durch mehrstufiges Vormerging, bis höchstens {@value #MAX_FAN_IN} Runs
-     * übrig sind. Bereits gemergte Eingangs-Runs werden nach jedem Durchgang gelöscht (Platz sparen).
+     * Reduces the run list through multi-pass pre-merging until at most {@value #MAX_FAN_IN} runs
+     * remain. Already-merged input runs are deleted after each pass (to save space).
      */
     private List<Path> reduceToFanIn(List<Path> runs) throws IOException {
         while (runs.size() > MAX_FAN_IN) {
@@ -140,7 +139,7 @@ final class ExternalMergeSort implements Closeable {
         return runs;
     }
 
-    /** Merged eine Gruppe sortierter Runs in einen neuen sortierten Run und löscht die Eingangs-Runs. */
+    /** Merges a group of sorted runs into a new sorted run and deletes the input runs. */
     private Path mergeGroupToRun(List<Path> group) throws IOException {
         Path out = Files.createTempFile(tempDir, "merge-", ".bin");
         runFiles.add(out);
@@ -163,7 +162,7 @@ final class ExternalMergeSort implements Closeable {
                 closeQuietly(reader);
             }
         }
-        // Eingangs-Runs werden nicht mehr gebraucht -> Plattenplatz sofort freigeben.
+        // The input runs are no longer needed -> free disk space immediately.
         for (Path run : group) {
             try {
                 Files.deleteIfExists(run);
@@ -174,7 +173,7 @@ final class ExternalMergeSort implements Closeable {
         return out;
     }
 
-    /** Schreibt {@code count} Zeilen (in der Reihenfolge des Iterators) als Run-Datei. */
+    /** Writes {@code count} rows (in iterator order) as a run file. */
     private static void writeRun(Path file, java.util.Iterator<Row> rows, long count) throws IOException {
         try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) {
             out.writeLong(count);
@@ -212,7 +211,7 @@ final class ExternalMergeSort implements Closeable {
         }
     }
 
-    /** Liest einen sortierten Run zeilenweise von der Platte. */
+    /** Reads a sorted run row by row from disk. */
     private static final class RunReader implements Closeable {
         private final DataInputStream in;
         private long remaining;
@@ -222,7 +221,7 @@ final class ExternalMergeSort implements Closeable {
             this.remaining = in.readLong();
         }
 
-        /** Anzahl noch nicht gelesener Zeilen dieses Runs. */
+        /** Number of rows of this run not yet read. */
         long remaining() {
             return remaining;
         }
@@ -249,9 +248,9 @@ final class ExternalMergeSort implements Closeable {
     private record Node(Row row, RunReader reader) {}
 
     /**
-     * Zieht die nächste Zeile aus einer vorbefüllten {@link PriorityQueue} von Run-Köpfen
-     * (k-way-Merge). Wird sowohl für das Vormerging in eine Datei ({@link #writeRun}) als auch –
-     * über {@link MergeIterator} – für den finalen Strom verwendet.
+     * Pulls the next row from a pre-filled {@link PriorityQueue} of run heads (k-way merge). Used both
+     * for pre-merging into a file ({@link #writeRun}) and – via {@link MergeIterator} – for the final
+     * stream.
      */
     private static Row pollNext(PriorityQueue<Node> queue) {
         Node node = queue.poll();
@@ -266,7 +265,7 @@ final class ExternalMergeSort implements Closeable {
         return result;
     }
 
-    /** Adaptiert eine Merge-Queue als einfachen (nicht ressourcenhaltenden) Iterator für {@link #writeRun}. */
+    /** Adapts a merge queue as a simple (non-resource-holding) iterator for {@link #writeRun}. */
     private static final class MergingIterator implements java.util.Iterator<Row> {
         private final PriorityQueue<Node> queue;
 
@@ -289,16 +288,16 @@ final class ExternalMergeSort implements Closeable {
         }
     }
 
-    /** k-way-Merge über die Köpfe aller (verbleibenden) Runs als schließbarer Ergebnis-Strom. */
+    /** k-way merge over the heads of all (remaining) runs as a closeable result stream. */
     private static final class MergeIterator implements CloseableIterator<Row> {
         private final PriorityQueue<Node> queue;
         private final List<RunReader> readers = new ArrayList<>();
 
         /**
-         * Konstruiert einen MergeIterator über alle Run-Dateien.
-         * Bei Fehlern beim Öffnen der Dateien werden alle bis dahin geöffneten Reader geschlossen.
+         * Constructs a MergeIterator over all run files. On errors while opening the files, all readers
+         * opened so far are closed.
          *
-         * @throws IOException wenn eine Run-Datei nicht gelesen werden kann
+         * @throws IOException if a run file cannot be read
          */
         MergeIterator(List<Path> runs, Comparator<Row> comparator) throws IOException {
             this.queue = new PriorityQueue<>((a, b) -> comparator.compare(a.row(), b.row()));
@@ -312,7 +311,7 @@ final class ExternalMergeSort implements Closeable {
                     }
                 }
             } catch (IOException e) {
-                // Cleanup bei Fehler: alle bis jetzt geöffneten Reader schließen
+                // Cleanup on error: close all readers opened so far.
                 closeReaders();
                 throw e;
             }
@@ -337,7 +336,7 @@ final class ExternalMergeSort implements Closeable {
             closeReaders();
         }
 
-        /** Hilfsmethode zum Schließen aller Reader (aufgerufen bei Fehler oder close()). */
+        /** Helper to close all readers (called on error or close()). */
         private void closeReaders() {
             for (RunReader reader : readers) {
                 closeQuietly(reader);

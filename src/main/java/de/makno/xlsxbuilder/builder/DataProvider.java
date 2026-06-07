@@ -3,19 +3,19 @@ package de.makno.xlsxbuilder.builder;
 import java.io.Closeable;
 
 /**
- * Forward-only Datenquelle für den {@link XlsxBuilder}. Wird genau einmal durchlaufen,
- * sodass auch Datenmengen verarbeitet werden können, die nicht vollständig in den Speicher passen
- * (z. B. ein JDBC-{@code ResultSet} oder ein gepufferter Datei-Reader).
+ * Forward-only data source for the {@link XlsxBuilder}. It is traversed exactly once, so that data
+ * sets which do not fully fit in memory can also be processed (e.g. a JDBC {@code ResultSet} or a
+ * buffered file reader).
  */
 public interface DataProvider<T> extends Closeable {
 
-    /** {@code true}, solange noch ein weiterer Datensatz verfügbar ist. */
+    /** {@code true} as long as another record is available. */
     boolean hasNext();
 
-    /** Liefert den nächsten Datensatz. */
+    /** Returns the next record. */
     T next();
 
-    /** Standard: nichts zu schließen. Quellen mit Ressourcen (DB, Datei) überschreiben dies. */
+    /** Default: nothing to close. Sources holding resources (DB, file) override this. */
     @Override
     default void close() {}
 }

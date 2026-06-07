@@ -12,17 +12,17 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Demo: erzeugt out-of-core eine sortierte {@code .xlsx} mit vielen Zeilen und je einer Spalte pro
- * {@link ColumnType}. Die Datensätze werden über einen {@link DataProvider} <em>lazy</em> generiert
- * ({@link EmployeeData#generator(long)}) – es liegt nie die gesamte Datenmenge im Speicher.
+ * Demo: creates, out-of-core, a sorted {@code .xlsx} with many rows and one column per
+ * {@link ColumnType}. The records are generated <em>lazily</em> via a {@link DataProvider}
+ * ({@link EmployeeData#generator(long)}) – the full data set is never held in memory.
  *
- * <p>Aufruf: {@code XlsxBuilderDemo [zeilenanzahl] [ausgabedatei]} (Default: 1_000_000 / employees.xlsx).
+ * <p>Usage: {@code XlsxBuilderDemo [rowCount] [outputFile]} (default: 1_000_000 / employees.xlsx).
  */
 public final class XlsxBuilderDemo {
 
     private XlsxBuilderDemo() {}
 
-    /** Datentyp des Info-Blatts – zeigt, dass jedes Blatt einen eigenen Typ haben kann. */
+    /** Data type of the info sheet – shows that each sheet can have its own type. */
     public record Info(String schluessel, String wert) {}
 
     public static void main(String[] args) throws IOException {
@@ -34,8 +34,8 @@ public final class XlsxBuilderDemo {
 
         System.out.printf("%s wird erstellt.%n", out.toAbsolutePath());
 
-        // Zwei Mitarbeiter-Blätter (gleicher Typ; demonstriert mehrere Blätter + Namens-Deduplizierung)
-        // plus ein Info-Blatt mit eigenem Datentyp.
+        // Two employee sheets (same type; demonstrates multiple sheets + name deduplication) plus one
+        // info sheet with its own data type.
         WorkbookBuilder.create()
                 .sheet(EmployeeData.sheet("Mitarbeiter", EmployeeData.generator(rowCount)))
                 .sheet(buildInfoSheet(rowCount))
@@ -51,7 +51,7 @@ public final class XlsxBuilderDemo {
                 rowCount, out.toAbsolutePath(), fileMb, seconds, usedMb, runtime.maxMemory() / (1024 * 1024));
     }
 
-    /** Baut das Info-Blatt (anderer Datentyp) – kleine statische Metadaten-Tabelle. */
+    /** Builds the info sheet (different data type) – a small static metadata table. */
     private static XlsxBuilder<Info> buildInfoSheet(long rowCount) {
         return XlsxBuilder.<Info>create()
                 .sheetName("Info")

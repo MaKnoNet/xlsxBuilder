@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
-/** Factory für gängige {@link DataProvider}-Adapter. */
+/** Factory for common {@link DataProvider} adapters. */
 public final class DataProviders {
 
     private DataProviders() {}
@@ -32,7 +32,7 @@ public final class DataProviders {
         return ofIterator(iterable.iterator());
     }
 
-    /** Adaptiert einen {@link Stream}; der Stream wird bei {@link DataProvider#close()} geschlossen. */
+    /** Adapts a {@link Stream}; the stream is closed on {@link DataProvider#close()}. */
     public static <T> DataProvider<T> ofStream(Stream<? extends T> stream) {
         Iterator<? extends T> iterator = stream.iterator();
         return new DataProvider<T>() {
@@ -57,15 +57,16 @@ public final class DataProviders {
     }
 
     /**
-     * Adaptiert ein JDBC-{@link ResultSet} als forward-only {@link DataProvider} – ideal für echte
-     * Out-of-core-Fälle, da die Datenbank die Zeilen streamend liefert (idealerweise mit
-     * {@code TYPE_FORWARD_ONLY} und passender {@code fetchSize}).
+     * Adapts a JDBC {@link ResultSet} as a forward-only {@link DataProvider} – ideal for true
+     * out-of-core cases, since the database delivers the rows streamed (ideally with
+     * {@code TYPE_FORWARD_ONLY} and a suitable {@code fetchSize}).
      *
-     * <p>{@link DataProvider#close()} schließt <strong>nur das {@code ResultSet}</strong>. Das zugehörige
-     * {@code Statement} und die {@code Connection} verwaltet der Aufrufer (z. B. via try-with-resources).
-     * Auftretende {@link SQLException}s werden in eine {@link DataAccessException} verpackt.
+     * <p>{@link DataProvider#close()} closes <strong>only the {@code ResultSet}</strong>. The associated
+     * {@code Statement} and the {@code Connection} are managed by the caller (e.g. via
+     * try-with-resources). Any {@link SQLException}s that occur are wrapped in a
+     * {@link DataAccessException}.
      *
-     * <p>Nicht thread-safe / single-use (wie ein {@code ResultSet} selbst).
+     * <p>Not thread-safe / single-use (like a {@code ResultSet} itself).
      */
     public static <T> DataProvider<T> ofResultSet(ResultSet rs, ResultSetRowMapper<? extends T> mapper) {
         java.util.Objects.requireNonNull(rs, "rs");
@@ -92,7 +93,7 @@ public final class DataProviders {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
-                lookedAhead = false; // aktuelle Zeile wird konsumiert
+                lookedAhead = false; // the current row is consumed
                 try {
                     return mapper.map(rs);
                 } catch (SQLException e) {

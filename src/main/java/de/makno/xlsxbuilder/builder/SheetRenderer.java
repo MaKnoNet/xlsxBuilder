@@ -10,13 +10,13 @@ import org.apache.logging.log4j.Logger;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 /**
- * Führt einen {@link RenderJob} aus: projiziert die (gefilterten) Datensätze gestreamt auf
- * {@link Row}s, sortiert bei Bedarf out-of-core via {@link ExternalMergeSort}, überlappt optional
- * Lesen/Sortieren mit dem Schreiben ({@link PrefetchingRowIterator}) und schreibt das Blatt über den
- * {@link XlsxWriter} in das Workbook. Gegenstück zur Konfigurationsseite ({@link XlsxBuilder}).
+ * Executes a {@link RenderJob}: projects the (filtered) records streamed onto {@link Row}s, sorts
+ * out-of-core when needed via {@link ExternalMergeSort}, optionally overlaps reading/sorting with
+ * writing ({@link PrefetchingRowIterator}), and writes the sheet into the workbook through the
+ * {@link XlsxWriter}. Counterpart to the configuration side ({@link XlsxBuilder}).
  *
- * <p>Zustandslos – alle Eingaben stecken im {@link RenderJob}; die forward-only Datenquelle wird genau
- * einmal konsumiert und vom Renderer geschlossen.
+ * <p>Stateless – all inputs live in the {@link RenderJob}; the forward-only data source is consumed
+ * exactly once and closed by the renderer.
  */
 final class SheetRenderer {
 
@@ -24,7 +24,7 @@ final class SheetRenderer {
 
     private SheetRenderer() {}
 
-    /** Schreibt das vom {@code job} beschriebene Blatt in {@code wb}; liefert die Anzahl Datenzeilen. */
+    /** Writes the sheet described by {@code job} into {@code wb}; returns the number of data rows. */
     static <T> int render(SXSSFWorkbook wb, RenderJob<T> job) throws IOException {
         long start = System.nanoTime();
         SortSpec sort = job.sort();
@@ -54,7 +54,7 @@ final class SheetRenderer {
         return rows;
     }
 
-    /** Schreibt den Strom – optional über eine Prefetch-Pipeline (lesen/sortieren ∥ schreiben). */
+    /** Writes the stream – optionally via a prefetch pipeline (read/sort ∥ write). */
     private static <T> int consume(SXSSFWorkbook wb, RenderJob<T> job, Iterator<Row> rows) throws IOException {
         if (!job.parallel()) {
             return XlsxWriter.addSheet(wb, job.sheetName(), job.columns(), rows, job.summary(), job.layout());
@@ -65,14 +65,13 @@ final class SheetRenderer {
     }
 
     /**
-     * Projiziert jeden (vom optionalen Filter akzeptierten) Datensatz früh auf eine {@link Row}.
-     * Look-ahead-Iterator, da die Quelle forward-only ist und nicht passende Datensätze übersprungen
-     * werden.
+     * Projects each record (accepted by the optional filter) eagerly onto a {@link Row}. Look-ahead
+     * iterator, since the source is forward-only and non-matching records are skipped.
      */
     private static <T> Iterator<Row> projection(RenderJob<T> job, DataProvider<T> provider) {
         Predicate<? super T> filter = job.filter();
         return new Iterator<>() {
-            private Row pending; // vorausgelesene, gefilterte Zeile oder null
+            private Row pending; // pre-read, filtered row or null
 
             @Override
             public boolean hasNext() {
@@ -97,7 +96,7 @@ final class SheetRenderer {
         };
     }
 
-    /** Projiziert einen Datensatz auf eine {@link Row} aus den extrahierten Zellenwerten. */
+    /** Projects a record onto a {@link Row} from the extracted cell values. */
     private static <T> Row project(RenderJob<T> job, T record) {
         List<Column<T>> columns = job.columns();
         Object[] values = new Object[columns.size()];

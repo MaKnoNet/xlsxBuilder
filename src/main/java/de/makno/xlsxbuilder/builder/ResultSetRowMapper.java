@@ -4,15 +4,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * Bildet die aktuelle Zeile eines {@link ResultSet} auf ein Objekt {@code T} ab. Wird von
- * {@link DataProviders#ofResultSet(ResultSet, ResultSetRowMapper)} verwendet.
+ * Maps the current row of a {@link ResultSet} to an object {@code T}. Used by
+ * {@link DataProviders#ofResultSet(ResultSet, ResultSetRowMapper)}.
  *
- * <p>Der Mapper liest nur die Spalten der <em>aktuellen</em> Zeile aus (z. B. {@code rs.getString(...)})
- * und ruft <strong>nicht</strong> {@code rs.next()} auf – das übernimmt der Adapter.
+ * <p>The mapper only reads the columns of the <em>current</em> row (e.g. {@code rs.getString(...)})
+ * and does <strong>not</strong> call {@code rs.next()} – the adapter does that.
  */
 @FunctionalInterface
 public interface ResultSetRowMapper<T> {
 
-    /** Liest die aktuelle Zeile des {@link ResultSet} und liefert das gemappte Objekt. */
+    /** Reads the current row of the {@link ResultSet} and returns the mapped object. */
     T map(ResultSet rs) throws SQLException;
 }

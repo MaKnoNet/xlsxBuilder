@@ -5,10 +5,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Demo-Datentyp, dessen Felder alle Spaltentypen abdecken. {@code checkInSeconds} ist die Kommt-Zeit
- * als Sekunden seit Mitternacht (Rohwert {@code int}), der per Konverter in eine Uhrzeit umgewandelt
- * wird. Wird sowohl vom {@link XlsxBuilderDemo} (In-Memory-Generator) als auch vom
- * {@link DbBenchmark} (aus der H2-DB gelesen) verwendet.
+ * Demo data type whose fields cover all column types. {@code checkInSeconds} is the check-in time as
+ * seconds since midnight (raw value {@code int}), which is converted into a time of day via a
+ * converter. Used both by {@link XlsxBuilderDemo} (in-memory generator) and by {@link DbBenchmark}
+ * (read from the H2 DB).
  */
 public record Employee(
         long id,

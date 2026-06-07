@@ -5,16 +5,15 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Bündelt die Layout-Parameter für das Schreiben eines Blatts (xlsx) und hält die
- * Writer-Signaturen schlank.
+ * Bundles the layout parameters for writing a sheet (xlsx) and keeps the writer signatures lean.
  *
- * @param headerLines         optionale Titelzeilen oberhalb der Kopfzeile (oder {@code null})
- * @param footerLines         optionale Footer-Zeilen unterhalb der Daten/Summe (oder leer)
- * @param placeholders        statische {@code {key}}->Wert-Ersetzungen (inkl. {@code {date}}/{@code {datetime}})
- * @param placeholderResolver optionaler Fallback für lazy/berechnete Platzhalter (oder {@code null});
- *                            wird nur konsultiert, wenn {@code placeholders} den Schlüssel nicht kennt
- * @param showColumnHeaders   Spaltenüberschriften-Zeile schreiben?
- * @param defaultNullText     sheet-weiter Platzhalter für {@code null}-Werte (oder {@code null})
+ * @param headerLines         optional title rows above the header row (or {@code null})
+ * @param footerLines         optional footer rows below the data/summary (or empty)
+ * @param placeholders        static {@code {key}}->value replacements (incl. {@code {date}}/{@code {datetime}})
+ * @param placeholderResolver optional fallback for lazy/computed placeholders (or {@code null});
+ *                            consulted only when {@code placeholders} does not know the key
+ * @param showColumnHeaders   write the column-header row?
+ * @param defaultNullText     sheet-wide placeholder for {@code null} values (or {@code null})
  */
 record SheetWriteOptions(
         List<String> headerLines,

@@ -6,13 +6,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * Überlappt das Erzeugen der Zeilen (Projektion/DB-Read + k-way-Merge) mit dem Schreiben: ein
- * Daemon-Hintergrund-Thread zieht aus der Quelle und füllt eine beschränkte {@link BlockingQueue},
- * der konsumierende (Schreib-)Thread entnimmt. So bleibt der Speicher out-of-core (Queue ist
- * begrenzt), während Lese-/Sortier-I/O und POI-Schreiben parallel laufen.
+ * Overlaps producing the rows (projection/DB read + k-way merge) with writing: a daemon background
+ * thread pulls from the source and fills a bounded {@link BlockingQueue}, while the consuming (writing)
+ * thread takes from it. This keeps memory out-of-core (the queue is bounded) while read/sort I/O and
+ * POI writing run in parallel.
  *
- * <p>Nur ein Zusatz-Thread je Blatt. {@link #close()} stoppt den Thread sauber (kein Leak) und wird
- * via try-with-resources <em>vor</em> Sorter/DataProvider geschlossen.
+ * <p>Only one extra thread per sheet. {@link #close()} stops the thread cleanly (no leak) and is closed
+ * via try-with-resources <em>before</em> the sorter/data provider.
  */
 final class PrefetchingRowIterator implements CloseableIterator<Row> {
 
@@ -24,8 +24,8 @@ final class PrefetchingRowIterator implements CloseableIterator<Row> {
     private volatile boolean closed = false;
     private volatile Throwable failure;
 
-    private Row nextRow; // gepufferte nächste Zeile oder null
-    private boolean finished; // END (Sentinel) gesehen
+    private Row nextRow; // buffered next row or null
+    private boolean finished; // END (sentinel) seen
 
     PrefetchingRowIterator(Iterator<Row> source) {
         this.producer = new Thread(() -> produce(source), "xlsxbuilder-prefetch");
@@ -42,15 +42,15 @@ final class PrefetchingRowIterator implements CloseableIterator<Row> {
                 }
             }
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // beim Schließen
+            Thread.currentThread().interrupt(); // on close
         } catch (Throwable t) {
-            failure = t; // wird beim Konsumenten erneut geworfen
+            failure = t; // re-thrown at the consumer
         } finally {
             signalEnd();
         }
     }
 
-    /** Sentinel ans Ende stellen, sofern der Konsument nicht ohnehin schon abgebrochen hat. */
+    /** Place the sentinel at the end, unless the consumer has already aborted anyway. */
     private void signalEnd() {
         if (closed) {
             return;
@@ -100,7 +100,7 @@ final class PrefetchingRowIterator implements CloseableIterator<Row> {
     public void close() {
         closed = true;
         producer.interrupt();
-        queue.clear(); // entsperrt ein evtl. blockierendes put() im Producer
+        queue.clear(); // unblocks a possibly blocking put() in the producer
         try {
             producer.join(5_000);
         } catch (InterruptedException e) {

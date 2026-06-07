@@ -16,14 +16,14 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 
 /**
- * Performance-Benchmark mit echter SQL-Datenquelle: befüllt eine eingebettete H2-Datenbank einmalig
- * mit Mitarbeiter-Testdaten und exportiert sie anschließend <em>streamend</em> (forward-only
- * {@link ResultSet} via {@link DataProviders#ofResultSet}) nach {@code .xlsx}. So werden DB-Streaming,
- * External Merge Sort und SXSSF gemeinsam unter Last (1 Mio. Zeilen) gemessen.
+ * Performance benchmark with a real SQL data source: fills an embedded H2 database once with employee
+ * test data and then exports it <em>streamed</em> (forward-only {@link ResultSet} via
+ * {@link DataProviders#ofResultSet}) to {@code .xlsx}. This measures DB streaming, external merge sort
+ * and SXSSF together under load (1 million rows).
  *
- * <p>Aufruf: {@code DbBenchmark [zeilenanzahl] [ausgabedatei]} (Default: 1_000_000 /
- * build/employees-db.xlsx). Empfohlen mit begrenztem Heap, z. B. {@code -Xmx256m}, um Out-of-core
- * nachzuweisen.
+ * <p>Usage: {@code DbBenchmark [rowCount] [outputFile]} (default: 1_000_000 /
+ * build/employees-db.xlsx). Recommended with a limited heap, e.g. {@code -Xmx256m}, to demonstrate
+ * out-of-core operation.
  */
 public final class DbBenchmark {
 
@@ -100,7 +100,7 @@ public final class DbBenchmark {
         }
     }
 
-    /** Befüllt die Tabelle deterministisch mit genau {@code count} Zeilen (vorher geleert). */
+    /** Fills the table deterministically with exactly {@code count} rows (cleared beforehand). */
     private static void seed(Connection conn, long count) throws SQLException {
         try (Statement st = conn.createStatement()) {
             st.execute("TRUNCATE TABLE employee");
@@ -136,17 +136,17 @@ public final class DbBenchmark {
         }
     }
 
-    /** Liest die Tabelle forward-only/streamend und exportiert sie über den Builder nach {@code out}. */
+    /** Reads the table forward-only/streamed and exports it through the builder to {@code out}. */
     private static void export(Connection conn, Path out, boolean parallel) throws SQLException, IOException {
         try (Statement st = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
             st.setFetchSize(1_000);
-            // Kein ORDER BY in SQL -> H2 liefert den Tabellen-Scan lazy; sortiert wird out-of-core
-            // im Builder (External Merge Sort).
+            // No ORDER BY in SQL -> H2 delivers the table scan lazily; sorting happens out-of-core in
+            // the builder (External Merge Sort).
             ResultSet rs = st.executeQuery("SELECT * FROM employee");
             WorkbookBuilder.create()
                     .sheet(EmployeeData.sheet("Mitarbeiter", DataProviders.ofResultSet(rs, EmployeeData::map))
                             .parallel(parallel))
-                    .write(out); // schließt das ResultSet via DataProvider.close()
+                    .write(out); // closes the ResultSet via DataProvider.close()
         }
     }
 }
