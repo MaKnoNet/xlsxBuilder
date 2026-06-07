@@ -1,35 +1,35 @@
 # xlsxBuilder
 
-Eine schlanke Java-21-Bibliothek zum Erzeugen von **`.xlsx`-Dateien** über ein fluentes
-**Builder-Pattern** – mit Sortierung, Summenzeilen, Formaten, Formeln und **mehreren Worksheets**.
-Im Mittelpunkt steht die **Out-of-core-Verarbeitung**: Datenmengen, die nicht in den Speicher passen,
-werden gestreamt geschrieben und (falls nötig) per External Merge Sort sortiert.
+A lean Java 21 library for generating **`.xlsx` files** through a fluent **builder pattern** – with
+sorting, summary rows, formats, formulas and **multiple worksheets**. Its focus is **out-of-core
+processing**: data sets that do not fit in memory are written streamed and (if needed) sorted via an
+external merge sort.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
 
 ## Highlights
 
-- **Builder-API** – Spalten, Sortierung, Summenzeile und Titel fluent zusammenstecken.
-- **Out-of-core** – External Merge Sort (Auslagern auf Temp-Dateien) + Apache POI **SXSSF**-Streaming.
-  Millionen Zeilen bei wenigen MB Heap (siehe Benchmark unten).
-- **Mehrere Blätter** – ein `WorkbookBuilder` fasst beliebig viele `XlsxBuilder` zusammen; jedes Blatt
-  hat seinen **eigenen Datentyp**.
-- **Spaltentypen** – `STRING, INTEGER, LONG, DOUBLE, DECIMAL, BOOLEAN, DATE, DATETIME, TIME, FORMULA`.
-- **Formate** – frei wählbare Excel-Format-Codes je Spalte (`#,##0.00 "€"`, `dd.mm.yyyy`, `hh:mm`, …).
-- **Wert-Konverter** – Rohwerte vor dem Schreiben umwandeln (z. B. `int`-Sekunden → Uhrzeit).
-- **Summenzeile** – vorberechnet **oder** als echte `=SUMME(...)`-Formel.
-- **Titel-/Fußzeilen** – optionale, über die Tabellenbreite zusammengeführte Kopf-/Footer-Texte mit
-  `{platzhaltern}` (inkl. `{date}`, `{rowCount}`, `{sum:Spalte}`).
-- **Automatische Spaltenbreiten** – inhaltsbasiert, damit nichts als `#####` erscheint.
+- **Builder API** – assemble columns, sorting, summary row and titles fluently.
+- **Out-of-core** – external merge sort (spilling to temp files) + Apache POI **SXSSF** streaming.
+  Millions of rows with a few MB of heap (see the benchmark below).
+- **Multiple sheets** – a `WorkbookBuilder` combines any number of `XlsxBuilder`s; each sheet has its
+  **own data type**.
+- **Column types** – `STRING, INTEGER, LONG, DOUBLE, DECIMAL, BOOLEAN, DATE, DATETIME, TIME, FORMULA`.
+- **Formats** – freely choosable Excel format codes per column (`#,##0.00 "€"`, `dd.mm.yyyy`, `hh:mm`, …).
+- **Value converters** – transform raw values before writing (e.g. `int` seconds → time of day).
+- **Summary row** – pre-computed **or** as a real `=SUM(...)` formula.
+- **Title/footer rows** – optional header/footer texts merged across the table width, with
+  `{placeholders}` (incl. `{date}`, `{rowCount}`, `{sum:Column}`).
+- **Automatic column widths** – content-based, so nothing shows up as `#####`.
 
-## Voraussetzungen
+## Requirements
 
-- **Java 21** (Gradle Toolchain)
-- Abhängigkeiten (werden von Gradle gezogen): **Apache POI 5.4.0** (`poi-ooxml`), `log4j-core`
+- **Java 21** (Gradle toolchain)
+- Dependencies (pulled by Gradle): **Apache POI 5.4.0** (`poi-ooxml`), `log4j-core`
 - Tests: **JUnit 5**
 
-## Schnellstart
+## Quick start
 
 ```java
 import de.makno.xlsxbuilder.builder.*;
@@ -44,96 +44,95 @@ var data = List.of(
 
 WorkbookBuilder.create()
     .sheet(XlsxBuilder.<Employee>create()
-        .sheetName("Mitarbeiter")
-        .header("Mitarbeiterbericht")                                    // optionale Titelzeile
-        .column("Name", Employee::name)                                  // Default: Text
-        .column("Gehalt", Employee::salary)
+        .sheetName("Employees")
+        .header("Employee report")                                       // optional title row
+        .column("Name", Employee::name)                                  // default: text
+        .column("Salary", Employee::salary)
             .ofType(ColumnType.DECIMAL).formatForType("#,##0.00 \"€\"")
-        .sortBy("Gehalt", SortOrder.DESC)
-        .sumColumn("Gehalt").summaryLabel("Name", "Summe")
-        .summaryAsFormula(true)                                          // =SUMME(...) statt Festwert
+        .sortBy("Salary", SortOrder.DESC)
+        .sumColumn("Salary").summaryLabel("Name", "Total")
+        .summaryAsFormula(true)                                          // =SUM(...) instead of a fixed value
         .data(DataProviders.ofIterable(data)))
-    .write(Path.of("bericht.xlsx"));
-```
-
-## Konzepte
-
-### `WorkbookBuilder`
-Container für die Datei. Nimmt ein oder mehrere Blätter auf und schreibt sie gestreamt:
-
-```java
-WorkbookBuilder.create()
-    .sheet(blattA)   // XlsxBuilder<TypA>
-    .sheet(blattB)   // XlsxBuilder<TypB> – anderer Typ möglich
-    .write(Path.of("report.xlsx"));   // oder write(OutputStream)
-```
-
-**Temp-/Junkdateien (Speicherort):** Die Sortier-Temp-Dateien (External Merge Sort) lassen sich
-zentral über `WorkbookBuilder.tempDir(Path)` für alle Blätter lenken; je Blatt überschreibt
-`XlsxBuilder.sortTempDir(Path)` diesen Default weiterhin. Beides betrifft nur die **eigenen**
-Sortier-Runs der Bibliothek. Die SXSSF-Temp-Dateien von Apache POI (das Zeilen-Auslagern) liegen
-prozessweit unter `java.io.tmpdir`; POI bietet keine pro-Workbook- und multiuser-sichere Möglichkeit,
-diese umzuleiten.
-
-```java
-WorkbookBuilder.create()
-    .tempDir(Path.of("/fast-disk/xlsx-tmp"))   // Default-Basisverzeichnis für alle Sort-Runs
-    .sheet(blattA)
     .write(Path.of("report.xlsx"));
 ```
 
-### `XlsxBuilder<T>` – ein Blatt
-| Methode | Zweck |
+## Concepts
+
+### `WorkbookBuilder`
+Container for the file. Takes one or more sheets and writes them streamed:
+
+```java
+WorkbookBuilder.create()
+    .sheet(sheetA)   // XlsxBuilder<TypeA>
+    .sheet(sheetB)   // XlsxBuilder<TypeB> – a different type is allowed
+    .write(Path.of("report.xlsx"));   // or write(OutputStream)
+```
+
+**Temp/junk files (location):** the sort temp files (external merge sort) can be directed centrally
+via `WorkbookBuilder.tempDir(Path)` for all sheets; a per-sheet `XlsxBuilder.sortTempDir(Path)` still
+overrides this default. Both affect only the library's **own** sort runs. Apache POI's SXSSF temp
+files (the row spill) live process-wide under `java.io.tmpdir`; POI offers no per-workbook,
+multi-user-safe way to relocate them.
+
+```java
+WorkbookBuilder.create()
+    .tempDir(Path.of("/fast-disk/xlsx-tmp"))   // default base directory for all sort runs
+    .sheet(sheetA)
+    .write(Path.of("report.xlsx"));
+```
+
+### `XlsxBuilder<T>` – a single sheet
+| Method | Purpose |
 |---|---|
-| `sheetName(String)` | Blattname (eindeutig erzwungen; Duplikate erhalten ein Suffix) |
-| `header(String...)` | optionale Titelzeile(n), je über die volle Breite zusammengeführt + zentriert |
-| `footer(String...)` | optionale Fußzeile(n) unter Daten/Summe, je über die volle Breite zusammengeführt |
-| `column(name, extractor)` | Spalte; Standardtyp **Text** |
-| `.ofType(ColumnType)` | Typ der zuletzt definierten Spalte |
-| `.formatForType(String)` | Excel-Format-Code der zuletzt definierten Spalte |
-| `.convertToColumnType(fn)` | Rohwert der Spalte vor dem Schreiben umwandeln |
-| `.nullText(String)` | Platzhalter der zuletzt definierten Spalte für `null`-Werte (überschreibt den Default) |
-| `filter(Predicate<? super T>)` | nur passende Objekte schreiben (mehrfach = UND); vor Sortierung/Summe |
-| `defaultNullText(String)` | sheet-weiter Platzhalter für `null`-Zellen (z. B. `"-"`); ohne Angabe leere Zelle |
-| `sortBy(name, SortOrder)` | optionale (mehrstufige) Sortierung |
-| `sortChunkSize(int)` | Zeilen pro In-memory-Run des External Merge Sort (Default 100 000) |
-| `sortTempDir(Path)` | Basisverzeichnis für die Sortier-Temp-Dateien (Default `java.io.tmpdir`) |
-| `columnHeaders(boolean)` | Spaltenüberschriften-Zeile schreiben (Default `true`) |
-| `sumColumn(name)` | numerische Spalte summieren (aktiviert Summenzeile) |
-| `summaryLabel(name, text)` | Label in der Summenzeile (z. B. „Summe") |
-| `summaryAsFormula(boolean)` | `true` = `=SUMME(...)`-Formel, `false` (Default) = vorberechnet |
-| `placeholder(key, value)` / `placeholders(Map)` | `{key}`-Platzhalter in Titel/Kopf/Footer |
-| `placeholderResolver(Function<String,String>)` | Fallback für lazy/berechnete Platzhalter (statische Map hat Vorrang) |
-| `parallel(boolean)` | Pipeline-Parallelität (lesen/sortieren ∥ schreiben); Default `false` |
-| `data(DataProvider<T>)` | Datenquelle des Blatts (erforderlich) |
+| `sheetName(String)` | sheet name (forced unique; duplicates get a suffix) |
+| `header(String...)` | optional title row(s), each merged across the full width + centered |
+| `footer(String...)` | optional footer row(s) below data/summary, each merged across the full width |
+| `column(name, extractor)` | column; default type **text** |
+| `.ofType(ColumnType)` | type of the most recently defined column |
+| `.formatForType(String)` | Excel format code of the most recently defined column |
+| `.convertToColumnType(fn)` | transform the column's raw value before writing |
+| `.nullText(String)` | placeholder of the most recently defined column for `null` values (overrides the default) |
+| `filter(Predicate<? super T>)` | write only matching objects (repeated = AND); before sorting/summary |
+| `defaultNullText(String)` | sheet-wide placeholder for `null` cells (e.g. `"-"`); empty cell if omitted |
+| `sortBy(name, SortOrder)` | optional (multi-level) sorting |
+| `sortChunkSize(int)` | rows per in-memory run of the external merge sort (default 100,000) |
+| `sortTempDir(Path)` | base directory for the sort temp files (default `java.io.tmpdir`) |
+| `columnHeaders(boolean)` | write the column-header row (default `true`) |
+| `sumColumn(name)` | sum a numeric column (enables the summary row) |
+| `summaryLabel(name, text)` | label in the summary row (e.g. "Total") |
+| `summaryAsFormula(boolean)` | `true` = `=SUM(...)` formula, `false` (default) = pre-computed |
+| `placeholder(key, value)` / `placeholders(Map)` | `{key}` placeholders in title/header/footer |
+| `placeholderResolver(Function<String,String>)` | fallback for lazy/computed placeholders (static map takes precedence) |
+| `parallel(boolean)` | pipeline parallelism (read/sort ∥ write); default `false` |
+| `data(DataProvider<T>)` | the sheet's data source (required) |
 
-**Platzhalter:** In `header(...)`/`footer(...)`-Texten werden `{key}` ersetzt – benutzerdefiniert via
-`placeholder(...)`, eingebaut `{date}`/`{datetime}` (überschreibbar) und – nur im Footer –
-`{rowCount}` sowie `{sum:Spaltenname}`. Unbekannte Tokens bleiben unverändert. Für lazy/berechnete
-Werte (z. B. Versionsnummer, Benutzername) ergänzt `placeholderResolver(key -> ...)` einen Fallback,
-der nur konsultiert wird, wenn die statische Map den Schlüssel nicht kennt (`null` ⇒ Token bleibt
-stehen); die Auflösung erfolgt zur Schreibzeit nur für Titel/Kopf/Footer (out-of-core-neutral).
+**Placeholders:** in `header(...)`/`footer(...)` texts `{key}` is replaced – custom via
+`placeholder(...)`, built-in `{date}`/`{datetime}` (overridable) and – only in the footer –
+`{rowCount}` plus `{sum:ColumnName}`. Unknown tokens are left unchanged. For lazy/computed values
+(e.g. a version number, a user name) `placeholderResolver(key -> ...)` adds a fallback that is
+consulted only when the static map does not know the key (`null` ⇒ the token stays); resolution
+happens at write time only for title/header/footer (out-of-core-neutral).
 
-**Pipeline-Parallelität (`parallel(true)`):** Ein Hintergrund-Thread liest/sortiert, während der
-aufrufende Thread schreibt (beschränkte Queue → weiterhin out-of-core). Lohnt nur, wenn die
-Producer-Seite (langsame Remote-DB, schwere Konvertierungen) der Flaschenhals ist; bei
-POI-dominierten Lasten bringt es nichts (POI schreibt single-threaded). Auf einem Multiuser-Server
-besser **zwischen** Requests parallelisieren als hier einzuschalten.
+**Pipeline parallelism (`parallel(true)`):** a background thread reads/sorts while the calling thread
+writes (a bounded queue → still out-of-core). Worth it only when the producer side (a slow remote DB,
+heavy conversions) is the bottleneck; for POI-dominated workloads it brings nothing (POI writes
+single-threaded). On a multi-user server, prefer parallelizing **between** requests rather than
+enabling this individually.
 
 ### `DataProvider<T>` / `DataProviders`
-Forward-only Datenquelle (wird genau einmal gelesen → streamingfähig). Adapter:
+Forward-only data source (read exactly once → streamable). Adapters:
 
 ```java
 DataProviders.ofIterable(list);
 DataProviders.ofIterator(iterator);
-DataProviders.ofStream(stream);     // Stream wird beim Schließen mitgeschlossen
-DataProviders.ofResultSet(rs, mapper);  // JDBC-ResultSet streamend, ideal für große DB-Exporte
+DataProviders.ofStream(stream);     // the stream is closed on close()
+DataProviders.ofResultSet(rs, mapper);  // JDBC ResultSet streamed, ideal for large DB exports
 ```
 
-**JDBC:** `ofResultSet(ResultSet, ResultSetRowMapper<T>)` liest die Datenbank zeilenweise (forward-only)
-und mappt jede Zeile via `mapper` auf `T`. `close()` schließt **nur das `ResultSet`** – `Statement`
-und `Connection` verwaltet der Aufrufer (try-with-resources). `SQLException`s werden in eine
-`DataAccessException` verpackt.
+**JDBC:** `ofResultSet(ResultSet, ResultSetRowMapper<T>)` reads the database row by row (forward-only)
+and maps each row via `mapper` to `T`. `close()` closes **only the `ResultSet`** – the `Statement`
+and `Connection` are managed by the caller (try-with-resources). `SQLException`s are wrapped in a
+`DataAccessException`.
 
 ```java
 try (Connection conn = dataSource.getConnection();
@@ -144,157 +143,157 @@ try (Connection conn = dataSource.getConnection();
         .sheet(XlsxBuilder.<Employee>create()
             .column("ID", Employee::id).ofType(ColumnType.LONG)
             .column("Name", Employee::name)
-            .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL)
+            .column("Salary", Employee::salary).ofType(ColumnType.DECIMAL)
             .data(DataProviders.ofResultSet(rs, r -> new Employee(
                 r.getLong("id"), r.getString("name"), r.getBigDecimal("salary")))))
-        .write(Path.of("export.xlsx"));   // schließt das ResultSet
+        .write(Path.of("export.xlsx"));   // closes the ResultSet
 }
 ```
 
-Für andere Quellen einfach `DataProvider<T>` direkt implementieren (z. B. einen Datei-Reader), sodass
-Datensätze lazy beim Abruf entstehen.
+For other sources, simply implement `DataProvider<T>` directly (e.g. a file reader) so that records
+are produced lazily on demand.
 
-> **Tipp:** Kann die DB selbst sortieren (`ORDER BY`), das dort tun und `.sortBy()` weglassen – dann
-> entfällt der External Merge Sort im Builder (kein Temp-File, weniger I/O).
+> **Tip:** if the DB can sort itself (`ORDER BY`), do it there and drop `.sortBy()` – then the external
+> merge sort in the builder is skipped (no temp file, less I/O).
 
-### Spaltentypen & Formate
+### Column types & formats
 
-| Typ | Erwarteter Wert | Beispiel-Format |
+| Type | Expected value | Example format |
 |---|---|---|
-| `STRING` | beliebig (`toString`) | – |
-| `INTEGER` / `LONG` | ganze Zahl | `#,##0` |
+| `STRING` | anything (`toString`) | – |
+| `INTEGER` / `LONG` | whole number | `#,##0` |
 | `DOUBLE` / `DECIMAL` | `Number` / `BigDecimal` | `#,##0.00`, `0.00%`, `#,##0.00 "€"` |
 | `BOOLEAN` | `boolean` | – |
 | `DATE` | `LocalDate` / `LocalDateTime` / `Date` | `dd.mm.yyyy` |
 | `DATETIME` | `LocalDateTime` / `Date` | `dd.mm.yyyy hh:mm` |
 | `TIME` | `LocalTime` / `LocalDateTime` | `hh:mm:ss` |
-| `FORMULA` | Formeltext ohne `=` | `{row}` = aktuelle Zeile, z. B. `"F{row}*0.1"` |
+| `FORMULA` | formula text without `=` | `{row}` = current row, e.g. `"F{row}*0.1"` |
 
-> Formate sind **Excel-Format-Codes** (nicht Java-`DateTimeFormatter`-Muster): `mm` = Monat im
-> Datumskontext, `hh:mm:ss` für Zeit, `#`/`0` für Zahlen. Ohne Angabe gelten sinnvolle Standardformate
-> für Datums-/Zeittypen; Zahlen erscheinen als „General".
+> Formats are **Excel format codes** (not Java `DateTimeFormatter` patterns): `mm` = month in a date
+> context, `hh:mm:ss` for time, `#`/`0` for numbers. Without one, sensible default formats apply to
+> date/time types; numbers appear as "General".
 
-### Wert-Konverter
+### Value converters
 
 ```java
-.column("Start", Task::sekunden).ofType(ColumnType.TIME)
+.column("Start", Task::seconds).ofType(ColumnType.TIME)
     .convertToColumnType((Integer s) -> java.time.LocalTime.ofSecondOfDay(s))
 ```
 
-Die Umwandlung greift bei der Projektion – also auch für Sortierung und Summenzeile. Den
-Lambda-Parametertyp explizit angeben.
+The conversion is applied at projection time – so it also affects sorting and the summary row. State
+the lambda parameter type explicitly.
 
-## Bauen & Ausführen
+## Build & run
 
 ```bash
-./gradlew build          # kompiliert + führt alle Tests aus
-./gradlew test           # nur Tests (JUnit 5)
-./gradlew run            # Demo (erzeugt employees.xlsx)
-./gradlew dbBenchmark    # SQL-Benchmark: H2 mit 1 Mio. Zeilen befüllen + streamend exportieren
-./gradlew javadoc        # generiert die API-Dokumentation
+./gradlew build          # compiles + runs all tests
+./gradlew test           # tests only (JUnit 5)
+./gradlew run            # demo (creates employees.xlsx)
+./gradlew dbBenchmark    # SQL benchmark: fill H2 with 1M rows + export streamed
+./gradlew javadoc        # generates the API documentation
 ```
 
-### SQL-Benchmark (H2)
+### SQL benchmark (H2)
 
-`dbBenchmark` befüllt eine eingebettete H2-Datenbank (`build/benchdb/`) einmalig mit Testdaten und
-exportiert sie streamend über `DataProviders.ofResultSet` nach `.xlsx` – misst also DB-Streaming +
-External Merge Sort + SXSSF zusammen. Läuft mit `-Xmx256m` (im Task gesetzt), um Out-of-core zu zeigen:
+`dbBenchmark` fills an embedded H2 database (`build/benchdb/`) once with test data and exports it
+streamed via `DataProviders.ofResultSet` to `.xlsx` – i.e. it measures DB streaming + external merge
+sort + SXSSF together. It runs with `-Xmx256m` (set in the task) to demonstrate out-of-core operation:
 
 ```bash
 ./gradlew dbBenchmark --args="1000000 build/employees-db.xlsx"
-# Beispielmessung: 1.000.000 Zeilen DB -> 70 MB xlsx in ~17s, belegter Heap ~78 MB (max 256 MB)
+# Example measurement: 1,000,000 DB rows -> 70 MB xlsx in ~17s, used heap ~78 MB (max 256 MB)
 ```
 
-Ein zweiter Lauf überspringt das Seeding (idempotent). H2 wird beim ersten Build einmalig geladen.
+A second run skips the seeding (idempotent). H2 is downloaded once on the first build.
 
-Demo mit Parametern und begrenztem Heap (zeigt Out-of-core):
+Demo with parameters and a limited heap (demonstrates out-of-core):
 
 ```bash
 ./gradlew installDist
 java -Xmx128m -cp "build/install/xlsxbuilder/lib/*" de.makno.xlsxbuilder.app.XlsxBuilderDemo 1000000 employees.xlsx
-#        ^ Heap-Limit                                                       ^ Zeilen  ^ Ausgabedatei
+#        ^ heap limit                                                       ^ rows    ^ output file
 ```
 
-### API-Dokumentation
+### API documentation
 
-Nach dem Bauen findet sich die Javadoc-Dokumentation unter:
+After building, the Javadoc documentation is at:
 ```
 build/docs/javadoc/index.html
 ```
 
-Oder direkt generieren:
+Or generate it directly:
 ```bash
 ./gradlew javadoc
 ```
 
-## Out-of-core / Benchmark
+## Out-of-core / benchmark
 
-Der Speicherbedarf hängt an `sortChunkSize` + dem SXSSF-Fenster, **nicht** an der Zeilen- oder
-Blattanzahl. Beispiel (Demo mit 3 Blättern, davon zwei mit je 1 Mio. Zeilen × 11 Spalten):
+Memory usage depends on `sortChunkSize` + the SXSSF window, **not** on the row or sheet count. Example
+(demo with 3 sheets, two of them with 1M rows × 11 columns each):
 
 ```
--Xmx128m, 1.000.000 Zeilen × 2 Blätter + Info
-→ ~140 MB Ausgabedatei, belegter Heap ~17 MB
+-Xmx128m, 1,000,000 rows × 2 sheets + info
+→ ~140 MB output file, used heap ~17 MB
 ```
 
-Mehr Blätter/Zeilen kosten v. a. Zeit und Plattenplatz (Temp-Dateien), kaum mehr Heap.
+More sheets/rows cost mainly time and disk space (temp files), barely more heap.
 
-### Performance-Logging (für Entwickler)
+### Performance logging (for developers)
 
-Der Builder schreibt Messpunkte auf **DEBUG** über die Log4j2-API (Logger-Namen unter
-`de.makno.xlsxbuilder.builder`): je Blatt Zeilenzahl + Sortier-/Schreibphase, die External-Merge-Sort-
-Kennzahlen (Zeilen, Runs, Vormerge-Pässe, Zeit, Temp-Verzeichnis) und die Gesamtzeit des Workbooks.
-Im Normalbetrieb (Level ≥ INFO) entstehen **keine Ausgaben und kein nennenswerter Overhead**. Zum
-Aktivieren das Log-Level der Anwendung für dieses Package auf `DEBUG` setzen, z. B. in `log4j2.xml`:
+The builder writes measurement points at **DEBUG** via the Log4j2 API (logger names under
+`de.makno.xlsxbuilder.builder`): per sheet the row count + sort/write phase, the external-merge-sort
+metrics (rows, runs, pre-merge passes, time, temp directory) and the workbook's total time. In normal
+operation (level ≥ INFO) there is **no output and no notable overhead**. To enable it, set the
+application's log level for this package to `DEBUG`, e.g. in `log4j2.xml`:
 
 ```xml
 <Logger name="de.makno.xlsxbuilder.builder" level="debug"/>
 ```
 
-## Nebenläufigkeit / Server-Betrieb
+## Concurrency / server operation
 
-Die Bibliothek hat **keinen geteilten oder statischen veränderlichen Zustand**. Nebenläufige Aufträge
-laufen daher isoliert, solange jeder Thread **eigene** Builder-Instanzen verwendet:
+The library has **no shared or static mutable state**. Concurrent jobs therefore run isolated, as long
+as each thread uses its **own** builder instances:
 
-- **Builder sind nicht thread-safe und single-use.** Pro Request `WorkbookBuilder.create()` /
-  `XlsxBuilder.create()` neu erzeugen; eine Instanz nicht zwischen Threads teilen. Ein zweites
-  Schreiben derselben Instanz (`write`) wirft eine `IllegalStateException` – die
-  Datenquelle ist forward-only/einmalig.
-- **Pro `write()` entsteht ein eigenes POI-Workbook.** Zwei Aufträge dürfen nicht gleichzeitig in
-  dieselbe Datei schreiben (jeweils eigener `OutputStream`/`Path`).
-- **`DataProvider` nicht teilen.** Forward-only, einmalig, pro Request eigene Quelle (z. B. eine
-  eigene JDBC-`Connection` aus dem Pool); `close()` ruft der Builder selbst auf.
-- **Speicher skaliert mit der Nebenläufigkeit.** Out-of-core begrenzt den Speicher *pro* Sortierung
-  (`sortChunkSize` Zeilen + SXSSF-Fenster), aber bei *N* gleichzeitigen Sortierungen summiert sich
-  das auf ~*N × sortChunkSize* Zeilen. Daher die Nebenläufigkeit begrenzen (Thread-Pool/`Semaphore`)
-  und/oder `sortChunkSize` kleiner wählen.
-- **Temp-Verzeichnis & OS-Limits.** Sortier-Runs liegen standardmäßig unter `java.io.tmpdir`; mit
-  `XlsxBuilder.sortTempDir(Path)` lässt sich eine dedizierte Platte wählen. Je Sortierung sind bis
-  zu 16 Run-Dateien gleichzeitig offen – `ulimit -n` und freien Plattenplatz entsprechend der
-  erwarteten Nebenläufigkeit dimensionieren.
+- **Builders are not thread-safe and single-use.** Create `WorkbookBuilder.create()` /
+  `XlsxBuilder.create()` fresh per request; do not share an instance between threads. Writing the same
+  instance a second time (`write`) throws an `IllegalStateException` – the data source is
+  forward-only/single-use.
+- **Each `write()` creates its own POI workbook.** Two jobs must not write to the same file
+  concurrently (each its own `OutputStream`/`Path`).
+- **Do not share a `DataProvider`.** Forward-only, single-use, its own source per request (e.g. a
+  dedicated JDBC `Connection` from the pool); the builder calls `close()` itself.
+- **Memory scales with concurrency.** Out-of-core bounds the memory *per* sort (`sortChunkSize` rows +
+  SXSSF window), but with *N* concurrent sorts this adds up to ~*N × sortChunkSize* rows. So limit
+  concurrency (thread pool/`Semaphore`) and/or choose a smaller `sortChunkSize`.
+- **Temp directory & OS limits.** Sort runs go under `java.io.tmpdir` by default; with
+  `WorkbookBuilder.tempDir(Path)` (all sheets) or `XlsxBuilder.sortTempDir(Path)` (per sheet) you can
+  pick a dedicated disk. Up to 16 run files are open at once per sort – size `ulimit -n` and free disk
+  space according to the expected concurrency.
 
-## Architektur (Kurzüberblick)
+## Architecture (overview)
 
 ```
-DataProvider<T> → Projektion zu Row(Object[]) → [optional] External Merge Sort → POI SXSSF → .xlsx
+DataProvider<T> → projection to Row(Object[]) → [optional] external merge sort → POI SXSSF → .xlsx
 ```
 
-| Klasse | Aufgabe |
+| Class | Responsibility |
 |---|---|
-| `WorkbookBuilder` | Datei-/Workbook-Lifecycle, fügt mehrere Blätter zusammen |
-| `XlsxBuilder<T>` | Konfiguration **eines** Blatts + Projektion/Sortier-Orchestrierung |
-| `Column<T>` | Name, Typ, Format, Extraktor, optionaler Konverter |
-| `ColumnType` / `SortOrder` / `SortKey` | Typ-/Sortier-Metadaten |
-| `RowComparator` | Vergleicht projizierte Zeilen (mehrstufig, null-sicher) |
-| `ExternalMergeSort` | Sortierte Runs auf Temp-Dateien + k-way-Merge |
-| `XlsxWriter` | Schreibt ein Blatt via Apache POI SXSSF (Streaming) |
-| `DataProvider` / `DataProviders` | Datenquelle + Adapter |
+| `WorkbookBuilder` | file/workbook lifecycle, combines multiple sheets |
+| `XlsxBuilder<T>` | configuration of **one** sheet (delegates execution to `SheetRenderer`) |
+| `SheetRenderer` | projection/sort/parallel orchestration + writing a sheet |
+| `Column<T>` | name, type, format, extractor, optional converter |
+| `ColumnType` / `SortOrder` / `SortKey` | type/sort metadata |
+| `RowComparator` | compares projected rows (multi-level, null-safe) |
+| `ExternalMergeSort` | sorted runs on temp files + k-way merge |
+| `XlsxWriter` | writes a sheet via Apache POI SXSSF (streaming) |
+| `DataProvider` / `DataProviders` | data source + adapters |
 
 ## Eclipse
 
-Import als **Existing Gradle Project** (Buildship). Encoding und Java-21-Compliance sind über die
-versionierten `.settings/`-Dateien vorkonfiguriert (UTF-8 – wichtig wegen der Umlaute im Code).
+Import as an **Existing Gradle Project** (Buildship). Encoding and Java 21 compliance are preconfigured
+via the versioned `.settings/` files (UTF-8).
 
-## Lizenz
+## License
 
-Dieses Projekt ist unter der [Apache License 2.0](LICENSE) lizenziert.
+This project is licensed under the [Apache License 2.0](LICENSE).
