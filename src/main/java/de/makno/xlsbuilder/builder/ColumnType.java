@@ -5,20 +5,36 @@ package de.makno.xlsbuilder.builder;
  * geschrieben wird (Zelltyp/Format) und wie er beim Sortieren verglichen wird.
  */
 public enum ColumnType {
-    STRING,
-    INTEGER,
-    LONG,
-    DOUBLE,
-    DECIMAL,
-    BOOLEAN,
-    DATE,
-    DATETIME,
+    STRING(true),
+    INTEGER(true),
+    LONG(true),
+    DOUBLE(true),
+    DECIMAL(true),
+    BOOLEAN(true),
+    DATE(true),
+    DATETIME(true),
     /** Uhrzeit (Tageszeit ohne Datum), erwartet {@link java.time.LocalTime} oder {@link java.time.LocalDateTime}. */
-    TIME,
+    TIME(true),
     /**
      * Excel-Formel. Der Extraktor liefert den Formeltext ohne führendes {@code =} (z. B.
      * {@code "F{row}*0.1"}); der Platzhalter {@code {row}} wird durch die tatsächliche Zeilennummer
-     * ersetzt. Excel berechnet die Werte beim Öffnen.
+     * ersetzt. Excel berechnet die Werte beim Öffnen. Formeln sind nicht sortierbar.
      */
-    FORMULA
+    FORMULA(false);
+
+    /** Gibt an, ob dieser Spaltentyp sortierbar ist. Formeln sind z.B. nicht sortierbar. */
+    private final boolean sortable;
+
+    ColumnType(boolean sortable) {
+        this.sortable = sortable;
+    }
+
+    /**
+     * Gibt an, ob dieser Spaltentyp sortierbar ist.
+     *
+     * @return {@code true} wenn der Typ sortiert werden kann, {@code false} sonst
+     */
+    public boolean isSortable() {
+        return sortable;
+    }
 }
