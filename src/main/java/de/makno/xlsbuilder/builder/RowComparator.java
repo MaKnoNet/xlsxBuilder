@@ -66,17 +66,16 @@ final class RowComparator implements Comparator<Row> {
             return -1;
         }
         if (!(x instanceof Comparable)) {
-            throw new IllegalArgumentException("Sortierspalte '" + columnName + "' ist vom Typ "
-                    + x.getClass().getSimpleName()
-                    + " und kann nicht sortiert werden (nicht Comparable)");
+            throw new IllegalArgumentException(
+                    "Sortierspalte '" + columnName + "' ist vom Typ " + x.getClass().getSimpleName()
+                            + " und kann nicht sortiert werden (nicht Comparable)");
         }
         try {
             return ((Comparable) x).compareTo(y);
         } catch (ClassCastException e) {
             throw new IllegalArgumentException(
                     "Sortierspalte '" + columnName + "' enthält nicht vergleichbare Werttypen ("
-                            + x.getClass().getSimpleName() + " vs. "
-                            + y.getClass().getSimpleName() + ")",
+                            + x.getClass().getSimpleName() + " vs. " + y.getClass().getSimpleName() + ")",
                     e);
         }
     }
