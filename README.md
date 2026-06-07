@@ -1,4 +1,4 @@
-# XLSBuilder
+# xlsxBuilder
 
 Eine schlanke Java-21-Bibliothek zum Erzeugen von **`.xlsx`-Dateien** über ein fluentes
 **Builder-Pattern** – mit Sortierung, Summenzeilen, Formaten, Formeln und **mehreren Worksheets**.
@@ -13,7 +13,7 @@ werden gestreamt geschrieben und (falls nötig) per External Merge Sort sortiert
 - **Builder-API** – Spalten, Sortierung, Summenzeile und Titel fluent zusammenstecken.
 - **Out-of-core** – External Merge Sort (Auslagern auf Temp-Dateien) + Apache POI **SXSSF**-Streaming.
   Millionen Zeilen bei wenigen MB Heap (siehe Benchmark unten).
-- **Mehrere Blätter** – ein `WorkbookBuilder` fasst beliebig viele `ExcelBuilder` zusammen; jedes Blatt
+- **Mehrere Blätter** – ein `WorkbookBuilder` fasst beliebig viele `XlsxBuilder` zusammen; jedes Blatt
   hat seinen **eigenen Datentyp**.
 - **Spaltentypen** – `STRING, INTEGER, LONG, DOUBLE, DECIMAL, BOOLEAN, DATE, DATETIME, TIME, FORMULA`.
 - **Formate** – frei wählbare Excel-Format-Codes je Spalte (`#,##0.00 "€"`, `dd.mm.yyyy`, `hh:mm`, …).
@@ -32,7 +32,7 @@ werden gestreamt geschrieben und (falls nötig) per External Merge Sort sortiert
 ## Schnellstart
 
 ```java
-import de.makno.xlsbuilder.builder.*;
+import de.makno.xlsxbuilder.builder.*;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -43,7 +43,7 @@ var data = List.of(
     new Employee("Bob",   new java.math.BigDecimal("3800.50")));
 
 WorkbookBuilder.create()
-    .sheet(ExcelBuilder.<Employee>create()
+    .sheet(XlsxBuilder.<Employee>create()
         .sheetName("Mitarbeiter")
         .header("Mitarbeiterbericht")                                    // optionale Titelzeile
         .column("Name", Employee::name)                                  // Default: Text
@@ -63,12 +63,12 @@ Container für die Datei. Nimmt ein oder mehrere Blätter auf und schreibt sie g
 
 ```java
 WorkbookBuilder.create()
-    .sheet(blattA)   // ExcelBuilder<TypA>
-    .sheet(blattB)   // ExcelBuilder<TypB> – anderer Typ möglich
+    .sheet(blattA)   // XlsxBuilder<TypA>
+    .sheet(blattB)   // XlsxBuilder<TypB> – anderer Typ möglich
     .write(Path.of("report.xlsx"));   // oder write(OutputStream)
 ```
 
-### `ExcelBuilder<T>` – ein Blatt
+### `XlsxBuilder<T>` – ein Blatt
 | Methode | Zweck |
 |---|---|
 | `sheetName(String)` | Blattname (eindeutig erzwungen; Duplikate erhalten ein Suffix) |
@@ -127,7 +127,7 @@ try (Connection conn = dataSource.getConnection();
     st.setFetchSize(1_000);
     ResultSet rs = st.executeQuery("SELECT id, name, salary FROM employee");
     WorkbookBuilder.create()
-        .sheet(ExcelBuilder.<Employee>create()
+        .sheet(XlsxBuilder.<Employee>create()
             .column("ID", Employee::id).ofType(ColumnType.LONG)
             .column("Name", Employee::name)
             .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL)
@@ -197,7 +197,7 @@ Demo mit Parametern und begrenztem Heap (zeigt Out-of-core):
 
 ```bash
 ./gradlew installDist
-java -Xmx128m -cp "build/install/xlsbuilder/lib/*" de.makno.xlsbuilder.app.ExcelBuilderDemo 1000000 employees.xlsx
+java -Xmx128m -cp "build/install/xlsxbuilder/lib/*" de.makno.xlsxbuilder.app.XlsxBuilderDemo 1000000 employees.xlsx
 #        ^ Heap-Limit                                                       ^ Zeilen  ^ Ausgabedatei
 ```
 
@@ -228,13 +228,13 @@ Mehr Blätter/Zeilen kosten v. a. Zeit und Plattenplatz (Temp-Dateien), kaum meh
 ### Performance-Logging (für Entwickler)
 
 Der Builder schreibt Messpunkte auf **DEBUG** über die Log4j2-API (Logger-Namen unter
-`de.makno.xlsbuilder.builder`): je Blatt Zeilenzahl + Sortier-/Schreibphase, die External-Merge-Sort-
+`de.makno.xlsxbuilder.builder`): je Blatt Zeilenzahl + Sortier-/Schreibphase, die External-Merge-Sort-
 Kennzahlen (Zeilen, Runs, Vormerge-Pässe, Zeit, Temp-Verzeichnis) und die Gesamtzeit des Workbooks.
 Im Normalbetrieb (Level ≥ INFO) entstehen **keine Ausgaben und kein nennenswerter Overhead**. Zum
 Aktivieren das Log-Level der Anwendung für dieses Package auf `DEBUG` setzen, z. B. in `log4j2.xml`:
 
 ```xml
-<Logger name="de.makno.xlsbuilder.builder" level="debug"/>
+<Logger name="de.makno.xlsxbuilder.builder" level="debug"/>
 ```
 
 ## Nebenläufigkeit / Server-Betrieb
@@ -243,7 +243,7 @@ Die Bibliothek hat **keinen geteilten oder statischen veränderlichen Zustand**.
 laufen daher isoliert, solange jeder Thread **eigene** Builder-Instanzen verwendet:
 
 - **Builder sind nicht thread-safe und single-use.** Pro Request `WorkbookBuilder.create()` /
-  `ExcelBuilder.create()` neu erzeugen; eine Instanz nicht zwischen Threads teilen. Ein zweites
+  `XlsxBuilder.create()` neu erzeugen; eine Instanz nicht zwischen Threads teilen. Ein zweites
   Schreiben derselben Instanz (`write`) wirft eine `IllegalStateException` – die
   Datenquelle ist forward-only/einmalig.
 - **Pro `write()` entsteht ein eigenes POI-Workbook.** Zwei Aufträge dürfen nicht gleichzeitig in
@@ -255,7 +255,7 @@ laufen daher isoliert, solange jeder Thread **eigene** Builder-Instanzen verwend
   das auf ~*N × sortChunkSize* Zeilen. Daher die Nebenläufigkeit begrenzen (Thread-Pool/`Semaphore`)
   und/oder `sortChunkSize` kleiner wählen.
 - **Temp-Verzeichnis & OS-Limits.** Sortier-Runs liegen standardmäßig unter `java.io.tmpdir`; mit
-  `ExcelBuilder.sortTempDir(Path)` lässt sich eine dedizierte Platte wählen. Je Sortierung sind bis
+  `XlsxBuilder.sortTempDir(Path)` lässt sich eine dedizierte Platte wählen. Je Sortierung sind bis
   zu 16 Run-Dateien gleichzeitig offen – `ulimit -n` und freien Plattenplatz entsprechend der
   erwarteten Nebenläufigkeit dimensionieren.
 
@@ -268,7 +268,7 @@ DataProvider<T> → Projektion zu Row(Object[]) → [optional] External Merge So
 | Klasse | Aufgabe |
 |---|---|
 | `WorkbookBuilder` | Datei-/Workbook-Lifecycle, fügt mehrere Blätter zusammen |
-| `ExcelBuilder<T>` | Konfiguration **eines** Blatts + Projektion/Sortier-Orchestrierung |
+| `XlsxBuilder<T>` | Konfiguration **eines** Blatts + Projektion/Sortier-Orchestrierung |
 | `Column<T>` | Name, Typ, Format, Extraktor, optionaler Konverter |
 | `ColumnType` / `SortOrder` / `SortKey` | Typ-/Sortier-Metadaten |
 | `RowComparator` | Vergleicht projizierte Zeilen (mehrstufig, null-sicher) |

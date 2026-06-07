@@ -6,7 +6,7 @@ plugins {
     id 'com.diffplug.spotless' version '6.25.0'
 }
 
-group = 'de.makno.xlsbuilder'
+group = 'de.makno.xlsxbuilder'
 version = '1.0.0'
 
 java {
@@ -25,8 +25,8 @@ tasks.withType(Javadoc).configureEach {
     options.encoding = 'UTF-8'
     options.docEncoding = 'UTF-8'
     options.charSet = 'UTF-8'
-    options.windowTitle = 'XLSBuilder API Documentation'
-    options.docTitle = 'XLSBuilder – Excel-Builder für Java'
+    options.windowTitle = 'xlsxBuilder API Documentation'
+    options.docTitle = 'xlsxBuilder – Excel-Builder für Java'
     options.addStringOption('Xdoclint:none', '-quiet')
 }
 
@@ -58,7 +58,7 @@ dependencies {
 }
 
 application {
-    mainClass = 'de.makno.xlsbuilder.app.ExcelBuilderDemo'
+    mainClass = 'de.makno.xlsxbuilder.app.XlsxBuilderDemo'
 }
 
 // SQL-Performance-Benchmark: befüllt eine eingebettete H2-DB und exportiert sie streamend nach .xlsx.
@@ -66,7 +66,7 @@ application {
 tasks.register('dbBenchmark', JavaExec) {
     group = 'benchmark'
     description = 'Befüllt H2 mit Testdaten und misst den streamenden .xlsx-Export.'
-    mainClass = 'de.makno.xlsbuilder.app.DbBenchmark'
+    mainClass = 'de.makno.xlsxbuilder.app.DbBenchmark'
     classpath = sourceSets.main.runtimeClasspath
     jvmArgs = ['-Xmx256m'] // zeigt Out-of-core trotz 1 Mio. Zeilen
 }
@@ -100,10 +100,10 @@ jacocoTestReport {
         html.required = true
         csv.required  = true
     }
-    // Reine Demo-/Glue-Klassen (Package de.makno.xlsbuilder.app) werden nicht gemessen;
-    // gemessen wird der wiederverwendbare Bibliotheks-Code (de.makno.xlsbuilder.component).
+    // Reine Demo-/Glue-Klassen (Package de.makno.xlsxbuilder.app) werden nicht gemessen;
+    // gemessen wird der wiederverwendbare Bibliotheks-Code (de.makno.xlsxbuilder.component).
     classDirectories.setFrom(files(classDirectories.files.collect {
-        fileTree(dir: it, exclude: 'de/makno/xlsbuilder/app/**')
+        fileTree(dir: it, exclude: 'de/makno/xlsxbuilder/app/**')
     }))
 }
 
