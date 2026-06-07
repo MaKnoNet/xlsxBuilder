@@ -361,6 +361,19 @@ public final class ExcelBuilder<T> {
         if (dataProvider == null) {
             throw new IllegalStateException("Kein DataProvider gesetzt (.data(...)) für Blatt: " + sheetName);
         }
+        // Validiere Sortierung: nur sortierbare Spaltentypen
+        for (SortKey sortKey : sortKeys) {
+            int idx = indexOf(sortKey.columnName());
+            if (idx < 0) {
+                throw new IllegalArgumentException("Unbekannte Sortierspalte: " + sortKey.columnName());
+            }
+            ColumnType type = columns.get(idx).type();
+            if (!type.isSortable()) {
+                throw new IllegalArgumentException(
+                        "Sortierspalte '" + sortKey.columnName() + "' ist vom Typ " + type
+                                + " und kann nicht sortiert werden");
+            }
+        }
         // Ab hier wird die (forward-only, einmalige) Datenquelle konsumiert -> Wiederverwendung sperren.
         consumed = true;
         RenderJob<T> job = new RenderJob<>(
