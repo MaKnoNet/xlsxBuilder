@@ -68,6 +68,20 @@ WorkbookBuilder.create()
     .write(Path.of("report.xlsx"));   // oder write(OutputStream)
 ```
 
+**Temp-/Junkdateien (Speicherort):** Die Sortier-Temp-Dateien (External Merge Sort) lassen sich
+zentral über `WorkbookBuilder.tempDir(Path)` für alle Blätter lenken; je Blatt überschreibt
+`XlsxBuilder.sortTempDir(Path)` diesen Default weiterhin. Beides betrifft nur die **eigenen**
+Sortier-Runs der Bibliothek. Die SXSSF-Temp-Dateien von Apache POI (das Zeilen-Auslagern) liegen
+prozessweit unter `java.io.tmpdir`; POI bietet keine pro-Workbook- und multiuser-sichere Möglichkeit,
+diese umzuleiten.
+
+```java
+WorkbookBuilder.create()
+    .tempDir(Path.of("/fast-disk/xlsx-tmp"))   // Default-Basisverzeichnis für alle Sort-Runs
+    .sheet(blattA)
+    .write(Path.of("report.xlsx"));
+```
+
 ### `XlsxBuilder<T>` – ein Blatt
 | Methode | Zweck |
 |---|---|

@@ -1368,4 +1368,44 @@ class XlsxBuilderTest {
         Grid g = XlsxTestReader.read(out);
         assertEquals("Env PROD", g.string(0, 0), "statische Map hat Vorrang vor dem Resolver");
     }
+
+    // ========== Temp directory for sort runs ==========
+
+    private record TempItem(String name, int wert) {}
+
+    private static XlsxBuilder<TempItem> sortedTempSheet() {
+        return XlsxBuilder.<TempItem>create()
+                .column("Name", TempItem::name)
+                .column("Wert", TempItem::wert)
+                .ofType(ColumnType.INTEGER)
+                .sortBy("Name", SortOrder.ASC)
+                .data(DataProviders.ofIterable(List.of(new TempItem("B", 1), new TempItem("A", 2))));
+    }
+
+    @Test
+    void workbookTempDirIsUsedForSortRuns() throws Exception {
+        // The (not-yet-existing) workbook temp dir is created as the base for the External Merge Sort.
+        Path custom = tempDir.resolve("wb-temp");
+        Path out = tempDir.resolve("wbTemp.xlsx");
+
+        WorkbookBuilder.create().tempDir(custom).sheet(sortedTempSheet()).write(out);
+
+        assertTrue(Files.isDirectory(custom), "workbook tempDir is used as the base for the sort runs");
+    }
+
+    @Test
+    void perSheetSortTempDirOverridesWorkbookDefault() throws Exception {
+        // The sheet's own sortTempDir wins; the workbook default is not used for that sheet.
+        Path wbDefault = tempDir.resolve("wb-default");
+        Path sheetDir = tempDir.resolve("sheet-override");
+        Path out = tempDir.resolve("override.xlsx");
+
+        WorkbookBuilder.create()
+                .tempDir(wbDefault)
+                .sheet(sortedTempSheet().sortTempDir(sheetDir))
+                .write(out);
+
+        assertTrue(Files.isDirectory(sheetDir), "per-sheet sortTempDir is used");
+        assertFalse(Files.exists(wbDefault), "the sheet's own sortTempDir overrides the workbook default");
+    }
 }

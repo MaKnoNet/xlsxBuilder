@@ -51,6 +51,7 @@ public final class WorkbookBuilder {
 
     private final List<XlsxBuilder<?>> sheets = new ArrayList<>();
     private int sxssfRowWindow = DEFAULT_ROW_WINDOW;
+    private Path tempDir; // default base dir for the sort runs of all sheets (null = per-sheet/system temp)
     private boolean written; // single-use: not reusable after write(...)
 
     private WorkbookBuilder() {}
@@ -83,6 +84,25 @@ public final class WorkbookBuilder {
         return this;
     }
 
+    /**
+     * Sets a default base directory for the temporary sort-run files (External Merge Sort) of all
+     * sheets in this workbook – a single place to direct the library's "junk" files. A per-sheet
+     * {@link XlsxBuilder#sortTempDir(Path)} still takes precedence. {@code null} (default) = the
+     * per-sheet setting resp. the system temp ({@code java.io.tmpdir}). The directory is created on
+     * demand; the per-sort subdirectory created inside it is deleted again after writing.
+     *
+     * <p><b>Note:</b> this only redirects the library's own sort-run files. Apache POI's SXSSF temp
+     * files (the row-window spill) always use POI's process-global temp directory
+     * ({@code java.io.tmpdir}); POI offers no per-workbook, multi-user-safe way to relocate them.
+     *
+     * @param dir base directory for the sort runs (created on demand), or {@code null} for the default
+     * @return this for the fluent API
+     */
+    public WorkbookBuilder tempDir(Path dir) {
+        this.tempDir = dir;
+        return this;
+    }
+
     /** Adds a sheet. The {@link XlsxBuilder} must have a data source ({@code .data(...)}). */
     public WorkbookBuilder sheet(XlsxBuilder<?> sheet) {
         sheets.add(Objects.requireNonNull(sheet, "sheet"));
@@ -110,6 +130,7 @@ public final class WorkbookBuilder {
         long startNanos = System.nanoTime();
         try (SXSSFWorkbook wb = new SXSSFWorkbook(sxssfRowWindow)) {
             for (XlsxBuilder<?> sheet : sheets) {
+                sheet.applyDefaultTempDir(tempDir);
                 sheet.renderInto(wb);
             }
             wb.write(out);

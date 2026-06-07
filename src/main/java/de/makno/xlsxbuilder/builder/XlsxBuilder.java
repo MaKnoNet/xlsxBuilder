@@ -243,6 +243,17 @@ public final class XlsxBuilder<T> {
     }
 
     /**
+     * Applies a workbook-wide default sort temp directory, unless this sheet already has its own (set
+     * via {@link #sortTempDir(Path)}). Called by the {@link WorkbookBuilder} before rendering, so the
+     * per-sheet setting always wins.
+     */
+    void applyDefaultTempDir(Path defaultDir) {
+        if (defaultDir != null && sortTempDir == null) {
+            sortTempDir = defaultDir;
+        }
+    }
+
+    /**
      * Optional filter on the raw records: only objects for which the predicate returns {@code true} are
      * written. It is applied <em>before</em> projection, sorting and summation – so the summary row
      * refers only to the rows actually written. Calling repeatedly combines the predicates with AND.
