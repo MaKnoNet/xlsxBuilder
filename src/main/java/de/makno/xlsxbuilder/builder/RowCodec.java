@@ -119,7 +119,7 @@ final class RowCodec {
                     LocalDate.ofEpochDay(in.readLong()), LocalTime.ofNanoOfDay(in.readLong()));
             case LTIME -> LocalTime.ofNanoOfDay(in.readLong());
             case JAVA -> readJavaSerialized(in);
-            default -> throw new IOException("Unbekanntes RowCodec-Typtag: " + tag);
+            default -> throw new IOException("Unknown RowCodec type tag: " + tag);
         };
     }
 
@@ -154,7 +154,7 @@ final class RowCodec {
         try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
             return ois.readObject();
         } catch (ClassNotFoundException e) {
-            throw new IOException("Deserialisierung fehlgeschlagen", e);
+            throw new IOException("Deserialization failed", e);
         }
     }
 }

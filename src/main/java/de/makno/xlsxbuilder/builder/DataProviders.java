@@ -81,7 +81,7 @@ public final class DataProviders {
                     try {
                         hasRow = rs.next();
                     } catch (SQLException e) {
-                        throw new DataAccessException("ResultSet.next() fehlgeschlagen", e);
+                        throw new DataAccessException("ResultSet.next() failed", e);
                     }
                     lookedAhead = true;
                 }
@@ -97,7 +97,7 @@ public final class DataProviders {
                 try {
                     return mapper.map(rs);
                 } catch (SQLException e) {
-                    throw new DataAccessException("Mapping der ResultSet-Zeile fehlgeschlagen", e);
+                    throw new DataAccessException("Mapping the ResultSet row failed", e);
                 }
             }
 
@@ -106,7 +106,7 @@ public final class DataProviders {
                 try {
                     rs.close();
                 } catch (SQLException e) {
-                    throw new DataAccessException("Schließen des ResultSet fehlgeschlagen", e);
+                    throw new DataAccessException("Closing the ResultSet failed", e);
                 }
             }
         };

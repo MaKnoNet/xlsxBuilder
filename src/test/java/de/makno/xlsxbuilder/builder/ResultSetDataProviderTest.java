@@ -41,12 +41,12 @@ class ResultSetDataProviderTest {
                             .data(DataProviders.ofResultSet(rs, r -> new EmpRow(r.getInt("id"), r.getString("name")))))
                     .write(out);
 
-            assertTrue(rs.isClosed(), "Adapter.close() muss das ResultSet schließen");
+            assertTrue(rs.isClosed(), "Adapter.close() must close the ResultSet");
             st.close();
         }
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(4, g.rowCount(), "Kopf + 3 Datenzeilen");
+        assertEquals(4, g.rowCount(), "header + 3 data rows");
         assertEquals(1, g.number(1, 0));
         assertEquals("Alpha", g.string(1, 1));
         assertEquals("Beta", g.string(2, 1));

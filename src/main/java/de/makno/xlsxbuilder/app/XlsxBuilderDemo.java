@@ -32,7 +32,7 @@ public final class XlsxBuilderDemo {
         Runtime runtime = Runtime.getRuntime();
         long start = System.nanoTime();
 
-        System.out.printf("%s wird erstellt.%n", out.toAbsolutePath());
+        System.out.printf("Creating %s.%n", out.toAbsolutePath());
 
         // Two employee sheets (same type; demonstrates multiple sheets + name deduplication) plus one
         // info sheet with its own data type.
@@ -47,7 +47,7 @@ public final class XlsxBuilderDemo {
         long fileMb = Files.size(out) / (1024 * 1024);
 
         System.out.printf(
-                "Fertig: %,d Zeilen -> %s (%d MB) in %.1fs, belegter Heap ~%d MB, max Heap %d MB%n",
+                "Done: %,d rows -> %s (%d MB) in %.1fs, used heap ~%d MB, max heap %d MB%n",
                 rowCount, out.toAbsolutePath(), fileMb, seconds, usedMb, runtime.maxMemory() / (1024 * 1024));
     }
 

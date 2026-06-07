@@ -78,7 +78,7 @@ public final class WorkbookBuilder {
      */
     public WorkbookBuilder sxssfRowWindow(int window) {
         if (window < 1) {
-            throw new IllegalArgumentException("sxssfRowWindow muss >= 1 sein");
+            throw new IllegalArgumentException("sxssfRowWindow must be >= 1");
         }
         this.sxssfRowWindow = window;
         return this;
@@ -119,12 +119,11 @@ public final class WorkbookBuilder {
     public void write(OutputStream out) throws IOException {
         Objects.requireNonNull(out, "out");
         if (sheets.isEmpty()) {
-            throw new IllegalStateException("Mindestens ein Blatt erforderlich");
+            throw new IllegalStateException("At least one sheet is required");
         }
         if (written) {
             throw new IllegalStateException(
-                    "WorkbookBuilder ist Einmal-Nutzung: bereits geschrieben – pro Auftrag eine neue Instanz"
-                            + " erstellen");
+                    "WorkbookBuilder is single-use: already written – create a new instance per" + " job");
         }
         written = true;
         long startNanos = System.nanoTime();
@@ -136,7 +135,7 @@ public final class WorkbookBuilder {
             wb.write(out);
         }
         LOG.debug(
-                "Workbook: {} Blätter in {} ms geschrieben (sxssfRowWindow={})",
+                "Workbook: {} sheets written in {} ms (sxssfRowWindow={})",
                 sheets.size(),
                 (System.nanoTime() - startNanos) / 1_000_000,
                 sxssfRowWindow);

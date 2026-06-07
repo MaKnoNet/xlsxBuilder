@@ -16,7 +16,7 @@ final class RowComparator implements Comparator<Row> {
 
     RowComparator(List<? extends Column<?>> columns, List<SortKey> sortKeys) {
         if (sortKeys.isEmpty()) {
-            throw new IllegalArgumentException("Mindestens ein SortKey erforderlich");
+            throw new IllegalArgumentException("At least one SortKey is required");
         }
         indices = new int[sortKeys.size()];
         descending = new boolean[sortKeys.size()];
@@ -25,7 +25,7 @@ final class RowComparator implements Comparator<Row> {
             SortKey key = sortKeys.get(i);
             int idx = indexOf(columns, key.columnName());
             if (idx < 0) {
-                throw new IllegalArgumentException("Unbekannte Sortierspalte: " + key.columnName());
+                throw new IllegalArgumentException("Unknown sort column: " + key.columnName());
             }
             indices[i] = idx;
             descending[i] = key.order() == SortOrder.DESC;
@@ -66,14 +66,14 @@ final class RowComparator implements Comparator<Row> {
             return -1;
         }
         if (!(x instanceof Comparable)) {
-            throw new IllegalArgumentException("Sortierspalte '" + columnName + "' ist vom Typ "
-                    + x.getClass().getSimpleName() + " und kann nicht sortiert werden (nicht Comparable)");
+            throw new IllegalArgumentException("Sort column '" + columnName + "' is of type "
+                    + x.getClass().getSimpleName() + " and cannot be sorted (not Comparable)");
         }
         try {
             return ((Comparable) x).compareTo(y);
         } catch (ClassCastException e) {
             throw new IllegalArgumentException(
-                    "Sortierspalte '" + columnName + "' enthält nicht vergleichbare Werttypen ("
+                    "Sort column '" + columnName + "' contains non-comparable value types ("
                             + x.getClass().getSimpleName() + " vs. "
                             + y.getClass().getSimpleName() + ")",
                     e);

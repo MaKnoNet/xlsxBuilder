@@ -176,7 +176,7 @@ public final class XlsxBuilder<T> {
 
     private Column<T> lastColumn() {
         if (columns.isEmpty()) {
-            throw new IllegalStateException("ofType()/formatForType() benötigt eine vorherige column(...)");
+            throw new IllegalStateException("ofType()/formatForType() requires a preceding column(...)");
         }
         return columns.get(columns.size() - 1);
     }
@@ -225,7 +225,7 @@ public final class XlsxBuilder<T> {
     /** Chunk size (rows per in-memory sorted run) of the External Merge Sort. */
     public XlsxBuilder<T> sortChunkSize(int chunkSize) {
         if (chunkSize < 1) {
-            throw new IllegalArgumentException("chunkSize muss >= 1 sein");
+            throw new IllegalArgumentException("chunkSize must be >= 1");
         }
         this.sortChunkSize = chunkSize;
         return this;
@@ -361,27 +361,26 @@ public final class XlsxBuilder<T> {
      */
     void renderInto(SXSSFWorkbook wb) throws IOException {
         if (consumed) {
-            throw new IllegalStateException(
-                    "XlsxBuilder ist Einmal-Nutzung: bereits geschrieben – pro Auftrag eine neue Instanz erstellen"
-                            + " (Blatt: "
-                            + sheetName + ")");
+            throw new IllegalStateException("XlsxBuilder is single-use: already written – create a new instance per job"
+                    + " (sheet: "
+                    + sheetName + ")");
         }
         if (columns.isEmpty()) {
-            throw new IllegalStateException("Mindestens eine Spalte muss definiert sein");
+            throw new IllegalStateException("At least one column must be defined");
         }
         if (dataProvider == null) {
-            throw new IllegalStateException("Kein DataProvider gesetzt (.data(...)) für Blatt: " + sheetName);
+            throw new IllegalStateException("No DataProvider set (.data(...)) for sheet: " + sheetName);
         }
         // Validate sorting: only sortable column types.
         for (SortKey sortKey : sortKeys) {
             int idx = indexOf(sortKey.columnName());
             if (idx < 0) {
-                throw new IllegalArgumentException("Unbekannte Sortierspalte: " + sortKey.columnName());
+                throw new IllegalArgumentException("Unknown sort column: " + sortKey.columnName());
             }
             ColumnType type = columns.get(idx).type();
             if (!type.isSortable()) {
-                throw new IllegalArgumentException("Sortierspalte '" + sortKey.columnName() + "' ist vom Typ " + type
-                        + " und kann nicht sortiert werden");
+                throw new IllegalArgumentException(
+                        "Sort column '" + sortKey.columnName() + "' is of type " + type + " and cannot be sorted");
             }
         }
         // From here the (forward-only, single-use) data source is consumed -> block reuse.
@@ -418,10 +417,10 @@ public final class XlsxBuilder<T> {
         for (String name : sumColumnNames) {
             int idx = indexOf(name);
             if (idx < 0) {
-                throw new IllegalArgumentException("Unbekannte Summenspalte: " + name);
+                throw new IllegalArgumentException("Unknown sum column: " + name);
             }
             if (!isNumeric(columns.get(idx).type())) {
-                throw new IllegalArgumentException("Summenspalte ist nicht numerisch: " + name);
+                throw new IllegalArgumentException("Sum column is not numeric: " + name);
             }
             sum[idx] = true;
         }
@@ -429,7 +428,7 @@ public final class XlsxBuilder<T> {
         if (summaryLabelColumn != null) {
             labelIndex = indexOf(summaryLabelColumn);
             if (labelIndex < 0) {
-                throw new IllegalArgumentException("Unbekannte Label-Spalte: " + summaryLabelColumn);
+                throw new IllegalArgumentException("Unknown label column: " + summaryLabelColumn);
             }
         }
         return new SummarySpec(sum, labelIndex, summaryLabelText, summaryAsFormula);

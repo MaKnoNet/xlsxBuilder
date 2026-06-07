@@ -45,10 +45,10 @@ final class SheetRenderer {
             }
         }
         LOG.debug(
-                "Blatt '{}': {} Zeilen ({}{}) in {} ms",
+                "Sheet '{}': {} rows ({}{}) in {} ms",
                 job.sheetName(),
                 rows,
-                sort.sortKeys().isEmpty() ? "unsortiert" : "sortiert",
+                sort.sortKeys().isEmpty() ? "unsorted" : "sorted",
                 job.parallel() ? ", parallel" : "",
                 (System.nanoTime() - start) / 1_000_000);
         return rows;

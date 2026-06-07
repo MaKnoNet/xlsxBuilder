@@ -485,7 +485,7 @@ final class XlsxWriter {
             cell.setCellValue(d);
         } else {
             throw new IllegalArgumentException(
-                    "Nicht unterstützter Datumstyp: " + value.getClass().getName());
+                    "Unsupported date type: " + value.getClass().getName());
         }
     }
 
@@ -498,7 +498,7 @@ final class XlsxWriter {
             time = dt.toLocalTime();
         } else {
             throw new IllegalArgumentException(
-                    "Nicht unterstützter Uhrzeit-Typ: " + value.getClass().getName());
+                    "Unsupported time type: " + value.getClass().getName());
         }
         cell.setCellValue(time.toNanoOfDay() / NANOS_PER_DAY);
     }

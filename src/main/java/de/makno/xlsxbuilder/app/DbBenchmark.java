@@ -46,12 +46,12 @@ public final class DbBenchmark {
 
             long existing = rowCount(conn);
             if (existing == rowCount) {
-                System.out.printf("DB enthält bereits %,d Zeilen – Seeding übersprungen.%n", existing);
+                System.out.printf("DB already contains %,d rows – seeding skipped.%n", existing);
             } else {
                 long seedStart = System.nanoTime();
                 seed(conn, rowCount);
                 System.out.printf(
-                        "Seeding: %,d Zeilen in H2 in %.1fs.%n",
+                        "Seeding: %,d rows into H2 in %.1fs.%n",
                         rowCount, (System.nanoTime() - seedStart) / 1_000_000_000.0);
             }
 
@@ -62,7 +62,7 @@ public final class DbBenchmark {
             long usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);
             long fileMb = Files.size(out) / (1024 * 1024);
             System.out.printf(
-                    "Export%s: %,d Zeilen DB -> %s (%d MB) in %.1fs, belegter Heap ~%d MB, max Heap %d MB%n",
+                    "Export%s: %,d rows DB -> %s (%d MB) in %.1fs, used heap ~%d MB, max heap %d MB%n",
                     parallel ? " (parallel)" : "",
                     rowCount,
                     out.toAbsolutePath(),

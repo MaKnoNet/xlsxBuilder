@@ -59,7 +59,7 @@ final class ExternalMergeSort implements Closeable {
      */
     ExternalMergeSort(Comparator<Row> comparator, int chunkSize, Path baseTempDir) {
         if (chunkSize < 1) {
-            throw new IllegalArgumentException("chunkSize muss >= 1 sein");
+            throw new IllegalArgumentException("chunkSize must be >= 1");
         }
         this.comparator = comparator;
         this.chunkSize = chunkSize;
@@ -97,8 +97,8 @@ final class ExternalMergeSort implements Closeable {
             runs = reduceToFanIn(runs);
             CloseableIterator<Row> merged = new MergeIterator(runs, comparator);
             LOG.debug(
-                    "External Merge Sort: {} Zeilen, {} Runs, {} Vormerge-Pässe (chunkSize={}), "
-                            + "Runs+Vormerge in {} ms, Temp={}",
+                    "External Merge Sort: {} rows, {} runs, {} pre-merge passes (chunkSize={}), "
+                            + "runs+pre-merge in {} ms, temp={}",
                     rowsRead,
                     initialRuns,
                     mergePasses,

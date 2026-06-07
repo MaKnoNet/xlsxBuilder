@@ -63,7 +63,7 @@ class XlsxBuilderTest {
 
         Grid g = XlsxTestReader.read(out);
         assertEquals("Leute", g.sheetName());
-        assertEquals(3, g.rowCount(), "Kopfzeile + 2 Datenzeilen");
+        assertEquals(3, g.rowCount(), "header + 2 data rows");
         assertEquals(List.of("Name", "Alter", "Aktiv"), g.strings(0));
 
         assertEquals("Alice", g.string(1, 0));
@@ -85,7 +85,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals("Sheet1", g.sheetName(), "Default-Blattname");
+        assertEquals("Sheet1", g.sheetName(), "default sheet name");
         assertEquals(2, g.rowCount());
         assertEquals("X", g.string(1, 0));
     }
@@ -156,11 +156,11 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(1001, g.rowCount(), "Kopfzeile + 1000 Datenzeilen");
+        assertEquals(1001, g.rowCount(), "header + 1000 data rows");
         long previous = Long.MIN_VALUE;
         for (int i = 1; i < g.rowCount(); i++) {
             long v = g.number(i, 0);
-            assertTrue(v > previous, "Werte müssen streng aufsteigend sein");
+            assertTrue(v > previous, "values must be strictly ascending");
             previous = v;
         }
         assertEquals(999, previous);
@@ -187,11 +187,11 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(601, g.rowCount(), "Kopfzeile + 600 Datenzeilen");
+        assertEquals(601, g.rowCount(), "header + 600 data rows");
         long previous = Long.MIN_VALUE;
         for (int i = 1; i < g.rowCount(); i++) {
             long v = g.number(i, 0);
-            assertTrue(v > previous, "Werte müssen über alle Merge-Stufen streng aufsteigend sein");
+            assertTrue(v > previous, "values must be strictly ascending across all merge passes");
             previous = v;
         }
         assertEquals(599, previous);
@@ -235,7 +235,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertTrue(g.isDateFormatted(1, 0), "Datumszelle muss ein Datumsformat haben");
+        assertTrue(g.isDateFormatted(1, 0), "date cell must have a date format");
         assertEquals(date, g.dateTime(1, 0).toLocalDate());
         assertEquals(1234.56, g.dbl(1, 1), 0.0001);
     }
@@ -263,13 +263,13 @@ class XlsxBuilderTest {
 
         Grid g = XlsxTestReader.read(out);
 
-        assertEquals("#,##0.00", g.format(1, 0), "DECIMAL-Format");
+        assertEquals("#,##0.00", g.format(1, 0), "DECIMAL format");
         assertEquals(1234.5, g.dbl(1, 0), 0.0001);
 
-        assertEquals("dd.mm.yyyy", g.format(1, 1), "DATE-Format");
+        assertEquals("dd.mm.yyyy", g.format(1, 1), "DATE format");
         assertEquals(date, g.dateTime(1, 1).toLocalDate());
 
-        assertEquals("hh:mm:ss", g.format(1, 2), "TIME-Format");
+        assertEquals("hh:mm:ss", g.format(1, 2), "TIME format");
         assertEquals(time, g.dateTime(1, 2).toLocalTime());
     }
 
@@ -344,7 +344,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(5, g.rowCount(), "Kopf + 3 Daten + 1 Summenzeile");
+        assertEquals(5, g.rowCount(), "header + 3 data + 1 summary row");
         assertEquals("Summe", g.string(4, 0));
         assertEquals(6, g.number(4, 1));
         assertEquals(20.00, g.dbl(4, 2), 0.0001);
@@ -373,7 +373,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(1002, g.rowCount(), "Kopf + 1000 Daten + Summenzeile");
+        assertEquals(1002, g.rowCount(), "header + 1000 data + summary row");
         assertEquals(expectedSum, g.number(1001, 0));
     }
 
@@ -392,7 +392,7 @@ class XlsxBuilderTest {
 
         Grid g = XlsxTestReader.read(out);
         // clearly wider than the POI default width (~2048) so that no "#####" appears.
-        assertTrue(g.columnWidth(0) >= 3000, "Datumsspalte muss breit genug sein");
+        assertTrue(g.columnWidth(0) >= 3000, "date column must be wide enough");
     }
 
     @Test
@@ -415,9 +415,9 @@ class XlsxBuilderTest {
 
         Grid g = XlsxTestReader.read(out);
         // name column at least as wide as the longest name.
-        assertTrue(g.columnWidth(0) >= longName.length() * 256, "Name-Spalte muss den längsten Namen fassen");
+        assertTrue(g.columnWidth(0) >= longName.length() * 256, "name column must fit the longest name");
         // sum = 5,000,000 -> "5.000.000" (9 characters incl. thousands separators).
-        assertTrue(g.columnWidth(1) >= 9 * 256, "Wert-Spalte muss die Summe fassen");
+        assertTrue(g.columnWidth(1) >= 9 * 256, "value column must fit the sum");
     }
 
     @Test
@@ -440,7 +440,7 @@ class XlsxBuilderTest {
         // 2 title rows + column headers + 1 data row
         assertEquals(4, g.rowCount());
         assertEquals("Mitarbeiterbericht", g.string(0, 0));
-        assertTrue(g.bold(0, 0), "Titel ist fett formatiert");
+        assertTrue(g.bold(0, 0), "title is bold");
         assertEquals("Stand: Mai 2026", g.string(1, 0));
         assertEquals(List.of("Name", "Alter", "Aktiv"), g.strings(2));
         assertEquals("Alice", g.string(3, 0));
@@ -500,7 +500,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertTrue(g.isDateFormatted(1, 1), "Konvertierte Zelle ist als Uhrzeit formatiert");
+        assertTrue(g.isDateFormatted(1, 1), "converted cell is formatted as a time");
         assertEquals(LocalTime.of(9, 30, 15), g.dateTime(1, 1).toLocalTime());
     }
 
@@ -555,7 +555,7 @@ class XlsxBuilderTest {
         List<String> names = XlsxTestReader.sheetNames(out);
         assertEquals(2, names.size());
         assertEquals("Daten", names.get(0));
-        assertNotEquals("Daten", names.get(1), "zweites Blatt muss eindeutigen Namen erhalten");
+        assertNotEquals("Daten", names.get(1), "second sheet must get a unique name");
     }
 
     // ========== Group A – Exception / Validation ==========
@@ -626,7 +626,7 @@ class XlsxBuilderTest {
         // ASC nulls-last: "A", "B", null
         assertEquals("A", g.string(1, 0));
         assertEquals("B", g.string(2, 0));
-        assertNull(g.string(3, 0), "null-Wert landet als leere Zelle am Ende");
+        assertNull(g.string(3, 0), "null value ends up as an empty cell at the end");
     }
 
     @Test
@@ -668,7 +668,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertTrue(g.isDateFormatted(1, 1), "DATETIME-Zelle muss als Datum formatiert sein");
+        assertTrue(g.isDateFormatted(1, 1), "DATETIME cell must be formatted as a date");
         assertEquals(dt, g.dateTime(1, 1));
     }
 
@@ -725,7 +725,7 @@ class XlsxBuilderTest {
         Grid g = XlsxTestReader.read(out);
         assertEquals("Nur eine Spalte", g.string(0, 0));
         // only 1 column -> no merge region
-        assertTrue(g.mergeRefs().isEmpty(), "Einzel-Spalte darf keinen Merge erzeugen");
+        assertTrue(g.mergeRefs().isEmpty(), "a single column must not create a merge");
     }
 
     @Test
@@ -742,7 +742,7 @@ class XlsxBuilderTest {
 
         Grid g = XlsxTestReader.read(out);
         // only the header row, no data rows
-        assertEquals(1, g.rowCount(), "Leere Quelle erzeugt nur Kopfzeile");
+        assertEquals(1, g.rowCount(), "empty source produces only the header row");
         assertEquals(List.of("Name", "Alter"), g.strings(0));
     }
 
@@ -765,7 +765,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(4, g.rowCount(), "Kopf + 2 Daten + Summenzeile");
+        assertEquals(4, g.rowCount(), "header + 2 data + summary row");
         assertEquals("Gesamt", g.string(3, 0));
         assertEquals(15.75, g.dbl(3, 1), 0.001);
     }
@@ -783,7 +783,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(4, g.rowCount(), "Kopf + 3 Datenzeilen");
+        assertEquals(4, g.rowCount(), "header + 3 data rows");
         assertEquals("Alpha", g.string(1, 0));
         assertEquals("Beta", g.string(2, 0));
         assertEquals("Gamma", g.string(3, 0));
@@ -799,7 +799,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(3, g.rowCount(), "Kopf + 2 Datenzeilen");
+        assertEquals(3, g.rowCount(), "header + 2 data rows");
         assertEquals("Eins", g.string(1, 0));
         assertEquals("Zwei", g.string(2, 0));
     }
@@ -818,7 +818,7 @@ class XlsxBuilderTest {
 
         Grid g = XlsxTestReader.read(out);
         // sorting with an empty source -> no run, MergeIterator empty, only the header row
-        assertEquals(1, g.rowCount(), "Leere sortierte Quelle erzeugt nur Kopfzeile");
+        assertEquals(1, g.rowCount(), "empty sorted source produces only the header row");
     }
 
     @Test
@@ -858,7 +858,7 @@ class XlsxBuilderTest {
         }
         assertTrue(Files.isDirectory(customTmp), "Konfiguriertes Temp-Verzeichnis wurde angelegt");
         try (var entries = Files.list(customTmp)) {
-            assertEquals(0, entries.count(), "Sortier-Unterverzeichnis muss aufgeräumt sein");
+            assertEquals(0, entries.count(), "sort subdirectory must be cleaned up");
         }
     }
 
@@ -948,8 +948,8 @@ class XlsxBuilderTest {
             assertEquals(values[i], restored.get(i), "Wert an Index " + i);
         }
         // the runtime type must be preserved exactly (otherwise the Integer vs. Long comparison would break).
-        assertTrue(restored.get(2) instanceof Integer, "Integer bleibt Integer");
-        assertTrue(restored.get(3) instanceof Long, "Long bleibt Long");
+        assertTrue(restored.get(2) instanceof Integer, "Integer stays Integer");
+        assertTrue(restored.get(3) instanceof Long, "Long stays Long");
     }
 
     @Test
@@ -994,11 +994,12 @@ class XlsxBuilderTest {
 
         assertTrue(
                 messages.stream().anyMatch(m -> m.contains("External Merge Sort")),
-                "Sort-Performance-Log fehlt: " + messages);
-        assertTrue(messages.stream().anyMatch(m -> m.contains("Blatt '")), "Blatt-Performance-Log fehlt: " + messages);
+                "sort performance log missing: " + messages);
+        assertTrue(
+                messages.stream().anyMatch(m -> m.contains("Sheet '")), "sheet performance log missing: " + messages);
         assertTrue(
                 messages.stream().anyMatch(m -> m.contains("Workbook:")),
-                "Workbook-Performance-Log fehlt: " + messages);
+                "workbook performance log missing: " + messages);
     }
 
     // ========== Filter ==========
@@ -1023,7 +1024,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(4, g.rowCount(), "Kopf + 3 aktive Datensätze");
+        assertEquals(4, g.rowCount(), "header + 3 active records");
         assertEquals("A", g.string(1, 0));
         assertEquals("C", g.string(2, 0));
         assertEquals("E", g.string(3, 0));
@@ -1055,7 +1056,7 @@ class XlsxBuilderTest {
         assertEquals(20, g.number(2, 1));
         assertEquals(15, g.number(3, 1));
         assertEquals("Summe", g.string(4, 0));
-        assertEquals(65, g.number(4, 1), "Summe nur über die gefilterten Zeilen");
+        assertEquals(65, g.number(4, 1), "sum only over the filtered rows");
     }
 
     // ========== Null-value handler ==========
@@ -1077,9 +1078,9 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals("-", g.string(1, 0), "Spalte A: sheet-weiter Default");
-        assertEquals("n/a", g.string(1, 1), "Spalte B: Spalten-Override");
-        assertEquals("-", g.string(1, 2), "Spalte C (INTEGER): Default als Text");
+        assertEquals("-", g.string(1, 0), "column A: sheet-wide default");
+        assertEquals("n/a", g.string(1, 1), "column B: column override");
+        assertEquals("-", g.string(1, 2), "column C (INTEGER): default as text");
     }
 
     @Test
@@ -1094,8 +1095,8 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(2, g.rowCount(), "Kopf + 1 (leere) Datenzeile");
-        assertNull(g.string(1, 0), "ohne Null-Text bleibt die Zelle leer");
+        assertEquals(2, g.rowCount(), "header + 1 (empty) data row");
+        assertNull(g.string(1, 0), "without null text the cell stays empty");
     }
 
     @Test
@@ -1115,9 +1116,9 @@ class XlsxBuilderTest {
 
         try (Workbook wb = WorkbookFactory.create(Files.newInputStream(out))) {
             var dataRow = wb.getSheetAt(0).getRow(1); // first data row (after the header)
-            assertNotNull(dataRow.getCell(0), "Zelle A muss als Empty existieren");
+            assertNotNull(dataRow.getCell(0), "cell A must exist as Empty");
             assertEquals(CellType.BLANK, dataRow.getCell(0).getCellType());
-            assertNotNull(dataRow.getCell(1), "Zelle B muss als Empty existieren");
+            assertNotNull(dataRow.getCell(1), "cell B must exist as Empty");
             assertEquals(CellType.BLANK, dataRow.getCell(1).getCellType());
         }
     }
@@ -1145,7 +1146,7 @@ class XlsxBuilderTest {
         // header(0) + 2 data(1,2) + sum(3) + footer(4)
         assertEquals(5, g.rowCount());
         assertEquals("Ende des Berichts", g.string(4, 0));
-        assertTrue(g.mergeRefs().contains("A5:B5"), "Footer gemerged über die Breite: " + g.mergeRefs());
+        assertTrue(g.mergeRefs().contains("A5:B5"), "footer merged across the width: " + g.mergeRefs());
     }
 
     @Test
@@ -1169,9 +1170,9 @@ class XlsxBuilderTest {
 
         Grid g = XlsxTestReader.read(out);
         // title(0,1) + header(2) + data(3,4) + sum(5) + footer(6)
-        assertEquals("Bericht ACME", g.string(0, 0), "benutzerdefinierter Platzhalter");
+        assertEquals("Bericht ACME", g.string(0, 0), "custom placeholder");
         assertEquals("Stand: " + java.time.LocalDate.now(), g.string(1, 0), "eingebautes {date}");
-        assertEquals("Zeilen: 2, Summe Wert: 40", g.string(6, 0), "dynamische Footer-Platzhalter");
+        assertEquals("Zeilen: 2, Summe Wert: 40", g.string(6, 0), "dynamic footer placeholders");
     }
 
     // ========== Pipeline parallelism ==========
@@ -1189,9 +1190,9 @@ class XlsxBuilderTest {
 
         Grid gs = XlsxTestReader.read(seq);
         Grid gp = XlsxTestReader.read(par);
-        assertEquals(gs.rowCount(), gp.rowCount(), "gleiche Zeilenanzahl");
+        assertEquals(gs.rowCount(), gp.rowCount(), "same row count");
         for (int r = 0; r < gs.rowCount(); r++) {
-            assertEquals(gs.string(r, 0), gp.string(r, 0), "Zeile " + r + " identisch");
+            assertEquals(gs.string(r, 0), gp.string(r, 0), "row " + r + " identical");
         }
     }
 
@@ -1261,7 +1262,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(2, g.rowCount(), "Nur 2 Datenzeilen, keine Kopfzeile");
+        assertEquals(2, g.rowCount(), "only 2 data rows, no header row");
         assertEquals("Alice", g.string(0, 0));
         assertEquals(30, g.number(0, 1));
         assertEquals("Bob", g.string(1, 0));
@@ -1305,7 +1306,7 @@ class XlsxBuilderTest {
         assertThrows(
                 IllegalStateException.class,
                 () -> WorkbookBuilder.create().sheet(sheet).write(tempDir.resolve("again.xlsx")),
-                "zweites Schreiben derselben Instanz muss scheitern");
+                "writing the same instance a second time must fail");
     }
 
     @Test
@@ -1320,7 +1321,7 @@ class XlsxBuilderTest {
         assertThrows(
                 IllegalStateException.class,
                 () -> wb.write(tempDir.resolve("wb-again.xlsx")),
-                "zweiter write(...)-Aufruf desselben WorkbookBuilder muss scheitern");
+                "a second write(...) call on the same WorkbookBuilder must fail");
     }
 
     // ========== Lazy/computed placeholders (placeholderResolver) ==========
@@ -1342,10 +1343,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals(
-                "Build 1.2.3, User {user}",
-                g.string(0, 0),
-                "Resolver löst {version} auf; unbekanntes {user} bleibt stehen");
+        assertEquals("Build 1.2.3, User {user}", g.string(0, 0), "resolver resolves {version}; unknown {user} stays");
     }
 
     @Test
@@ -1366,7 +1364,7 @@ class XlsxBuilderTest {
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals("Env PROD", g.string(0, 0), "statische Map hat Vorrang vor dem Resolver");
+        assertEquals("Env PROD", g.string(0, 0), "static map takes precedence over the resolver");
     }
 
     // ========== Temp directory for sort runs ==========
@@ -1450,7 +1448,7 @@ class XlsxBuilderTest {
             PrefetchingRowIterator it = new PrefetchingRowIterator(blocked, 100); // short join timeout
             it.close(); // join(100) times out, producer still alive -> WARN
             assertTrue(
-                    warns.stream().anyMatch(m -> m.contains("Prefetch-Producer")),
+                    warns.stream().anyMatch(m -> m.contains("Prefetch producer")),
                     "warning for a non-stopping producer is missing: " + warns);
         } finally {
             lock.unlock();

@@ -94,7 +94,7 @@ final class PrefetchingRowIterator implements CloseableIterator<Row> {
             item = queue.take();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Unterbrochen beim Warten auf die nächste Datenzeile", e);
+            throw new IllegalStateException("Interrupted while waiting for the next data row", e);
         }
         if (item == END) {
             finished = true;
@@ -129,15 +129,15 @@ final class PrefetchingRowIterator implements CloseableIterator<Row> {
             // The source did not honor the interrupt within the timeout. The producer may still be
             // reading the source while the caller proceeds to close it (potential close/read race).
             LOG.warn(
-                    "Prefetch-Producer-Thread nach {} ms nicht gestoppt – die Datenquelle reagiert nicht auf"
-                            + " interrupt; sie wird ggf. noch gelesen, während sie geschlossen wird",
+                    "Prefetch producer thread not stopped after {} ms – the data source does not respond to"
+                            + " interrupt; it may still be read while it is being closed",
                     joinTimeoutMillis);
         }
         Throwable f = failure;
         if (f != null && !failureSurfaced) {
             // A producer error was recorded but never surfaced to the consumer (e.g. the consumer aborted
             // before reaching END). Don't throw here – a primary exception is likely already in flight.
-            LOG.warn("Fehler des Prefetch-Producers wird beim Schließen verworfen (nicht herausgereicht)", f);
+            LOG.warn("Producer error from the prefetch pipeline is discarded on close (not propagated)", f);
         }
     }
 
@@ -153,6 +153,6 @@ final class PrefetchingRowIterator implements CloseableIterator<Row> {
         if (t instanceof Error err) {
             throw err;
         }
-        throw new IllegalStateException("Fehler beim Lesen der Datenquelle", t);
+        throw new IllegalStateException("Error while reading the data source", t);
     }
 }
