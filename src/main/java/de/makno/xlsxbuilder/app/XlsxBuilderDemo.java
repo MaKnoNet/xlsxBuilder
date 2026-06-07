@@ -37,9 +37,9 @@ public final class XlsxBuilderDemo {
         // Two employee sheets (same type; demonstrates multiple sheets + name deduplication) plus one
         // info sheet with its own data type.
         WorkbookBuilder.create()
-                .sheet(EmployeeData.sheet("Mitarbeiter", EmployeeData.generator(rowCount)))
+                .sheet(EmployeeData.sheet("Employees", EmployeeData.generator(rowCount)))
                 .sheet(buildInfoSheet(rowCount))
-                .sheet(EmployeeData.sheet("Mitarbeiter_1", EmployeeData.generator(rowCount)))
+                .sheet(EmployeeData.sheet("Employees_1", EmployeeData.generator(rowCount)))
                 .write(out);
 
         double seconds = (System.nanoTime() - start) / 1_000_000_000.0;
@@ -55,11 +55,11 @@ public final class XlsxBuilderDemo {
     private static XlsxBuilder<Info> buildInfoSheet(long rowCount) {
         return XlsxBuilder.<Info>create()
                 .sheetName("Info")
-                .column("Schlüssel", Info::schluessel)
-                .column("Wert", Info::wert)
+                .column("Key", Info::schluessel)
+                .column("Value", Info::wert)
                 .data(DataProviders.ofIterable(List.of(
-                        new Info("Bericht", "Mitarbeiterbericht"),
-                        new Info("Zeilen", String.format("%,d", rowCount)),
-                        new Info("Erstellt am", LocalDate.now().toString()))));
+                        new Info("Report", "Employee report"),
+                        new Info("Rows", String.format("%,d", rowCount)),
+                        new Info("Created on", LocalDate.now().toString()))));
     }
 }

@@ -21,7 +21,7 @@ import java.util.Random;
  */
 public final class EmployeeData {
 
-    private static final String[] DEPARTMENTS = {"Vertrieb", "Technik", "Marketing", "Personal", "Finanzen", "Support"};
+    private static final String[] DEPARTMENTS = {"Sales", "Engineering", "Marketing", "HR", "Finance", "Support"};
 
     private EmployeeData() {}
 
@@ -43,7 +43,7 @@ public final class EmployeeData {
                 }
                 produced++;
                 long id = 1_000_000L + produced;
-                String name = "Mitarbeiter-" + produced;
+                String name = "Employee-" + produced;
                 String dept = DEPARTMENTS[random.nextInt(DEPARTMENTS.length)];
                 int age = 20 + random.nextInt(45);
                 double rating = Math.round(random.nextDouble() * 50) / 10.0; // 0.0 .. 5.0
@@ -65,29 +65,29 @@ public final class EmployeeData {
     public static XlsxBuilder<Employee> sheet(String sheetName, DataProvider<Employee> data) {
         return XlsxBuilder.<Employee>create()
                 .sheetName(sheetName)
-                .header("Mitarbeiterbericht", "Erstellt am " + LocalDate.now())
+                .header("Employee report", "Created on " + LocalDate.now())
                 .column("ID", Employee::id)
                 .ofType(ColumnType.LONG)
                 .column("Name", Employee::name) // STRING (default)
-                .column("Abteilung", Employee::department) // STRING
-                .column("Alter", Employee::age)
+                .column("Department", Employee::department) // STRING
+                .column("Age", Employee::age)
                 .ofType(ColumnType.INTEGER)
-                .column("Bewertung", Employee::rating)
+                .column("Rating", Employee::rating)
                 .ofType(ColumnType.DOUBLE)
                 .formatForType("0.0")
-                .column("Gehalt", Employee::salary)
+                .column("Salary", Employee::salary)
                 .ofType(ColumnType.DECIMAL)
                 .formatForType("#,##0.00 \"€\"")
-                .column("Aktiv", Employee::active)
+                .column("Active", Employee::active)
                 .ofType(ColumnType.BOOLEAN)
-                .column("Eintritt", Employee::hireDate)
+                .column("Hire date", Employee::hireDate)
                 .ofType(ColumnType.DATE)
                 .formatForType("dd.mm.yyyy")
-                .column("Letzter Login", Employee::lastLogin)
+                .column("Last login", Employee::lastLogin)
                 .ofType(ColumnType.DATETIME)
                 .formatForType("dd.mm.yyyy hh:mm")
                 // raw value int (seconds since midnight) is converted to a time of day (TIME).
-                .column("Kommt", Employee::checkInSeconds)
+                .column("Check-in", Employee::checkInSeconds)
                 .ofType(ColumnType.TIME)
                 .formatForType("hh:mm")
                 .convertToColumnType((Integer s) -> LocalTime.ofSecondOfDay(s))
@@ -95,11 +95,11 @@ public final class EmployeeData {
                 .column("Bonus", e -> "F{row}*0.1")
                 .ofType(ColumnType.FORMULA)
                 .formatForType("#,##0.00 \"€\"")
-                .sortBy("Abteilung", SortOrder.ASC)
-                .sortBy("Gehalt", SortOrder.DESC)
+                .sortBy("Department", SortOrder.ASC)
+                .sortBy("Salary", SortOrder.DESC)
                 .sortChunkSize(100_000)
-                .sumColumn("Gehalt")
-                .summaryLabel("Name", "Summe")
+                .sumColumn("Salary")
+                .summaryLabel("Name", "Total")
                 .summaryAsFormula(true) // summary row as a real =SUM(...) formula
                 .data(data);
     }

@@ -21,10 +21,10 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  *
  * <pre>{@code
  * WorkbookBuilder.create()
- *     .sheet(XlsxBuilder.<Employee>create().sheetName("Mitarbeiter")
+ *     .sheet(XlsxBuilder.<Employee>create().sheetName("Employees")
  *         .column("Name", Employee::name)
  *         .data(employeeProvider))
- *     .sheet(XlsxBuilder.<Order>create().sheetName("Aufträge")
+ *     .sheet(XlsxBuilder.<Order>create().sheetName("Orders")
  *         .column("Nr", Order::id).ofType(ColumnType.LONG)
  *         .data(orderProvider))
  *     .write(Path.of("report.xlsx"));

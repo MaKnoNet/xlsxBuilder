@@ -44,10 +44,10 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  * <pre>{@code
  * WorkbookBuilder.create()
  *     .sheet(XlsxBuilder.<Employee>create()
- *         .sheetName("Mitarbeiter")
+ *         .sheetName("Employees")
  *         .column("Name", Employee::name)                                  // default: text
- *         .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
- *         .sortBy("Gehalt", SortOrder.DESC)
+ *         .column("Salary", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
+ *         .sortBy("Salary", SortOrder.DESC)
  *         .data(dataProvider))
  *     .write(Path.of("out.xlsx"));
  * }</pre>
@@ -111,7 +111,7 @@ public final class XlsxBuilder<T> {
      * Defines a column. The default type is {@code STRING} (text). Type and format are optional and are
      * set directly afterwards via {@link #ofType(ColumnType)} resp. {@link #formatForType(String)}:
      * <pre>{@code
-     * .column("Gehalt", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
+     * .column("Salary", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
      * }</pre>
      */
     public XlsxBuilder<T> column(String name, Function<? super T, ?> extractor) {
@@ -196,7 +196,7 @@ public final class XlsxBuilder<T> {
         return this;
     }
 
-    /** Optional label in the summary row (e.g. {@code summaryLabel("Name", "Summe")}). */
+    /** Optional label in the summary row (e.g. {@code summaryLabel("Name", "Total")}). */
     public XlsxBuilder<T> summaryLabel(String columnName, String text) {
         this.summaryLabelColumn = Objects.requireNonNull(columnName, "columnName");
         this.summaryLabelText = Objects.requireNonNull(text, "text");

@@ -144,7 +144,7 @@ public final class DbBenchmark {
             // the builder (External Merge Sort).
             ResultSet rs = st.executeQuery("SELECT * FROM employee");
             WorkbookBuilder.create()
-                    .sheet(EmployeeData.sheet("Mitarbeiter", DataProviders.ofResultSet(rs, EmployeeData::map))
+                    .sheet(EmployeeData.sheet("Employees", DataProviders.ofResultSet(rs, EmployeeData::map))
                             .parallel(parallel))
                     .write(out); // closes the ResultSet via DataProvider.close()
         }

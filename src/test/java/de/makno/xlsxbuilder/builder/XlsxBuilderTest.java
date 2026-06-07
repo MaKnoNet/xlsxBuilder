@@ -52,19 +52,19 @@ class XlsxBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Person>create()
-                        .sheetName("Leute")
+                        .sheetName("People")
                         .column("Name", Person::name)
-                        .column("Alter", Person::age)
+                        .column("Age", Person::age)
                         .ofType(ColumnType.INTEGER)
-                        .column("Aktiv", Person::active)
+                        .column("Active", Person::active)
                         .ofType(ColumnType.BOOLEAN)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
-        assertEquals("Leute", g.sheetName());
+        assertEquals("People", g.sheetName());
         assertEquals(3, g.rowCount(), "header + 2 data rows");
-        assertEquals(List.of("Name", "Alter", "Aktiv"), g.strings(0));
+        assertEquals(List.of("Name", "Age", "Active"), g.strings(0));
 
         assertEquals("Alice", g.string(1, 0));
         assertEquals(30, g.number(1, 1));
@@ -98,9 +98,9 @@ class XlsxBuilderTest {
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Person>create()
                         .column("Name", Person::name)
-                        .column("Alter", Person::age)
+                        .column("Age", Person::age)
                         .ofType(ColumnType.INTEGER)
-                        .sortBy("Alter", SortOrder.DESC)
+                        .sortBy("Age", SortOrder.DESC)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
@@ -120,11 +120,11 @@ class XlsxBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<DeptRow>create()
-                        .column("Abteilung", DeptRow::dept)
-                        .column("Gehalt", DeptRow::salary)
+                        .column("Department", DeptRow::dept)
+                        .column("Salary", DeptRow::salary)
                         .ofType(ColumnType.INTEGER)
-                        .sortBy("Abteilung", SortOrder.ASC)
-                        .sortBy("Gehalt", SortOrder.DESC)
+                        .sortBy("Department", SortOrder.ASC)
+                        .sortBy("Salary", SortOrder.DESC)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
@@ -281,12 +281,12 @@ class XlsxBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Item>create()
-                        .header("Bericht") // title row -> the data area is shifted
+                        .header("Report") // title row -> the data area is shifted
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert)
+                        .column("Value", Item::wert)
                         .ofType(ColumnType.INTEGER)
-                        .sumColumn("Wert")
-                        .summaryLabel("Name", "Summe")
+                        .sumColumn("Value")
+                        .summaryLabel("Name", "Total")
                         .summaryAsFormula(true)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
@@ -294,7 +294,7 @@ class XlsxBuilderTest {
         Grid g = XlsxTestReader.read(out);
         // title(1) + header(2) + data(3-5) + sum(6)
         assertEquals(6, g.rowCount());
-        assertEquals("Summe", g.string(5, 0));
+        assertEquals("Total", g.string(5, 0));
         // value is column B; data rows are Excel rows 3..5.
         assertEquals("SUM(B3:B5)", g.formula(5, 1));
     }
@@ -310,7 +310,7 @@ class XlsxBuilderTest {
                         .ofType(ColumnType.INTEGER)
                         .column("B", P::b)
                         .ofType(ColumnType.INTEGER)
-                        .column("Summe", p -> "A{row}+B{row}")
+                        .column("Total", p -> "A{row}+B{row}")
                         .ofType(ColumnType.FORMULA)
                         .data(DataProviders.ofIterable(List.of(new P(2, 3), new P(10, 20)))))
                 .write(out);
@@ -339,13 +339,13 @@ class XlsxBuilderTest {
                         .ofType(ColumnType.DECIMAL)
                         .sumColumn("Menge")
                         .sumColumn("Betrag")
-                        .summaryLabel("Name", "Summe")
+                        .summaryLabel("Name", "Total")
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
         assertEquals(5, g.rowCount(), "header + 3 data + 1 summary row");
-        assertEquals("Summe", g.string(4, 0));
+        assertEquals("Total", g.string(4, 0));
         assertEquals(6, g.number(4, 1));
         assertEquals(20.00, g.dbl(4, 2), 0.0001);
     }
@@ -384,7 +384,7 @@ class XlsxBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<R>create()
-                        .column("Eintritt", R::datum)
+                        .column("Hire date", R::datum)
                         .ofType(ColumnType.DATE)
                         .formatForType("dd.mm.yyyy")
                         .data(DataProviders.ofIterable(List.of(new R(LocalDate.of(2026, 12, 31))))))
@@ -398,18 +398,18 @@ class XlsxBuilderTest {
     @Test
     void widthsAccountForLongStringsAndSummarySum() throws Exception {
         record Item(String name, int wert) {}
-        String longName = "Ein sehr langer Mitarbeitername XYZ"; // 35 Zeichen
-        List<Item> data = List.of(new Item(longName, 2_000_000), new Item("Kurz", 3_000_000));
+        String longName = "A very long employee name XYZ-12345"; // 35 characters
+        List<Item> data = List.of(new Item(longName, 2_000_000), new Item("Short", 3_000_000));
         Path out = tempDir.resolve("widths2.xlsx");
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Item>create()
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert)
+                        .column("Value", Item::wert)
                         .ofType(ColumnType.INTEGER)
                         .formatForType("#,##0")
-                        .sumColumn("Wert")
-                        .summaryLabel("Name", "Summe")
+                        .sumColumn("Value")
+                        .summaryLabel("Name", "Total")
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
@@ -427,11 +427,11 @@ class XlsxBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Person>create()
-                        .header("Mitarbeiterbericht", "Stand: Mai 2026")
+                        .header("Employee report", "As of May 2026")
                         .column("Name", Person::name)
-                        .column("Alter", Person::age)
+                        .column("Age", Person::age)
                         .ofType(ColumnType.INTEGER)
-                        .column("Aktiv", Person::active)
+                        .column("Active", Person::active)
                         .ofType(ColumnType.BOOLEAN)
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
@@ -439,10 +439,10 @@ class XlsxBuilderTest {
         Grid g = XlsxTestReader.read(out);
         // 2 title rows + column headers + 1 data row
         assertEquals(4, g.rowCount());
-        assertEquals("Mitarbeiterbericht", g.string(0, 0));
+        assertEquals("Employee report", g.string(0, 0));
         assertTrue(g.bold(0, 0), "title is bold");
-        assertEquals("Stand: Mai 2026", g.string(1, 0));
-        assertEquals(List.of("Name", "Alter", "Aktiv"), g.strings(2));
+        assertEquals("As of May 2026", g.string(1, 0));
+        assertEquals(List.of("Name", "Age", "Active"), g.strings(2));
         assertEquals("Alice", g.string(3, 0));
         assertEquals(30, g.number(3, 1));
         assertTrue(g.bool(3, 2));
@@ -459,28 +459,28 @@ class XlsxBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Item>create()
-                        .header("Bericht")
+                        .header("Report")
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert)
+                        .column("Value", Item::wert)
                         .ofType(ColumnType.INTEGER)
-                        .sortBy("Wert", SortOrder.DESC)
-                        .sumColumn("Wert")
-                        .summaryLabel("Name", "Summe")
+                        .sortBy("Value", SortOrder.DESC)
+                        .sumColumn("Value")
+                        .summaryLabel("Name", "Total")
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
         // title + column headers + 3 data + summary row
         assertEquals(6, g.rowCount());
-        assertEquals("Bericht", g.string(0, 0));
-        assertEquals(List.of("Name", "Wert"), g.strings(1));
+        assertEquals("Report", g.string(0, 0));
+        assertEquals(List.of("Name", "Value"), g.strings(1));
         assertEquals("B", g.string(2, 0));
         assertEquals(30, g.number(2, 1));
         assertEquals("C", g.string(3, 0));
         assertEquals(20, g.number(3, 1));
         assertEquals("A", g.string(4, 0));
         assertEquals(10, g.number(4, 1));
-        assertEquals("Summe", g.string(5, 0));
+        assertEquals("Total", g.string(5, 0));
         assertEquals(60, g.number(5, 1));
     }
 
@@ -512,26 +512,26 @@ class XlsxBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Emp>create()
-                        .sheetName("Mitarbeiter")
+                        .sheetName("Employees")
                         .column("Name", Emp::name)
-                        .column("Alter", Emp::age)
+                        .column("Age", Emp::age)
                         .ofType(ColumnType.INTEGER)
                         .data(DataProviders.ofIterable(List.of(new Emp("Alice", 30), new Emp("Bob", 25)))))
                 .sheet(XlsxBuilder.<Dept>create()
-                        .sheetName("Abteilungen")
-                        .column("Kürzel", Dept::code)
+                        .sheetName("Departments")
+                        .column("Code", Dept::code)
                         .data(DataProviders.ofIterable(List.of(new Dept("IT"), new Dept("HR")))))
                 .write(out);
 
-        assertEquals(List.of("Mitarbeiter", "Abteilungen"), XlsxTestReader.sheetNames(out));
+        assertEquals(List.of("Employees", "Departments"), XlsxTestReader.sheetNames(out));
 
         Grid s0 = XlsxTestReader.read(out, 0);
-        assertEquals(List.of("Name", "Alter"), s0.strings(0));
+        assertEquals(List.of("Name", "Age"), s0.strings(0));
         assertEquals("Alice", s0.string(1, 0));
         assertEquals(30, s0.number(1, 1));
 
         Grid s1 = XlsxTestReader.read(out, 1);
-        assertEquals(List.of("Kürzel"), s1.strings(0));
+        assertEquals(List.of("Code"), s1.strings(0));
         assertEquals("IT", s1.string(1, 0));
         assertEquals("HR", s1.string(2, 0));
     }
@@ -680,7 +680,7 @@ class XlsxBuilderTest {
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Measurement>create()
                         .column("Label", Measurement::label)
-                        .column("Wert", Measurement::value)
+                        .column("Value", Measurement::value)
                         .ofType(ColumnType.DOUBLE)
                         .data(DataProviders.ofIterable(List.of(new Measurement("pi", 3.14159)))))
                 .write(out);
@@ -701,7 +701,7 @@ class XlsxBuilderTest {
                         .column("B", R::b)
                         .ofType(ColumnType.INTEGER)
                         // static formula without a {row} placeholder
-                        .column("Summe", r -> "A2+B2")
+                        .column("Total", r -> "A2+B2")
                         .ofType(ColumnType.FORMULA)
                         .data(DataProviders.ofIterable(List.of(new R(5, 7)))))
                 .write(out);
@@ -735,7 +735,7 @@ class XlsxBuilderTest {
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Person>create()
                         .column("Name", Person::name)
-                        .column("Alter", Person::age)
+                        .column("Age", Person::age)
                         .ofType(ColumnType.INTEGER)
                         .data(DataProviders.ofIterable(List.of())))
                 .write(out);
@@ -743,7 +743,7 @@ class XlsxBuilderTest {
         Grid g = XlsxTestReader.read(out);
         // only the header row, no data rows
         assertEquals(1, g.rowCount(), "empty source produces only the header row");
-        assertEquals(List.of("Name", "Alter"), g.strings(0));
+        assertEquals(List.of("Name", "Age"), g.strings(0));
     }
 
     @Test
@@ -778,7 +778,7 @@ class XlsxBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<String>create()
-                        .column("Wert", s -> s)
+                        .column("Value", s -> s)
                         .data(DataProviders.ofStream(Stream.of("Alpha", "Beta", "Gamma"))))
                 .write(out);
 
@@ -795,7 +795,7 @@ class XlsxBuilderTest {
         var iterator = List.of("Eins", "Zwei").iterator();
 
         WorkbookBuilder.create()
-                .sheet(XlsxBuilder.<String>create().column("Wert", s -> s).data(DataProviders.ofIterator(iterator)))
+                .sheet(XlsxBuilder.<String>create().column("Value", s -> s).data(DataProviders.ofIterator(iterator)))
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
@@ -902,7 +902,7 @@ class XlsxBuilderTest {
         } finally {
             pool.shutdown();
         }
-        assertTrue(pool.awaitTermination(60, TimeUnit.SECONDS), "Alle Tasks müssen fertig werden");
+        assertTrue(pool.awaitTermination(60, TimeUnit.SECONDS), "all tasks must finish");
         for (Future<?> f : futures) {
             f.get(); // propagates any AssertionErrors from the threads -> test fails
         }
@@ -1017,7 +1017,7 @@ class XlsxBuilderTest {
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Person>create()
                         .column("Name", Person::name)
-                        .column("Alter", Person::age)
+                        .column("Age", Person::age)
                         .ofType(ColumnType.INTEGER)
                         .filter(Person::active) // only active employees
                         .data(DataProviders.ofIterable(data)))
@@ -1040,12 +1040,12 @@ class XlsxBuilderTest {
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Item>create()
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert)
+                        .column("Value", Item::wert)
                         .ofType(ColumnType.INTEGER)
                         .filter(i -> i.wert() > 10) // keeps B(20), C(15), E(30)
-                        .sortBy("Wert", SortOrder.DESC)
-                        .sumColumn("Wert")
-                        .summaryLabel("Name", "Summe")
+                        .sortBy("Value", SortOrder.DESC)
+                        .sumColumn("Value")
+                        .summaryLabel("Name", "Total")
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
@@ -1055,7 +1055,7 @@ class XlsxBuilderTest {
         assertEquals(30, g.number(1, 1));
         assertEquals(20, g.number(2, 1));
         assertEquals(15, g.number(3, 1));
-        assertEquals("Summe", g.string(4, 0));
+        assertEquals("Total", g.string(4, 0));
         assertEquals(65, g.number(4, 1), "sum only over the filtered rows");
     }
 
@@ -1134,18 +1134,18 @@ class XlsxBuilderTest {
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Item>create()
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert)
+                        .column("Value", Item::wert)
                         .ofType(ColumnType.INTEGER)
-                        .sumColumn("Wert")
-                        .summaryLabel("Name", "Summe")
-                        .footer("Ende des Berichts")
+                        .sumColumn("Value")
+                        .summaryLabel("Name", "Total")
+                        .footer("End of report")
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
         // header(0) + 2 data(1,2) + sum(3) + footer(4)
         assertEquals(5, g.rowCount());
-        assertEquals("Ende des Berichts", g.string(4, 0));
+        assertEquals("End of report", g.string(4, 0));
         assertTrue(g.mergeRefs().contains("A5:B5"), "footer merged across the width: " + g.mergeRefs());
     }
 
@@ -1157,22 +1157,22 @@ class XlsxBuilderTest {
 
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Item>create()
-                        .header("Bericht {firma}", "Stand: {date}")
+                        .header("Report {company}", "As of {date}")
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert)
+                        .column("Value", Item::wert)
                         .ofType(ColumnType.INTEGER)
-                        .sumColumn("Wert")
-                        .summaryLabel("Name", "Summe")
-                        .footer("Zeilen: {rowCount}, Summe Wert: {sum:Wert}")
-                        .placeholder("firma", "ACME")
+                        .sumColumn("Value")
+                        .summaryLabel("Name", "Total")
+                        .footer("Rows: {rowCount}, Total Value: {sum:Value}")
+                        .placeholder("company", "ACME")
                         .data(DataProviders.ofIterable(data)))
                 .write(out);
 
         Grid g = XlsxTestReader.read(out);
         // title(0,1) + header(2) + data(3,4) + sum(5) + footer(6)
-        assertEquals("Bericht ACME", g.string(0, 0), "custom placeholder");
-        assertEquals("Stand: " + java.time.LocalDate.now(), g.string(1, 0), "eingebautes {date}");
-        assertEquals("Zeilen: 2, Summe Wert: 40", g.string(6, 0), "dynamic footer placeholders");
+        assertEquals("Report ACME", g.string(0, 0), "custom placeholder");
+        assertEquals("As of " + java.time.LocalDate.now(), g.string(1, 0), "eingebautes {date}");
+        assertEquals("Rows: 2, Total Value: 40", g.string(6, 0), "dynamic footer placeholders");
     }
 
     // ========== Pipeline parallelism ==========
@@ -1199,8 +1199,8 @@ class XlsxBuilderTest {
     private void writeSortedStrings(Path out, List<String> data, boolean parallel) throws Exception {
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<String>create()
-                        .column("Wert", s -> s)
-                        .sortBy("Wert", SortOrder.ASC)
+                        .column("Value", s -> s)
+                        .sortBy("Value", SortOrder.ASC)
                         .sortChunkSize(32) // forces spilling -> sort + prefetch run in parallel
                         .parallel(parallel)
                         .data(DataProviders.ofIterable(data)))
@@ -1255,7 +1255,7 @@ class XlsxBuilderTest {
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Person>create()
                         .column("Name", Person::name)
-                        .column("Alter", Person::age)
+                        .column("Age", Person::age)
                         .ofType(ColumnType.INTEGER)
                         .columnHeaders(false)
                         .data(DataProviders.ofIterable(data)))
@@ -1278,9 +1278,9 @@ class XlsxBuilderTest {
         WorkbookBuilder.create()
                 .sheet(XlsxBuilder.<Item>create()
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert)
+                        .column("Value", Item::wert)
                         .ofType(ColumnType.INTEGER)
-                        .sumColumn("Wert")
+                        .sumColumn("Value")
                         .summaryAsFormula(true)
                         .columnHeaders(false)
                         .data(DataProviders.ofIterable(data)))
@@ -1336,7 +1336,7 @@ class XlsxBuilderTest {
                 .sheet(XlsxBuilder.<Item>create()
                         .header("Build {version}, User {user}")
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert)
+                        .column("Value", Item::wert)
                         .ofType(ColumnType.INTEGER)
                         .placeholderResolver(key -> "version".equals(key) ? "1.2.3" : null)
                         .data(DataProviders.ofIterable(data)))
@@ -1356,7 +1356,7 @@ class XlsxBuilderTest {
                 .sheet(XlsxBuilder.<Item>create()
                         .header("Env {env}")
                         .column("Name", Item::name)
-                        .column("Wert", Item::wert)
+                        .column("Value", Item::wert)
                         .ofType(ColumnType.INTEGER)
                         .placeholder("env", "PROD")
                         .placeholderResolver(key -> "OVERRIDDEN")
@@ -1374,7 +1374,7 @@ class XlsxBuilderTest {
     private static XlsxBuilder<TempItem> sortedTempSheet() {
         return XlsxBuilder.<TempItem>create()
                 .column("Name", TempItem::name)
-                .column("Wert", TempItem::wert)
+                .column("Value", TempItem::wert)
                 .ofType(ColumnType.INTEGER)
                 .sortBy("Name", SortOrder.ASC)
                 .data(DataProviders.ofIterable(List.of(new TempItem("B", 1), new TempItem("A", 2))));
