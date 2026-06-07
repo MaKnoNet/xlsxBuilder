@@ -43,16 +43,44 @@ public final class WorkbookBuilder {
 
     private static final Logger LOG = LogManager.getLogger(WorkbookBuilder.class);
 
-    /** Anzahl Zeilen, die SXSSF je Blatt gleichzeitig im Speicher hält (Rest wird ausgelagert). */
-    private static final int ROW_WINDOW = 100;
+    /**
+     * Standard-Anzahl Zeilen, die SXSSF je Blatt gleichzeitig im Speicher hält (Rest wird
+     * ausgelagert). Dies ist ein guter Kompromiss für die meisten Anwendungsfälle.
+     */
+    private static final int DEFAULT_ROW_WINDOW = 100;
 
     private final List<ExcelBuilder<?>> sheets = new ArrayList<>();
+    private int sxssfRowWindow = DEFAULT_ROW_WINDOW;
     private boolean written; // Einmal-Nutzung: nach write(...) nicht erneut verwendbar
 
     private WorkbookBuilder() {}
 
     public static WorkbookBuilder create() {
         return new WorkbookBuilder();
+    }
+
+    /**
+     * Setzt die Anzahl Zeilen, die SXSSF je Blatt gleichzeitig im Speicher hält (der Rest wird auf
+     * Temp-Dateien ausgelagert). Der Speicherbedarf steigt mit dieser Größe, aber auch die
+     * Schreib-Performance. Default ist {@value #DEFAULT_ROW_WINDOW}.
+     *
+     * <p><b>Typische Werte:</b>
+     * <ul>
+     *   <li>50–100: sehr sparsam mit RAM, gut für sehr große Dateien mit limitiertem Heap;</li>
+     *   <li>100–500: Standard, guter Balance zwischen Speicher und Performance;</li>
+     *   <li>1000+: mehr RAM, aber auch mehr Performance (wenn Heap groß genug).</li>
+     * </ul>
+     *
+     * @param window Anzahl Zeilen im Speicher (>= 1)
+     * @return this für Fluent API
+     * @throws IllegalArgumentException wenn window < 1
+     */
+    public WorkbookBuilder sxssfRowWindow(int window) {
+        if (window < 1) {
+            throw new IllegalArgumentException("sxssfRowWindow muss >= 1 sein");
+        }
+        this.sxssfRowWindow = window;
+        return this;
     }
 
     /** Fügt ein Blatt hinzu. Der {@link ExcelBuilder} muss eine Datenquelle ({@code .data(...)}) haben. */
@@ -80,15 +108,16 @@ public final class WorkbookBuilder {
         }
         written = true;
         long startNanos = System.nanoTime();
-        try (SXSSFWorkbook wb = new SXSSFWorkbook(ROW_WINDOW)) {
+        try (SXSSFWorkbook wb = new SXSSFWorkbook(sxssfRowWindow)) {
             for (ExcelBuilder<?> sheet : sheets) {
                 sheet.renderInto(wb);
             }
             wb.write(out);
         }
         LOG.debug(
-                "Workbook: {} Blätter in {} ms geschrieben",
+                "Workbook: {} Blätter in {} ms geschrieben (sxssfRowWindow={})",
                 sheets.size(),
-                (System.nanoTime() - startNanos) / 1_000_000);
+                (System.nanoTime() - startNanos) / 1_000_000,
+                sxssfRowWindow);
     }
 }
