@@ -69,6 +69,7 @@ final class XlsxWriter {
 
         int lastCol = columns.size() - 1;
         int rowNum = writeTitleRows(sheet, layout.headerLines(), placeholders, resolver, titleStyle, lastCol);
+        rowNum = writeColumnGroups(sheet, wb, layout.columnGroups(), rowNum);
         rowNum = writeColumnHeaders(sheet, columns, rowNum, showHeaders);
 
         BigDecimal[] sums = initSums(columns, summary);
@@ -132,6 +133,30 @@ final class XlsxWriter {
             }
         }
         return rowNum;
+    }
+
+    /**
+     * Writes the optional grouped header row (multi-row / joined headers) above the column headers.
+     * Each {@link ColumnGroup} yields one cell at its start column, merged across its span. Returns the
+     * next row (unchanged when there are no groups).
+     */
+    private static int writeColumnGroups(SXSSFSheet sheet, SXSSFWorkbook wb, List<ColumnGroup> groups, int rowNum) {
+        if (groups == null || groups.isEmpty()) {
+            return rowNum;
+        }
+        CellStyle groupStyle = buildGroupHeaderStyle(wb);
+        org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowNum);
+        int col = 0;
+        for (ColumnGroup group : groups) {
+            Cell cell = row.createCell(col);
+            cell.setCellValue(group.label());
+            cell.setCellStyle(groupStyle);
+            if (group.span() > 1) {
+                sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, col, col + group.span() - 1));
+            }
+            col += group.span();
+        }
+        return rowNum + 1;
     }
 
     /** Writes the column headers (if enabled). Returns the next row. */
@@ -436,6 +461,17 @@ final class XlsxWriter {
         titleStyle.setAlignment(HorizontalAlignment.CENTER);
         titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
         return titleStyle;
+    }
+
+    private static CellStyle buildGroupHeaderStyle(SXSSFWorkbook wb) {
+        Font font = wb.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 11);
+        CellStyle style = wb.createCellStyle();
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        return style;
     }
 
     private static CellStyle buildFooterStyle(SXSSFWorkbook wb) {

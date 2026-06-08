@@ -68,6 +68,7 @@ public final class XlsxBuilder<T> {
     private String sheetName = "Sheet1";
     private final List<String> headerLines = new ArrayList<>();
     private final List<String> footerLines = new ArrayList<>();
+    private final List<ColumnGroup> columnGroups = new ArrayList<>();
     private final List<Column<T>> columns = new ArrayList<>();
     private final List<SortKey> sortKeys = new ArrayList<>();
     private final List<String> sumColumnNames = new ArrayList<>();
@@ -103,6 +104,22 @@ public final class XlsxBuilder<T> {
     public XlsxBuilder<T> header(String... lines) {
         for (String line : lines) {
             headerLines.add(Objects.requireNonNull(line, "line"));
+        }
+        return this;
+    }
+
+    /**
+     * Optional grouped header row above the column headers (multi-row / joined headers): each
+     * {@link ColumnGroup} spans a number of consecutive columns and is merged across that range. The
+     * spans must cover all columns exactly ({@code Σ span == number of columns}); otherwise writing
+     * throws an {@link IllegalArgumentException}. An empty list means no group row. Calling repeatedly
+     * replaces the groups.
+     */
+    public XlsxBuilder<T> columnGroups(List<ColumnGroup> groups) {
+        Objects.requireNonNull(groups, "groups");
+        columnGroups.clear();
+        for (ColumnGroup group : groups) {
+            columnGroups.add(Objects.requireNonNull(group, "group"));
         }
         return this;
     }
@@ -405,7 +422,29 @@ public final class XlsxBuilder<T> {
         staticPlaceholders.putIfAbsent(
                 "datetime", LocalDateTime.now().withNano(0).toString());
         return new SheetWriteOptions(
-                header, footerLines, staticPlaceholders, placeholderResolver, showColumnHeaders, defaultNullText);
+                header,
+                footerLines,
+                validatedColumnGroups(),
+                staticPlaceholders,
+                placeholderResolver,
+                showColumnHeaders,
+                defaultNullText);
+    }
+
+    /** Returns the group cells (empty = none) after checking that their spans cover all columns exactly. */
+    private List<ColumnGroup> validatedColumnGroups() {
+        if (columnGroups.isEmpty()) {
+            return List.of();
+        }
+        int total = 0;
+        for (ColumnGroup group : columnGroups) {
+            total += group.span();
+        }
+        if (total != columns.size()) {
+            throw new IllegalArgumentException(
+                    "Column groups span " + total + " columns but there are " + columns.size());
+        }
+        return List.copyOf(columnGroups);
     }
 
     /** Builds the summary-row configuration, or {@code null} if no summary row is desired. */

@@ -31,8 +31,10 @@ import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.Property;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -44,6 +46,52 @@ class XlsxBuilderTest {
     private record Person(String name, int age, boolean active) {}
 
     private record DeptRow(String dept, int salary) {}
+
+    @Test
+    void writesGroupedHeaderRowAboveColumnHeaders() throws Exception {
+        Path out = tempDir.resolve("grouped.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<Person>create()
+                        .sheetName("People")
+                        .column("Name", Person::name)
+                        .column("Age", Person::age)
+                        .ofType(ColumnType.INTEGER)
+                        .column("Active", Person::active)
+                        .ofType(ColumnType.BOOLEAN)
+                        .columnGroups(List.of(new ColumnGroup("Stammdaten", 2), new ColumnGroup("Status", 1)))
+                        .data(DataProviders.ofIterable(List.of(new Person("Alice", 30, true)))))
+                .write(out);
+
+        // Group row (0), then the column headers (1), then data (2).
+        Grid g = XlsxTestReader.read(out);
+        assertEquals("Stammdaten", g.string(0, 0));
+        assertEquals("Status", g.string(0, 2));
+        assertEquals(List.of("Name", "Age", "Active"), g.strings(1), "column headers moved down one row");
+        assertEquals("Alice", g.string(2, 0));
+
+        // The 2-column group is a merged region across columns 0..1 in row 0.
+        try (Workbook wb = WorkbookFactory.create(Files.newInputStream(out))) {
+            Sheet sheet = wb.getSheetAt(0);
+            boolean merged =
+                    sheet.getMergedRegions().stream().anyMatch(r -> r.equals(new CellRangeAddress(0, 0, 0, 1)));
+            assertTrue(merged, "group 'Stammdaten' must be merged across columns 0..1");
+        }
+    }
+
+    @Test
+    void rejectsColumnGroupsNotCoveringAllColumns() {
+        Path out = tempDir.resolve("badgroups.xlsx");
+        WorkbookBuilder workbook = WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<Person>create()
+                        .column("Name", Person::name)
+                        .column("Age", Person::age)
+                        .ofType(ColumnType.INTEGER)
+                        .columnGroups(List.of(new ColumnGroup("Only one", 1))) // 1 of 2 columns
+                        .data(DataProviders.ofIterable(List.of(new Person("A", 1, true)))));
+
+        assertThrows(IllegalArgumentException.class, () -> workbook.write(out));
+    }
 
     @Test
     void writesHeaderAndColumns() throws Exception {
