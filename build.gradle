@@ -4,10 +4,13 @@ plugins {
     id 'jacoco'
     // Code-Formatierung mit palantir-java-format (Konvention: Java-Quellen liegen immer in diesem Format vor).
     id 'com.diffplug.spotless' version '6.25.0'
+    // Bibliotheks-Publishing: stellt das Jar als de.makno.xlsxbuilder:xlsxbuilder bereit
+    // (publishToMavenLocal / Nexus) fuer Konsumenten wie VaadinExcelExport und web-module-conversion.
+    id 'maven-publish'
 }
 
 group = 'de.makno.xlsxbuilder'
-version = '1.0.0'
+version = '1.0.0-SNAPSHOT'
 
 java {
     toolchain {
@@ -92,6 +95,15 @@ spotless {
 
 jacoco {
     toolVersion = '0.8.12'
+}
+
+// Bibliotheks-Publishing (das 'application'-Plugin erzeugt ein normales Jar, kein Classifier-Problem).
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
 }
 
 jacocoTestReport {
