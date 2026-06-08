@@ -21,6 +21,8 @@ external merge sort.
 - **Summary row** – pre-computed **or** as a real `=SUM(...)` formula.
 - **Title/footer rows** – optional header/footer texts merged across the table width, with
   `{placeholders}` (incl. `{date}`, `{rowCount}`, `{sum:Column}`).
+- **Grouped headers** – an optional merged header row above the column headers (multi-row / joined
+  headers) via `columnGroups(...)`.
 - **Automatic column widths** – content-based, so nothing shows up as `#####`.
 
 ## Requirements
@@ -87,6 +89,7 @@ WorkbookBuilder.create()
 | `sheetName(String)` | sheet name (forced unique; duplicates get a suffix) |
 | `header(String...)` | optional title row(s), each merged across the full width + centered |
 | `footer(String...)` | optional footer row(s) below data/summary, each merged across the full width |
+| `columnGroups(List<ColumnGroup>)` | optional grouped header row above the column headers; each `ColumnGroup(label, span)` is merged across its span (spans must cover all columns) |
 | `column(name, extractor)` | column; default type **text** |
 | `.ofType(ColumnType)` | type of the most recently defined column |
 | `.formatForType(String)` | Excel format code of the most recently defined column |
@@ -283,7 +286,7 @@ DataProvider<T> → projection to Row(Object[]) → [optional] external merge so
 | `XlsxBuilder<T>` | configuration of **one** sheet (delegates execution to `SheetRenderer`) |
 | `SheetRenderer` | projection/sort/parallel orchestration + writing a sheet |
 | `Column<T>` | name, type, format, extractor, optional converter |
-| `ColumnType` / `SortOrder` / `SortKey` | type/sort metadata |
+| `ColumnType` / `SortOrder` / `SortKey` / `ColumnGroup` | type/sort/header-group metadata |
 | `RowComparator` | compares projected rows (multi-level, null-safe) |
 | `ExternalMergeSort` | sorted runs on temp files + k-way merge |
 | `XlsxWriter` | writes a sheet via Apache POI SXSSF (streaming) |
