@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id 'application'
     id 'jacoco'
     // Code-Formatierung mit palantir-java-format (Konvention: Java-Quellen liegen immer in diesem Format vor).
     id 'com.diffplug.spotless' version '6.25.0'
@@ -37,6 +36,21 @@ repositories {
     mavenCentral()
 }
 
+// Demo/Benchmark liegen in einem eigenen Source-Set (src/demo/java) und sind damit NICHT Teil des
+// veröffentlichten Library-Jars/POMs. Das Source-Set baut gegen die Library + ihre Abhängigkeiten.
+sourceSets {
+    demo {
+        java { srcDir 'src/demo/java' }
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    demoImplementation.extendsFrom implementation // POI, log4j-api auf dem Demo-Classpath
+    demoRuntimeOnly.extendsFrom runtimeOnly // log4j-core auf der Demo-Runtime
+}
+
 dependencies {
     // Apache POI: .xlsx-Erzeugung. SXSSF (org.apache.poi.xssf.streaming) schreibt out-of-core.
     implementation 'org.apache.poi:poi-ooxml:5.4.0'
@@ -48,9 +62,9 @@ dependencies {
     // logging provider". Version passend zur log4j-api.
     runtimeOnly 'org.apache.logging.log4j:log4j-core:2.24.3'
 
-    // H2: eingebettete SQL-DB für den Performance-Benchmark (app). Reines JDBC via DriverManager,
-    // daher nur zur Laufzeit nötig.
-    runtimeOnly 'com.h2database:h2:2.3.232'
+    // H2: nur für Demo/Benchmark (demo-Source-Set), KEINE Library-Abhängigkeit. Reines JDBC via
+    // DriverManager, daher nur zur Laufzeit nötig.
+    demoRuntimeOnly 'com.h2database:h2:2.3.232'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.14.0'
     // log4j-core im Test: In-Memory-Appender zum Verifizieren der Performance-Log-Ausgaben.
@@ -60,8 +74,13 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.0'
 }
 
-application {
+// Demo-Lauf (ersetzt das frühere 'application'-Plugin): läuft gegen das demo-Source-Set.
+// Aufruf: ./gradlew run --args="1000000 employees.xlsx"
+tasks.register('run', JavaExec) {
+    group = 'application'
+    description = 'Runs the in-memory demo (creates employees.xlsx).'
     mainClass = 'de.makno.xlsxbuilder.app.XlsxBuilderDemo'
+    classpath = sourceSets.demo.runtimeClasspath
 }
 
 // SQL-Performance-Benchmark: befüllt eine eingebettete H2-DB und exportiert sie streamend nach .xlsx.
@@ -70,7 +89,7 @@ tasks.register('dbBenchmark', JavaExec) {
     group = 'benchmark'
     description = 'Befüllt H2 mit Testdaten und misst den streamenden .xlsx-Export.'
     mainClass = 'de.makno.xlsxbuilder.app.DbBenchmark'
-    classpath = sourceSets.main.runtimeClasspath
+    classpath = sourceSets.demo.runtimeClasspath
     jvmArgs = ['-Xmx256m'] // zeigt Out-of-core trotz 1 Mio. Zeilen
 }
 
@@ -82,6 +101,9 @@ test {
         events 'passed', 'skipped', 'failed'
     }
 }
+
+// Demo-Code in die Verifikation einhängen (kompiliert bei 'check'/'build', fängt Demo-Brüche).
+tasks.named('check') { dependsOn 'compileDemoJava' }
 
 // palantir-java-format: 'gradlew spotlessApply' formatiert, 'gradlew spotlessCheck' prüft (hängt an 'check').
 spotless {
@@ -112,11 +134,6 @@ jacocoTestReport {
         html.required = true
         csv.required  = true
     }
-    // Reine Demo-/Glue-Klassen (Package de.makno.xlsxbuilder.app) werden nicht gemessen;
-    // gemessen wird der wiederverwendbare Bibliotheks-Code (de.makno.xlsxbuilder.component).
-    classDirectories.setFrom(files(classDirectories.files.collect {
-        fileTree(dir: it, exclude: 'de/makno/xlsxbuilder/app/**')
-    }))
 }
 
 // Javadoc-JAR für Maven Central Publishing

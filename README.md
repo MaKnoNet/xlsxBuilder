@@ -209,13 +209,14 @@ sort + SXSSF together. It runs with `-Xmx256m` (set in the task) to demonstrate 
 
 A second run skips the seeding (idempotent). H2 is downloaded once on the first build.
 
-Demo with parameters and a limited heap (demonstrates out-of-core):
+Demo with parameters (the demo lives in a separate `demo` source set, so it is not part of the
+published library jar):
 
 ```bash
-./gradlew installDist
-java -Xmx128m -cp "build/install/xlsxbuilder/lib/*" de.makno.xlsxbuilder.app.XlsxBuilderDemo 1000000 employees.xlsx
-#        ^ heap limit                                                       ^ rows    ^ output file
+./gradlew run --args="1000000 employees.xlsx"   # rows, output file
 ```
+
+The `dbBenchmark` task runs with a limited heap (`-Xmx256m`) to demonstrate out-of-core operation.
 
 ### API documentation
 
