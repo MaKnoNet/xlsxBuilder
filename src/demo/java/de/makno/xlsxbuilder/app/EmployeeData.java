@@ -1,5 +1,9 @@
 package de.makno.xlsxbuilder.app;
 
+import de.makno.xlsxbuilder.ColumnType;
+import de.makno.xlsxbuilder.DataProvider;
+import de.makno.xlsxbuilder.SortOrder;
+import de.makno.xlsxbuilder.XlsxBuilder;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.ResultSet;
@@ -9,11 +13,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.NoSuchElementException;
 import java.util.Random;
-
-import de.makno.xlsxbuilder.ColumnType;
-import de.makno.xlsxbuilder.DataProvider;
-import de.makno.xlsxbuilder.SortOrder;
-import de.makno.xlsxbuilder.XlsxBuilder;
 
 /**
  * Shared helpers around {@link Employee}: a deterministic lazy generator, the unified sheet

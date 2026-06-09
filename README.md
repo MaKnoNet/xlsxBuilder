@@ -34,7 +34,7 @@ external merge sort.
 ## Quick start
 
 ```java
-import de.makno.xlsxbuilder.builder.*;
+import de.makno.xlsxbuilder.*;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -245,13 +245,13 @@ More sheets/rows cost mainly time and disk space (temp files), barely more heap.
 ### Performance logging (for developers)
 
 The builder writes measurement points at **DEBUG** via the Log4j2 API (logger names under
-`de.makno.xlsxbuilder.builder`): per sheet the row count + sort/write phase, the external-merge-sort
+`de.makno.xlsxbuilder`): per sheet the row count + sort/write phase, the external-merge-sort
 metrics (rows, runs, pre-merge passes, time, temp directory) and the workbook's total time. In normal
 operation (level ≥ INFO) there is **no output and no notable overhead**. To enable it, set the
 application's log level for this package to `DEBUG`, e.g. in `log4j2.xml`:
 
 ```xml
-<Logger name="de.makno.xlsxbuilder.builder" level="debug"/>
+<Logger name="de.makno.xlsxbuilder" level="debug"/>
 ```
 
 ## Concurrency / server operation

@@ -1012,7 +1012,7 @@ class XlsxBuilderTest {
             }
         };
         appender.start();
-        String loggerName = "de.makno.xlsxbuilder.builder";
+        String loggerName = "de.makno.xlsxbuilder";
         org.apache.logging.log4j.core.Logger logger =
                 (org.apache.logging.log4j.core.Logger) LogManager.getLogger(loggerName);
         Level previous = logger.getLevel();
@@ -1469,7 +1469,7 @@ class XlsxBuilderTest {
             }
         };
         appender.start();
-        String loggerName = "de.makno.xlsxbuilder.builder";
+        String loggerName = "de.makno.xlsxbuilder";
         org.apache.logging.log4j.core.Logger logger =
                 (org.apache.logging.log4j.core.Logger) LogManager.getLogger(loggerName);
         Level previous = logger.getLevel();

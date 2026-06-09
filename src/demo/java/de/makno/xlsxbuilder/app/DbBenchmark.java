@@ -1,5 +1,8 @@
 package de.makno.xlsxbuilder.app;
 
+import de.makno.xlsxbuilder.DataProvider;
+import de.makno.xlsxbuilder.DataProviders;
+import de.makno.xlsxbuilder.WorkbookBuilder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,10 +14,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-
-import de.makno.xlsxbuilder.DataProvider;
-import de.makno.xlsxbuilder.DataProviders;
-import de.makno.xlsxbuilder.WorkbookBuilder;
 
 /**
  * Performance benchmark with a real SQL data source: fills an embedded H2 database once with employee
