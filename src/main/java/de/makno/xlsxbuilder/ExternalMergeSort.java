@@ -1,4 +1,4 @@
-package de.makno.xlsxbuilder.builder;
+package de.makno.xlsxbuilder;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

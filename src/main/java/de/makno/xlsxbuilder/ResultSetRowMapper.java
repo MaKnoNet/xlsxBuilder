@@ -1,4 +1,4 @@
-package de.makno.xlsxbuilder.builder;
+package de.makno.xlsxbuilder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

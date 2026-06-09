@@ -1,4 +1,4 @@
-package de.makno.xlsxbuilder.builder;
+package de.makno.xlsxbuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import de.makno.xlsxbuilder.builder.XlsxTestReader.Grid;
+import de.makno.xlsxbuilder.XlsxTestReader.Grid;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;

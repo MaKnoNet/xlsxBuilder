@@ -1,4 +1,4 @@
-package de.makno.xlsxbuilder.builder;
+package de.makno.xlsxbuilder;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

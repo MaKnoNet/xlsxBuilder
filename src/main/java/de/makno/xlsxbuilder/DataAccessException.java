@@ -1,4 +1,4 @@
-package de.makno.xlsxbuilder.builder;
+package de.makno.xlsxbuilder;
 
 /**
  * Unchecked wrapper for a {@link java.sql.SQLException} occurring inside the {@link DataProvider}

@@ -1,4 +1,4 @@
-package de.makno.xlsxbuilder.builder;
+package de.makno.xlsxbuilder;
 
 /**
  * Logical type of a column. Controls how the projected value is written as an Excel cell

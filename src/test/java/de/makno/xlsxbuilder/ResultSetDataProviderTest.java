@@ -1,9 +1,9 @@
-package de.makno.xlsxbuilder.builder;
+package de.makno.xlsxbuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import de.makno.xlsxbuilder.builder.XlsxTestReader.Grid;
+import de.makno.xlsxbuilder.XlsxTestReader.Grid;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
