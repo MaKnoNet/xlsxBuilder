@@ -191,7 +191,7 @@ the lambda parameter type explicitly.
 ```bash
 ./gradlew build          # compiles + runs all tests
 ./gradlew test           # tests only (JUnit 5)
-./gradlew run            # demo (creates employees.xlsx)
+./gradlew run            # demo (creates build/employees.xlsx)
 ./gradlew dbBenchmark    # SQL benchmark: fill H2 with 1M rows + export streamed
 ./gradlew javadoc        # generates the API documentation
 ```
@@ -213,7 +213,7 @@ Demo with parameters (the demo lives in a separate `demo` source set, so it is n
 published library jar):
 
 ```bash
-./gradlew run --args="1000000 employees.xlsx"   # rows, output file
+./gradlew run --args="1000000 build/employees.xlsx"   # rows, output file
 ```
 
 The `dbBenchmark` task runs with a limited heap (`-Xmx256m`) to demonstrate out-of-core operation.

@@ -12,6 +12,7 @@ public final class DataProviders {
     private DataProviders() {}
 
     public static <T> DataProvider<T> ofIterator(Iterator<? extends T> iterator) {
+        java.util.Objects.requireNonNull(iterator, "iterator");
         return new DataProvider<T>() {
             @Override
             public boolean hasNext() {
@@ -29,11 +30,13 @@ public final class DataProviders {
     }
 
     public static <T> DataProvider<T> ofIterable(Iterable<? extends T> iterable) {
+        java.util.Objects.requireNonNull(iterable, "iterable");
         return ofIterator(iterable.iterator());
     }
 
     /** Adapts a {@link Stream}; the stream is closed on {@link DataProvider#close()}. */
     public static <T> DataProvider<T> ofStream(Stream<? extends T> stream) {
+        java.util.Objects.requireNonNull(stream, "stream");
         Iterator<? extends T> iterator = stream.iterator();
         return new DataProvider<T>() {
             @Override

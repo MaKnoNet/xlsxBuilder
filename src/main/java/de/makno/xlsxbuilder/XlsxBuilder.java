@@ -198,7 +198,13 @@ public final class XlsxBuilder<T> {
         return columns.get(columns.size() - 1);
     }
 
-    /** Optional sort stage. Calling repeatedly yields a multi-level sort. */
+    /**
+     * Optional sort stage. Calling repeatedly yields a multi-level sort.
+     *
+     * <p><b>Note:</b> with active sorting, rows may be spilled to temp files (external merge sort).
+     * All cell values must therefore be {@link java.io.Serializable} – the common types (String,
+     * numbers, {@code java.time}, …) are; a custom type in a column must implement it itself.
+     */
     public XlsxBuilder<T> sortBy(String columnName, SortOrder order) {
         sortKeys.add(new SortKey(columnName, order));
         return this;
@@ -331,6 +337,7 @@ public final class XlsxBuilder<T> {
 
     /** Adds several placeholders at once (see {@link #placeholder(String, String)}). */
     public XlsxBuilder<T> placeholders(Map<String, String> values) {
+        Objects.requireNonNull(values, "values");
         values.forEach(this::placeholder);
         return this;
     }
@@ -400,6 +407,10 @@ public final class XlsxBuilder<T> {
                         "Sort column '" + sortKey.columnName() + "' is of type " + type + " and cannot be sorted");
             }
         }
+        // Validate the remaining configuration (sum columns, groups) BEFORE marking the builder as
+        // consumed: pure configuration errors must not masquerade as "already written" on a retry.
+        SummarySpec summary = buildSummarySpec();
+        SheetWriteOptions layout = buildLayout();
         // From here the (forward-only, single-use) data source is consumed -> block reuse.
         consumed = true;
         RenderJob<T> job = new RenderJob<>(
@@ -408,22 +419,22 @@ public final class XlsxBuilder<T> {
                 filter,
                 dataProvider,
                 new SortSpec(List.copyOf(sortKeys), sortChunkSize, sortTempDir),
-                buildSummarySpec(),
-                buildLayout(),
+                summary,
+                layout,
                 parallel);
         SheetRenderer.render(wb, job);
     }
 
     /** Builds the layout options incl. the statically resolvable placeholders ({@code {date}}/{@code {datetime}}). */
     private SheetWriteOptions buildLayout() {
-        List<String> header = headerLines.isEmpty() ? null : headerLines;
+        List<String> header = headerLines.isEmpty() ? null : List.copyOf(headerLines);
         Map<String, String> staticPlaceholders = new LinkedHashMap<>(placeholders);
         staticPlaceholders.putIfAbsent("date", LocalDate.now().toString());
         staticPlaceholders.putIfAbsent(
                 "datetime", LocalDateTime.now().withNano(0).toString());
         return new SheetWriteOptions(
                 header,
-                footerLines,
+                List.copyOf(footerLines),
                 validatedColumnGroups(),
                 staticPlaceholders,
                 placeholderResolver,

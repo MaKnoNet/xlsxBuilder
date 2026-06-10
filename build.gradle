@@ -79,10 +79,10 @@ dependencies {
 }
 
 // Demo-Lauf (ersetzt das frühere 'application'-Plugin): läuft gegen das demo-Source-Set.
-// Aufruf: ./gradlew run --args="1000000 employees.xlsx"
+// Aufruf: ./gradlew run --args="1000000 build/employees.xlsx"
 tasks.register('run', JavaExec) {
     group = 'application'
-    description = 'Runs the in-memory demo (creates employees.xlsx).'
+    description = 'Runs the in-memory demo (creates build/employees.xlsx).'
     mainClass = 'de.makno.xlsxbuilder.app.XlsxBuilderDemo'
     classpath = sourceSets.demo.runtimeClasspath
 }

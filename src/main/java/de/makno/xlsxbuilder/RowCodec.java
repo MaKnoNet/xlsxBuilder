@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
@@ -143,6 +144,11 @@ final class RowCodec {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try (ObjectOutputStream oos = new ObjectOutputStream(buffer)) {
             oos.writeObject(v);
+        } catch (NotSerializableException e) {
+            throw new IOException(
+                    "Cell value of type " + v.getClass().getName() + " is not Serializable - with sortBy(...)"
+                            + " all cell values must be Serializable, because sorted runs are spilled to temp files",
+                    e);
         }
         byte[] bytes = buffer.toByteArray();
         out.writeInt(bytes.length);

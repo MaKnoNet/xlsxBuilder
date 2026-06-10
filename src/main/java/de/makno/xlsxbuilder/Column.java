@@ -5,9 +5,10 @@ import java.util.function.Function;
 
 /**
  * A table column: header, logical type and an extractor that produces the cell value from a record
- * {@code T}.
+ * {@code T}. Package-private (not part of the public API) – columns are defined exclusively through
+ * the fluent {@link XlsxBuilder#column} API.
  */
-public final class Column<T> {
+final class Column<T> {
 
     private final String name;
     private ColumnType type;
@@ -16,7 +17,7 @@ public final class Column<T> {
     private final Function<? super T, ?> extractor;
     private Function<Object, Object> converter;
 
-    public Column(String name, ColumnType type, Function<? super T, ?> extractor) {
+    Column(String name, ColumnType type, Function<? super T, ?> extractor) {
         this(name, type, null, extractor);
     }
 
@@ -24,28 +25,28 @@ public final class Column<T> {
      * @param format optional Excel format code (e.g. {@code "#,##0.00"}, {@code "dd.mm.yyyy"},
      *               {@code "hh:mm:ss"}); {@code null} = the type's default format.
      */
-    public Column(String name, ColumnType type, String format, Function<? super T, ?> extractor) {
+    Column(String name, ColumnType type, String format, Function<? super T, ?> extractor) {
         this.name = Objects.requireNonNull(name, "name");
         this.type = Objects.requireNonNull(type, "type");
         this.format = format;
         this.extractor = Objects.requireNonNull(extractor, "extractor");
     }
 
-    public String name() {
+    String name() {
         return name;
     }
 
-    public ColumnType type() {
+    ColumnType type() {
         return type;
     }
 
     /** Optional Excel format code, or {@code null}. */
-    public String format() {
+    String format() {
         return format;
     }
 
     /** Column-specific placeholder for {@code null} values, or {@code null} (= sheet-wide default). */
-    public String nullText() {
+    String nullText() {
         return nullText;
     }
 
@@ -74,7 +75,7 @@ public final class Column<T> {
      * raw value (unless {@code null}) is transformed into the representation matching the target type –
      * e.g. an {@code int} into a {@link java.time.LocalTime}.
      */
-    public Object extract(T record) {
+    Object extract(T record) {
         Object value = extractor.apply(record);
         if (value == null || converter == null) {
             return value;

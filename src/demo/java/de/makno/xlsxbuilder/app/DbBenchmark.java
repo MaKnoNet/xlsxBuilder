@@ -24,6 +24,11 @@ import java.sql.Timestamp;
  * <p>Usage: {@code DbBenchmark [rowCount] [outputFile]} (default: 1_000_000 /
  * build/employees-db.xlsx). Recommended with a limited heap, e.g. {@code -Xmx256m}, to demonstrate
  * out-of-core operation.
+ *
+ * <p><b>Working directory:</b> the H2 database ({@code build/benchdb}) and the default output file are
+ * resolved relative to the <em>working directory</em>. Via {@code gradlew dbBenchmark} that is the
+ * project directory (correct); for IDE run configurations, set the working directory to the project
+ * directory as well – otherwise the database lands somewhere else (e.g. in the Eclipse workspace root).
  */
 public final class DbBenchmark {
 

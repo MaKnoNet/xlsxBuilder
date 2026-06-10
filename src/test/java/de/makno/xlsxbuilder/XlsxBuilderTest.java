@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.makno.xlsxbuilder.XlsxTestReader.Grid;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1504,5 +1505,81 @@ class XlsxBuilderTest {
             appender.stop();
             Configurator.setLevel(loggerName, previous);
         }
+    }
+
+    // ========== Robustness: argument checks, overflow, serialization ==========
+
+    @Test
+    void rejectsNullArgumentsInAdaptersAndPlaceholders() {
+        assertThrows(NullPointerException.class, () -> DataProviders.ofIterable(null));
+        assertThrows(NullPointerException.class, () -> DataProviders.ofIterator(null));
+        assertThrows(NullPointerException.class, () -> DataProviders.ofStream(null));
+        assertThrows(
+                NullPointerException.class, () -> XlsxBuilder.<Person>create().placeholders(null));
+    }
+
+    @Test
+    void summaryOverflowFailsExplicitly() {
+        // two Long.MAX_VALUE values: the BigDecimal accumulator holds the exact sum, but it no longer
+        // fits into the LONG cell -> longValueExact must fail honestly instead of truncating silently.
+        record Big(long v) {}
+        List<Big> data = List.of(new Big(Long.MAX_VALUE), new Big(Long.MAX_VALUE));
+
+        assertThrows(ArithmeticException.class, () -> WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<Big>create()
+                        .column("V", Big::v)
+                        .ofType(ColumnType.LONG)
+                        .sumColumn("V")
+                        .data(DataProviders.ofIterable(data)))
+                .write(tempDir.resolve("overflow.xlsx")));
+    }
+
+    @Test
+    void sortingNonSerializableValueFailsWithHelpfulMessage() {
+        // Comparable (sortable) but not Serializable: spilling the sorted run must fail with a message
+        // naming the value type and the Serializable requirement - not with a bare
+        // NotSerializableException from deep inside the codec.
+        final class Opaque implements Comparable<Opaque> {
+            private final int v;
+
+            Opaque(int v) {
+                this.v = v;
+            }
+
+            @Override
+            public int compareTo(Opaque o) {
+                return Integer.compare(v, o.v);
+            }
+        }
+        List<Opaque> data = List.of(new Opaque(2), new Opaque(1));
+
+        IOException e = assertThrows(IOException.class, () -> WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<Opaque>create()
+                        .column("V", o -> o)
+                        .sortBy("V", SortOrder.ASC)
+                        .data(DataProviders.ofIterable(data)))
+                .write(tempDir.resolve("notSerializable.xlsx")));
+        assertTrue(e.getMessage().contains("Opaque"), "message must name the value type: " + e.getMessage());
+        assertTrue(e.getMessage().contains("Serializable"), "message must explain the requirement: " + e.getMessage());
+    }
+
+    @Test
+    void validationFailureDoesNotMarkBuilderConsumed() {
+        // A pure configuration error (groups do not cover all columns) must not flip the sheet into the
+        // "already written" state: a retry reports the actual configuration error again.
+        XlsxBuilder<Person> sheet = XlsxBuilder.<Person>create()
+                .column("Name", Person::name)
+                .column("Age", Person::age)
+                .ofType(ColumnType.INTEGER)
+                .columnGroups(List.of(new ColumnGroup("Only one", 1))) // 1 of 2 columns
+                .data(DataProviders.ofIterable(List.of(new Person("A", 1, true))));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> WorkbookBuilder.create().sheet(sheet).write(tempDir.resolve("invalid1.xlsx")));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> WorkbookBuilder.create().sheet(sheet).write(tempDir.resolve("invalid2.xlsx")),
+                "retry must report the configuration error again, not 'already written'");
     }
 }

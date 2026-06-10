@@ -312,7 +312,8 @@ final class XlsxWriter {
     private static String sumAsText(ColumnType type, BigDecimal sum) {
         return switch (type) {
             case DOUBLE -> Double.toString(sum.doubleValue());
-            case INTEGER, LONG -> Long.toString(sum.longValue());
+                // longValueExact: an overflowing sum fails honestly instead of being truncated silently.
+            case INTEGER, LONG -> Long.toString(sum.longValueExact());
             default -> sum.toPlainString();
         };
     }
@@ -439,15 +440,16 @@ final class XlsxWriter {
     }
 
     /**
-     * Returns the default Excel format code for date and time types. Note: Excel format codes use
-     * {@code mm} for month (not {@code MM}) and {@code hh} for 12-hour format (or {@code HH} for 24-hour
-     * format).
+     * Returns the default Excel format code for date and time types. Note: these are Excel format codes,
+     * not Java patterns - {@code mm} means month in a date context, and hours are 24-hour by default;
+     * a 12-hour display only results from an {@code AM/PM} marker in the format (Excel does not
+     * distinguish {@code hh} from {@code HH}).
      */
     private static String defaultFormat(ColumnType type) {
         return switch (type) {
             case DATE -> "yyyy-mm-dd"; // ISO 8601 default format for date display
-            case DATETIME -> "yyyy-mm-dd hh:mm"; // date + time (12h format)
-            case TIME -> "hh:mm:ss"; // time (12h format with seconds)
+            case DATETIME -> "yyyy-mm-dd hh:mm"; // date + time (24h)
+            case TIME -> "hh:mm:ss"; // time of day with seconds (24h)
             default -> null; // numbers without an explicit format: Excel default ("General")
         };
     }
@@ -543,7 +545,9 @@ final class XlsxWriter {
     private static Object summaryValue(ColumnType type, BigDecimal sum) {
         return switch (type) {
             case DOUBLE -> sum.doubleValue();
-            case INTEGER, LONG -> sum.longValue();
+                // longValueExact: sums of INTEGER/LONG columns are always integral, so this only fails
+                // on a true long overflow - honestly, instead of truncating silently.
+            case INTEGER, LONG -> sum.longValueExact();
             default -> sum; // DECIMAL (and others) as BigDecimal
         };
     }

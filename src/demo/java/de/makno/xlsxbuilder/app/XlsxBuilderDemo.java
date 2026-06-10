@@ -16,7 +16,9 @@ import java.util.List;
  * {@link ColumnType}. The records are generated <em>lazily</em> via a {@link DataProvider}
  * ({@link EmployeeData#generator(long)}) – the full data set is never held in memory.
  *
- * <p>Usage: {@code XlsxBuilderDemo [rowCount] [outputFile]} (default: 1_000_000 / employees.xlsx).
+ * <p>Usage: {@code XlsxBuilderDemo [rowCount] [outputFile]} (default: 1_000_000 /
+ * build/employees.xlsx – relative to the working directory, which is the project directory when run
+ * via {@code gradlew run}).
  */
 public final class XlsxBuilderDemo {
 
@@ -27,7 +29,10 @@ public final class XlsxBuilderDemo {
 
     public static void main(String[] args) throws IOException {
         long rowCount = args.length > 0 ? Long.parseLong(args[0]) : 1_000_000L;
-        Path out = Path.of(args.length > 1 ? args[1] : "employees.xlsx");
+        Path out = Path.of(args.length > 1 ? args[1] : "build/employees.xlsx");
+        if (out.getParent() != null) {
+            Files.createDirectories(out.getParent());
+        }
 
         Runtime runtime = Runtime.getRuntime();
         long start = System.nanoTime();
