@@ -1507,6 +1507,57 @@ class XlsxBuilderTest {
         }
     }
 
+    // ========== Atomic write(Path) ==========
+
+    /** Data source whose read fails – simulates e.g. a dropped DB connection mid-export. */
+    private static DataProvider<String> failingProvider() {
+        return new DataProvider<>() {
+            @Override
+            public boolean hasNext() {
+                return true;
+            }
+
+            @Override
+            public String next() {
+                throw new IllegalStateException("source broke mid-read");
+            }
+        };
+    }
+
+    @Test
+    void failedWriteLeavesExistingTargetIntact() throws Exception {
+        Path out = tempDir.resolve("existing.xlsx");
+        Files.writeString(out, "ORIGINAL CONTENT");
+
+        assertThrows(IllegalStateException.class, () -> WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<String>create().column("V", s -> s).data(failingProvider()))
+                .write(out));
+
+        assertEquals("ORIGINAL CONTENT", Files.readString(out), "a failed write must not touch the target file");
+        assertNoPartFiles();
+    }
+
+    @Test
+    void failedWriteCreatesNoTargetFile() throws Exception {
+        Path out = tempDir.resolve("never-written.xlsx");
+
+        assertThrows(IllegalStateException.class, () -> WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<String>create().column("V", s -> s).data(failingProvider()))
+                .write(out));
+
+        assertFalse(Files.exists(out), "no partial file may appear at the target path");
+        assertNoPartFiles();
+    }
+
+    private void assertNoPartFiles() throws IOException {
+        try (Stream<Path> entries = Files.list(tempDir)) {
+            List<String> parts = entries.map(p -> p.getFileName().toString())
+                    .filter(n -> n.endsWith(".part"))
+                    .toList();
+            assertTrue(parts.isEmpty(), "temp files must be cleaned up: " + parts);
+        }
+    }
+
     // ========== Robustness: argument checks, overflow, serialization ==========
 
     @Test

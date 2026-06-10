@@ -2,8 +2,10 @@ package de.makno.xlsxbuilder;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -109,10 +111,43 @@ public final class WorkbookBuilder {
         return this;
     }
 
+    /**
+     * Writes the workbook to {@code out} – atomically: the file is first written as a temp file
+     * ({@code *.part}) in the target directory and moved onto the target path only after a successful
+     * write. If an error occurs while writing (data source, validation, I/O), the target path stays
+     * untouched – a previously existing file keeps its old content, and no partial {@code .xlsx} is
+     * left behind; the temp file is removed.
+     */
     public void write(Path out) throws IOException {
         Objects.requireNonNull(out, "out");
-        try (OutputStream os = Files.newOutputStream(out)) {
-            write(os);
+        Path dir = out.toAbsolutePath().getParent();
+        Path tmp = Files.createTempFile(dir, out.getFileName().toString() + ".", ".part");
+        try {
+            try (OutputStream os = Files.newOutputStream(tmp)) {
+                write(os);
+            }
+            moveInPlace(tmp, out);
+        } catch (IOException | RuntimeException | Error e) {
+            deleteQuietly(tmp);
+            throw e;
+        }
+    }
+
+    /** Moves the finished temp file onto the target path; atomically where the file system supports it. */
+    private static void moveInPlace(Path tmp, Path out) throws IOException {
+        try {
+            Files.move(tmp, out, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(tmp, out, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    /** Best-effort cleanup of the temp file; never masks the primary exception already in flight. */
+    private static void deleteQuietly(Path tmp) {
+        try {
+            Files.deleteIfExists(tmp);
+        } catch (IOException ignored) {
+            // best effort
         }
     }
 
