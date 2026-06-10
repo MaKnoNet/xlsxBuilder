@@ -15,6 +15,10 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+    // Sources- und Javadoc-Jar gehören zur Publikation (components.java): Konsumenten bekommen
+    // Quellen/Doku aus dem (lokalen) Maven-Repo; für Maven Central sind beide Pflicht.
+    withSourcesJar()
+    withJavadocJar()
 }
 
 // UTF-8 für die Kompilierung erzwingen: die Quellen enthalten Umlaute (ä/ö/ü) in Kommentaren und
@@ -100,6 +104,8 @@ test {
     testLogging {
         events 'passed', 'skipped', 'failed'
     }
+    // Konvention: Coverage-Report wird beim Testlauf automatisch miterzeugt (test -> jacocoTestReport).
+    finalizedBy jacocoTestReport
 }
 
 // Demo-Code in die Verifikation einhängen (kompiliert bei 'check'/'build', fängt Demo-Brüche).
@@ -134,19 +140,6 @@ jacocoTestReport {
         html.required = true
         csv.required  = true
     }
-}
-
-// Javadoc-JAR für Maven Central Publishing
-tasks.register('javadocJar', Jar) {
-    from javadoc
-    archiveClassifier = 'javadoc'
-    dependsOn javadoc
-}
-
-// Sources-JAR für Maven Central Publishing
-tasks.register('sourcesJar', Jar) {
-    from sourceSets.main.allSource
-    archiveClassifier = 'sources'
 }
 
 // Eclipse-Integration: Die .settings/-Dateien liegen direkt im Projekt-Repository (versioniert).
