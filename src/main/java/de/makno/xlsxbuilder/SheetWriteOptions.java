@@ -15,6 +15,9 @@ import java.util.function.Function;
  *                            consulted only when {@code placeholders} does not know the key
  * @param showColumnHeaders   write the column-header row?
  * @param defaultNullText     sheet-wide placeholder for {@code null} values (or {@code null})
+ * @param splitOnRowLimit     {@code true} = continue on follow-up sheets when the row limit is
+ *                            reached; {@code false} = throw a {@link RowLimitExceededException}
+ * @param maxRowsPerSheet     maximum number of rows per sheet (Excel: 1,048,576; lowered only by tests)
  */
 record SheetWriteOptions(
         List<String> headerLines,
@@ -23,4 +26,6 @@ record SheetWriteOptions(
         Map<String, String> placeholders,
         Function<String, String> placeholderResolver,
         boolean showColumnHeaders,
-        String defaultNullText) {}
+        String defaultNullText,
+        boolean splitOnRowLimit,
+        int maxRowsPerSheet) {}

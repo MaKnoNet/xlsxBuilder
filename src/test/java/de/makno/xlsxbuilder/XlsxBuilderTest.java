@@ -1633,4 +1633,142 @@ class XlsxBuilderTest {
                 () -> WorkbookBuilder.create().sheet(sheet).write(tempDir.resolve("invalid2.xlsx")),
                 "retry must report the configuration error again, not 'already written'");
     }
+
+    // ========== Excel row limit / sheet split ==========
+
+    @Test
+    void rowLimitThrowsByDefault() {
+        // seam limit 10 with a header row -> at most 9 data rows fit; 15 rows exceed that.
+        List<Integer> data = new ArrayList<>();
+        for (int i = 0; i < 15; i++) {
+            data.add(i);
+        }
+
+        RowLimitExceededException e = assertThrows(RowLimitExceededException.class, () -> WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<Integer>create()
+                        .sheetName("Big")
+                        .column("n", i -> i)
+                        .ofType(ColumnType.INTEGER)
+                        .maxRowsPerSheet(10)
+                        .data(DataProviders.ofIterable(data)))
+                .write(tempDir.resolve("limit.xlsx")));
+        assertTrue(e.getMessage().contains("Big"), "message must name the sheet: " + e.getMessage());
+        assertTrue(e.getMessage().contains("splitOnRowLimit"), "message must point to the switch: " + e.getMessage());
+    }
+
+    @Test
+    void rowLimitSplitsIntoMultipleSheets() throws Exception {
+        // seam limit 10 with title + group + column headers (3 prelude rows) -> 7 data rows per part
+        // sheet; 18 values -> 3 part sheets (7 + 7 + 4) with the prelude repeated on each.
+        List<Integer> data = new ArrayList<>();
+        for (int i = 0; i < 18; i++) {
+            data.add(i);
+        }
+        Path out = tempDir.resolve("split.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<Integer>create()
+                        .sheetName("S")
+                        .header("T")
+                        .columnGroups(List.of(new ColumnGroup("G", 1)))
+                        .column("n", i -> i)
+                        .ofType(ColumnType.INTEGER)
+                        .maxRowsPerSheet(10)
+                        .splitOnRowLimit(true)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        assertEquals(List.of("S", "S (2)", "S (3)"), XlsxTestReader.sheetNames(out));
+        assertEquals(10, XlsxTestReader.read(out, 0).rowCount(), "first part sheet is filled to the limit");
+        List<Long> values = new ArrayList<>();
+        for (int s = 0; s < 3; s++) {
+            Grid g = XlsxTestReader.read(out, s);
+            assertEquals("T", g.string(0, 0), "title repeated on part sheet " + s);
+            assertEquals("G", g.string(1, 0), "group header repeated on part sheet " + s);
+            assertEquals(List.of("n"), g.strings(2), "column headers repeated on part sheet " + s);
+            assertTrue(g.columnWidth(0) >= 3000, "column width applied on part sheet " + s);
+            for (int r = 3; r < g.rowCount(); r++) {
+                values.add(g.number(r, 0));
+            }
+        }
+        List<Long> expected = new ArrayList<>();
+        for (long i = 0; i < 18; i++) {
+            expected.add(i);
+        }
+        assertEquals(expected, values, "data must continue seamlessly across the part sheets");
+    }
+
+    @Test
+    void splitWritesSummaryAndFooterOnlyOnLastSheet() throws Exception {
+        // seam limit 8: 1 header row + 2 reserved trailer rows (summary + footer) -> 5 data rows per
+        // part sheet; 12 values -> 3 part sheets (5 + 5 + 2); the totals must cover ALL rows.
+        record Item(String name, int wert) {}
+        List<Item> data = new ArrayList<>();
+        int expectedSum = 0;
+        for (int i = 1; i <= 12; i++) {
+            data.add(new Item("I" + i, i));
+            expectedSum += i; // 78
+        }
+        Path out = tempDir.resolve("splitSummary.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<Item>create()
+                        .sheetName("Part")
+                        .column("Name", Item::name)
+                        .column("Value", Item::wert)
+                        .ofType(ColumnType.INTEGER)
+                        .sumColumn("Value")
+                        .summaryLabel("Name", "Total")
+                        .footer("Rows: {rowCount}, Sum: {sum:Value}")
+                        .maxRowsPerSheet(8)
+                        .splitOnRowLimit(true)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        assertEquals(3, XlsxTestReader.sheetNames(out).size());
+        Grid first = XlsxTestReader.read(out, 0);
+        assertEquals(6, first.rowCount(), "first part sheet: header + 5 data rows, no summary/footer");
+        Grid last = XlsxTestReader.read(out, 2);
+        // header + 2 data rows + summary + footer
+        assertEquals(5, last.rowCount());
+        assertEquals("Total", last.string(3, 0));
+        assertEquals(expectedSum, last.number(3, 1), "summary must cover all part sheets");
+        assertEquals("Rows: 12, Sum: 78", last.string(4, 0), "footer totals across all part sheets");
+    }
+
+    @Test
+    void splitSummaryFormulaSpansSheets() throws Exception {
+        // seam limit 7: 1 header row + 1 reserved summary row -> 5 data rows per part sheet;
+        // 8 values -> 2 part sheets (5 + 3). The formula must reference both sheets' data ranges.
+        record Item(String name, int wert) {}
+        List<Item> data = new ArrayList<>();
+        for (int i = 1; i <= 8; i++) {
+            data.add(new Item("I" + i, i)); // sum 36
+        }
+        Path out = tempDir.resolve("splitFormula.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<Item>create()
+                        .sheetName("Part")
+                        .column("Name", Item::name)
+                        .column("Value", Item::wert)
+                        .ofType(ColumnType.INTEGER)
+                        .sumColumn("Value")
+                        .summaryAsFormula(true)
+                        .maxRowsPerSheet(7)
+                        .splitOnRowLimit(true)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        Grid last = XlsxTestReader.read(out, 1);
+        // data on "Part" = Excel rows 2..6, on "Part (2)" = Excel rows 2..4; summary at row index 4.
+        assertEquals("SUM(Part!B2:B6,'Part (2)'!B2:B4)", last.formula(4, 1));
+
+        // the cross-sheet formula must actually evaluate to the total across both sheets.
+        try (Workbook wb = WorkbookFactory.create(Files.newInputStream(out))) {
+            var evaluator = wb.getCreationHelper().createFormulaEvaluator();
+            var cell = wb.getSheetAt(1).getRow(4).getCell(1);
+            assertEquals(36.0, evaluator.evaluate(cell).getNumberValue(), 0.0001);
+        }
+    }
 }

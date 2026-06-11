@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 /**
@@ -34,6 +35,8 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  *       ({@link #footer}) – each with {@code {placeholders}} ({@link #placeholder});</li>
  *   <li>null-value placeholders ({@link #defaultNullText}/{@link #nullText});</li>
  *   <li>output as {@code .xlsx} (via the {@link WorkbookBuilder});</li>
+ *   <li>row-limit handling: exception (default) or automatic sheet split
+ *       ({@link #splitOnRowLimit(boolean)});</li>
  *   <li>optional pipeline parallelism ({@link #parallel(boolean)}).</li>
  * </ul>
  *
@@ -83,6 +86,8 @@ public final class XlsxBuilder<T> {
     private Predicate<? super T> filter; // null = no filtering (all objects)
     private String defaultNullText; // sheet-wide placeholder for null; null = empty cell
     private boolean parallel; // pipeline parallelism (producer/consumer); off by default
+    private boolean splitOnRowLimit; // false = RowLimitExceededException at the row limit
+    private int maxRowsPerSheet = SpreadsheetVersion.EXCEL2007.getMaxRows(); // lowered only by tests
     private boolean consumed; // single-use: not reusable after writing
     private DataProvider<T> dataProvider;
 
@@ -242,6 +247,37 @@ public final class XlsxBuilder<T> {
      */
     public XlsxBuilder<T> columnHeaders(boolean show) {
         this.showColumnHeaders = show;
+        return this;
+    }
+
+    /**
+     * Controls the behavior when the data exceeds Excel's row limit (1,048,576 rows per sheet,
+     * including title/group/column-header rows and the rows reserved for the summary row and footers):
+     * <ul>
+     *   <li>{@code false} (default): writing throws a {@link RowLimitExceededException};</li>
+     *   <li>{@code true}: the table continues on follow-up sheets ({@code "Name (2)"},
+     *       {@code "Name (3)"}, ...). Title rows, group headers and column headers are repeated on
+     *       every follow-up sheet; the summary row and the footer rows are written once on the last
+     *       sheet and cover the data rows of <em>all</em> part sheets ({@code {rowCount}}/
+     *       {@code {sum:...}} = totals). With {@link #summaryAsFormula(boolean) summaryAsFormula(true)}
+     *       the sum becomes a cross-sheet formula.</li>
+     * </ul>
+     */
+    public XlsxBuilder<T> splitOnRowLimit(boolean enabled) {
+        this.splitOnRowLimit = enabled;
+        return this;
+    }
+
+    /**
+     * Test seam: lowers the per-sheet row limit so the limit/split behavior is testable without
+     * millions of rows. Deliberately not public – outside of tests the limit is always Excel's
+     * {@link SpreadsheetVersion#EXCEL2007} maximum.
+     */
+    XlsxBuilder<T> maxRowsPerSheet(int maxRows) {
+        if (maxRows < 1) {
+            throw new IllegalArgumentException("maxRows must be >= 1");
+        }
+        this.maxRowsPerSheet = maxRows;
         return this;
     }
 
@@ -439,7 +475,9 @@ public final class XlsxBuilder<T> {
                 staticPlaceholders,
                 placeholderResolver,
                 showColumnHeaders,
-                defaultNullText);
+                defaultNullText,
+                splitOnRowLimit,
+                maxRowsPerSheet);
     }
 
     /** Returns the group cells (empty = none) after checking that their spans cover all columns exactly. */

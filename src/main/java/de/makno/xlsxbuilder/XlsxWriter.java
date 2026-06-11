@@ -4,12 +4,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.poi.ss.formula.SheetNameFormatter;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -33,20 +36,74 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
  *
  * <p>Per column a {@link CellStyle} with the desired number/date format is created once (the column's
  * explicit format code, or a default format for date/time types).
+ *
+ * <p><b>Row limit:</b> a worksheet holds at most {@code maxRowsPerSheet} rows (Excel: 1,048,576),
+ * including title/group/column-header rows and the rows reserved for the summary row and footers.
+ * When the data exceeds that, either a {@link RowLimitExceededException} is thrown (default) or –
+ * with {@code splitOnRowLimit} – the table continues on follow-up sheets: title/group/column-header
+ * rows are repeated per part sheet, the summary row and footers are written once on the last sheet
+ * and cover all part sheets (with a cross-sheet {@code SUM} formula if requested).
+ *
+ * <p>One instance writes one <em>logical</em> sheet (one or more part sheets); the instance carries
+ * the state that spans part sheets (styles, widths, sums, data ranges).
  */
 final class XlsxWriter {
+
+    private static final Logger LOG = LogManager.getLogger(XlsxWriter.class);
 
     private static final double NANOS_PER_DAY = 86_400d * 1_000_000_000d;
 
     /** Maximum length of an Excel sheet name. */
     private static final int MAX_SHEET_NAME_LENGTH = 31;
 
-    private XlsxWriter() {}
+    private final SXSSFWorkbook wb;
+    private final String baseSheetName;
+    private final List<? extends Column<?>> columns;
+    private final SummarySpec summary;
+    private final SheetWriteOptions layout;
+
+    private final CellStyle[] columnStyles;
+    private final CellStyle titleStyle;
+    private final CellStyle footerStyle;
+    private CellStyle groupHeaderStyle; // lazy: created only when column groups are configured
+    private final ColumnWidthEstimator widths;
+    private final BigDecimal[] sums;
+    /** 0-based index of the first row data must not occupy (reserved for the summary row + footers). */
+    private final int firstReservedRowIndex;
+
+    private final List<SXSSFSheet> sheets = new ArrayList<>();
+    private final List<DataRange> dataRanges = new ArrayList<>();
+
+    /** 1-based Excel row span of one part sheet's data area (for cross-sheet {@code SUM} formulas). */
+    private record DataRange(String sheetName, int firstRowNum, int lastRowNum) {}
+
+    private XlsxWriter(
+            SXSSFWorkbook wb,
+            String sheetName,
+            List<? extends Column<?>> columns,
+            SummarySpec summary,
+            SheetWriteOptions layout) {
+        this.wb = wb;
+        this.baseSheetName = sheetName;
+        this.columns = columns;
+        this.summary = summary;
+        this.layout = layout;
+        this.columnStyles = buildColumnStyles(wb, wb.getCreationHelper(), columns);
+        this.titleStyle = buildTitleStyle(wb);
+        this.footerStyle = buildFooterStyle(wb);
+        this.widths = new ColumnWidthEstimator(columns, layout.showColumnHeaders());
+        this.sums = initSums(columns, summary);
+        int trailerRows = (summary != null ? 1 : 0)
+                + (layout.footerLines() == null ? 0 : layout.footerLines().size());
+        this.firstReservedRowIndex = layout.maxRowsPerSheet() - trailerRows;
+    }
 
     /**
-     * Adds a worksheet to an existing workbook (managed by the {@code WorkbookBuilder}).
+     * Adds a worksheet to an existing workbook (managed by the {@code WorkbookBuilder}). At the row
+     * limit the sheet either fails or splits into part sheets (see {@code splitOnRowLimit}).
      *
-     * @return number of data rows written (excluding title/header/summary rows) – for performance logs.
+     * @return number of data rows written across all part sheets (excluding title/header/summary
+     *         rows) – for performance logs.
      */
     static int addSheet(
             SXSSFWorkbook wb,
@@ -55,46 +112,66 @@ final class XlsxWriter {
             Iterator<Row> rows,
             SummarySpec summary,
             SheetWriteOptions layout) {
-        SXSSFSheet sheet = wb.createSheet(uniqueSheetName(wb, sheetName));
+        return new XlsxWriter(wb, sheetName, columns, summary, layout).writeSheets(rows);
+    }
+
+    /** Streams all data rows, splitting into part sheets at the row limit if configured. */
+    private int writeSheets(Iterator<Row> rows) {
+        SXSSFSheet sheet = startSheet();
+        int rowNum = writePrelude(sheet);
+        int firstDataRow0 = rowNum; // 0-based index of the first data row of the current part sheet
+        int totalDataRows = 0;
+        while (rows.hasNext()) {
+            if (rowNum >= firstReservedRowIndex) {
+                if (!layout.splitOnRowLimit()) {
+                    throw new RowLimitExceededException("Sheet '" + sheet.getSheetName()
+                            + "' exceeds the limit of " + layout.maxRowsPerSheet()
+                            + " rows per sheet (incl. title/header rows and reserved summary/footer"
+                            + " rows). Use splitOnRowLimit(true) to continue on follow-up sheets.");
+                }
+                dataRanges.add(new DataRange(sheet.getSheetName(), firstDataRow0 + 1, rowNum));
+                String fullSheetName = sheet.getSheetName();
+                sheet = startSheet();
+                LOG.debug(
+                        "Sheet '{}' full ({} rows) - continuing on '{}'", fullSheetName, rowNum, sheet.getSheetName());
+                rowNum = writePrelude(sheet);
+                firstDataRow0 = rowNum;
+            }
+            writeDataRow(sheet, rows.next(), rowNum++);
+            totalDataRows++;
+        }
+        dataRanges.add(new DataRange(sheet.getSheetName(), firstDataRow0 + 1, rowNum));
+        rowNum = writeSummaryRow(sheet, rowNum, totalDataRows);
+        writeFooterRows(sheet, rowNum, totalDataRows);
+        for (SXSSFSheet part : sheets) {
+            widths.applyTo(part);
+        }
+        return totalDataRows;
+    }
+
+    /** Starts a (part) sheet: unique name, recalculation flag; registered for the final width pass. */
+    private SXSSFSheet startSheet() {
+        SXSSFSheet sheet = wb.createSheet(uniqueSheetName(wb, baseSheetName));
+        sheets.add(sheet);
         enableFormulaRecalculationIfNeeded(sheet, columns, summary);
+        return sheet;
+    }
 
-        CreationHelper helper = wb.getCreationHelper();
-        CellStyle[] columnStyles = buildColumnStyles(wb, helper, columns);
-        CellStyle titleStyle = buildTitleStyle(wb);
-        CellStyle footerStyle = buildFooterStyle(wb);
-        boolean showHeaders = layout.showColumnHeaders();
-        Map<String, String> placeholders = layout.placeholders();
-        Function<String, String> resolver = layout.placeholderResolver();
-        ColumnWidthEstimator widths = new ColumnWidthEstimator(columns, showHeaders);
-
-        int lastCol = columns.size() - 1;
-        int rowNum = writeTitleRows(sheet, layout.headerLines(), placeholders, resolver, titleStyle, lastCol);
-        rowNum = writeColumnGroups(sheet, wb, layout.columnGroups(), rowNum);
-        rowNum = writeColumnHeaders(sheet, columns, rowNum, showHeaders);
-
-        BigDecimal[] sums = initSums(columns, summary);
-        int firstDataRow0 = rowNum; // 0-based index of the first data row
-        rowNum = writeDataRows(sheet, columns, rows, columnStyles, widths, sums, rowNum, layout.defaultNullText());
-
-        int dataRowCount = rowNum - firstDataRow0;
-        // Excel row numbers are 1-based: first data row = firstDataRow0 + 1, last = rowNum.
-        rowNum = writeSummaryRow(
-                sheet, columns, columnStyles, widths, summary, sums, rowNum, firstDataRow0 + 1, rowNum, dataRowCount);
-
-        writeFooterRows(
-                sheet,
-                layout.footerLines(),
-                placeholders,
-                resolver,
-                columns,
-                sums,
-                dataRowCount,
-                footerStyle,
-                lastCol,
-                rowNum);
-
-        widths.applyTo(sheet);
-        return dataRowCount;
+    /**
+     * Writes the rows above the data (title rows, group header, column headers). Returns the first
+     * data row. Guards against a limit that leaves no room for data at all – otherwise the split
+     * loop could keep opening empty part sheets (only reachable with the test seam's tiny limits).
+     */
+    private int writePrelude(SXSSFSheet sheet) {
+        int rowNum = writeTitleRows(sheet);
+        rowNum = writeColumnGroups(sheet, rowNum);
+        rowNum = writeColumnHeaders(sheet, rowNum);
+        if (rowNum >= firstReservedRowIndex) {
+            throw new IllegalStateException("maxRowsPerSheet=" + layout.maxRowsPerSheet()
+                    + " leaves no room for data rows: " + rowNum + " title/header rows plus "
+                    + (layout.maxRowsPerSheet() - firstReservedRowIndex) + " reserved summary/footer rows");
+        }
+        return rowNum;
     }
 
     /** For formula columns/sums, tell Excel to recompute on open (the values are not cached). */
@@ -113,18 +190,14 @@ final class XlsxWriter {
     }
 
     /** Writes the optional title rows (each merged across the full width). Returns the next row. */
-    private static int writeTitleRows(
-            SXSSFSheet sheet,
-            List<String> headerLines,
-            Map<String, String> placeholders,
-            Function<String, String> resolver,
-            CellStyle titleStyle,
-            int lastCol) {
+    private int writeTitleRows(SXSSFSheet sheet) {
         int rowNum = 0;
+        List<String> headerLines = layout.headerLines();
         if (headerLines != null) {
+            int lastCol = columns.size() - 1;
             for (String line : headerLines) {
                 Cell cell = sheet.createRow(rowNum).createCell(0);
-                cell.setCellValue(Placeholders.resolve(line, placeholders, resolver));
+                cell.setCellValue(Placeholders.resolve(line, layout.placeholders(), layout.placeholderResolver()));
                 cell.setCellStyle(titleStyle);
                 if (lastCol > 0) {
                     sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, lastCol));
@@ -140,17 +213,20 @@ final class XlsxWriter {
      * Each {@link ColumnGroup} yields one cell at its start column, merged across its span. Returns the
      * next row (unchanged when there are no groups).
      */
-    private static int writeColumnGroups(SXSSFSheet sheet, SXSSFWorkbook wb, List<ColumnGroup> groups, int rowNum) {
+    private int writeColumnGroups(SXSSFSheet sheet, int rowNum) {
+        List<ColumnGroup> groups = layout.columnGroups();
         if (groups == null || groups.isEmpty()) {
             return rowNum;
         }
-        CellStyle groupStyle = buildGroupHeaderStyle(wb);
+        if (groupHeaderStyle == null) {
+            groupHeaderStyle = buildGroupHeaderStyle(wb);
+        }
         org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowNum);
         int col = 0;
         for (ColumnGroup group : groups) {
             Cell cell = row.createCell(col);
             cell.setCellValue(group.label());
-            cell.setCellStyle(groupStyle);
+            cell.setCellStyle(groupHeaderStyle);
             if (group.span() > 1) {
                 sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, col, col + group.span() - 1));
             }
@@ -160,9 +236,8 @@ final class XlsxWriter {
     }
 
     /** Writes the column headers (if enabled). Returns the next row. */
-    private static int writeColumnHeaders(
-            SXSSFSheet sheet, List<? extends Column<?>> columns, int rowNum, boolean showColumnHeaders) {
-        if (!showColumnHeaders) {
+    private int writeColumnHeaders(SXSSFSheet sheet, int rowNum) {
+        if (!layout.showColumnHeaders()) {
             return rowNum;
         }
         org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(rowNum++);
@@ -186,73 +261,51 @@ final class XlsxWriter {
         return sums;
     }
 
-    /** Streams the data rows, measuring column widths and accumulating the sums. Returns the next row. */
-    private static int writeDataRows(
-            SXSSFSheet sheet,
-            List<? extends Column<?>> columns,
-            Iterator<Row> rows,
-            CellStyle[] columnStyles,
-            ColumnWidthEstimator widths,
-            BigDecimal[] sums,
-            int rowNum,
-            String defaultNullText) {
-        while (rows.hasNext()) {
-            Row dataRow = rows.next();
-            org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum++);
-            for (int c = 0; c < columns.size(); c++) {
-                Object value = dataRow.get(c);
-                Column<?> col = columns.get(c);
-                if (value == null) {
-                    // Null-value handler: column-specific placeholder before the sheet-wide default.
-                    String nullText = col.nullText() != null ? col.nullText() : defaultNullText;
-                    if (nullText != null) {
-                        r.createCell(c).setCellValue(nullText);
-                        widths.ensureAtLeast(c, nullText.length());
-                    } else {
-                        // Without a placeholder: explicitly create an empty cell (Excel cell type BLANK/"Empty").
-                        r.createCell(c, CellType.BLANK);
-                    }
-                    continue;
+    /** Writes one data row, measuring column widths and accumulating the sums. */
+    private void writeDataRow(SXSSFSheet sheet, Row dataRow, int rowNum) {
+        org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum);
+        for (int c = 0; c < columns.size(); c++) {
+            Object value = dataRow.get(c);
+            Column<?> col = columns.get(c);
+            if (value == null) {
+                // Null-value handler: column-specific placeholder before the sheet-wide default.
+                String nullText = col.nullText() != null ? col.nullText() : layout.defaultNullText();
+                if (nullText != null) {
+                    r.createCell(c).setCellValue(nullText);
+                    widths.ensureAtLeast(c, nullText.length());
+                } else {
+                    // Without a placeholder: explicitly create an empty cell (Excel cell type BLANK/"Empty").
+                    r.createCell(c, CellType.BLANK);
                 }
-                ColumnType type = col.type();
-                writeCell(r, c, type, value, columnStyles[c]);
-                widths.track(c, value);
-                if (sums != null && sums[c] != null) {
-                    sums[c] = sums[c].add(toBigDecimal(value));
-                }
+                continue;
+            }
+            ColumnType type = col.type();
+            writeCell(r, c, type, value, columnStyles[c]);
+            widths.track(c, value);
+            if (sums != null && sums[c] != null) {
+                sums[c] = sums[c].add(toBigDecimal(value));
             }
         }
-        return rowNum;
     }
 
     /**
-     * Writes the optional summary row (a pre-computed value or a real {@code =SUM(...)} formula). Returns
-     * the next free row (for the footer rows).
+     * Writes the optional summary row (a pre-computed value or a real {@code =SUM(...)} formula) onto
+     * the last part sheet; the sums cover the data rows of <em>all</em> part sheets. Returns the next
+     * free row (for the footer rows).
      */
-    private static int writeSummaryRow(
-            SXSSFSheet sheet,
-            List<? extends Column<?>> columns,
-            CellStyle[] columnStyles,
-            ColumnWidthEstimator widths,
-            SummarySpec summary,
-            BigDecimal[] sums,
-            int rowNum,
-            int firstDataRowNum,
-            int lastDataRowNum,
-            int dataRowCount) {
+    private int writeSummaryRow(SXSSFSheet sheet, int rowNum, int totalDataRows) {
         if (summary == null) {
             return rowNum;
         }
         org.apache.poi.ss.usermodel.Row r = sheet.createRow(rowNum);
-        boolean asFormula = summary.useFormula() && dataRowCount > 0;
+        boolean asFormula = summary.useFormula() && totalDataRows > 0;
         for (int c = 0; c < columns.size(); c++) {
             ColumnType type = columns.get(c).type();
             if (sums[c] != null) {
                 Object value = summaryValue(type, sums[c]); // for width estimation
                 if (asFormula) {
-                    String col = CellReference.convertNumToColString(c);
                     Cell cell = r.createCell(c);
-                    cell.setCellFormula("SUM(" + col + firstDataRowNum + ":" + col + lastDataRowNum + ")");
+                    cell.setCellFormula(sumFormula(c));
                     if (columnStyles[c] != null) {
                         cell.setCellStyle(columnStyles[c]);
                     }
@@ -269,25 +322,43 @@ final class XlsxWriter {
     }
 
     /**
-     * Writes the optional footer rows (each merged across the full width). Resolves the dynamic
-     * placeholders {@code {rowCount}} and {@code {sum:Column}} (in addition to the static ones).
+     * {@code SUM(...)} over all data ranges. Without a split this stays the plain same-sheet range
+     * (e.g. {@code SUM(B3:B5)}); with a split every range is qualified with its sheet name (quoted if
+     * necessary), e.g. {@code SUM('Employees'!B3:B1048570,'Employees (2)'!B2:B123)}.
      */
-    private static void writeFooterRows(
-            SXSSFSheet sheet,
-            List<String> footerLines,
-            Map<String, String> staticPlaceholders,
-            Function<String, String> resolver,
-            List<? extends Column<?>> columns,
-            BigDecimal[] sums,
-            int dataRowCount,
-            CellStyle footerStyle,
-            int lastCol,
-            int rowNum) {
+    private String sumFormula(int columnIndex) {
+        String col = CellReference.convertNumToColString(columnIndex);
+        boolean qualified = dataRanges.size() > 1;
+        StringBuilder formula = new StringBuilder("SUM(");
+        for (int i = 0; i < dataRanges.size(); i++) {
+            DataRange range = dataRanges.get(i);
+            if (i > 0) {
+                formula.append(',');
+            }
+            if (qualified) {
+                formula.append(SheetNameFormatter.format(range.sheetName())).append('!');
+            }
+            formula.append(col)
+                    .append(range.firstRowNum())
+                    .append(':')
+                    .append(col)
+                    .append(range.lastRowNum());
+        }
+        return formula.append(')').toString();
+    }
+
+    /**
+     * Writes the optional footer rows onto the last part sheet (each merged across the full width).
+     * Resolves the dynamic placeholders {@code {rowCount}} and {@code {sum:Column}} with the totals
+     * across all part sheets (in addition to the static ones).
+     */
+    private void writeFooterRows(SXSSFSheet sheet, int rowNum, int totalDataRows) {
+        List<String> footerLines = layout.footerLines();
         if (footerLines == null || footerLines.isEmpty()) {
             return;
         }
-        Map<String, String> values = new HashMap<>(staticPlaceholders);
-        values.put("rowCount", Integer.toString(dataRowCount));
+        Map<String, String> values = new HashMap<>(layout.placeholders());
+        values.put("rowCount", Integer.toString(totalDataRows));
         if (sums != null) {
             for (int c = 0; c < columns.size(); c++) {
                 if (sums[c] != null) {
@@ -297,9 +368,10 @@ final class XlsxWriter {
                 }
             }
         }
+        int lastCol = columns.size() - 1;
         for (String line : footerLines) {
             Cell cell = sheet.createRow(rowNum).createCell(0);
-            cell.setCellValue(Placeholders.resolve(line, values, resolver));
+            cell.setCellValue(Placeholders.resolve(line, values, layout.placeholderResolver()));
             cell.setCellStyle(footerStyle);
             if (lastCol > 0) {
                 sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, lastCol));
@@ -566,7 +638,8 @@ final class XlsxWriter {
      * Estimates column widths based on content, so that nothing shows as "#####". Since SXSSF autosize
      * cannot see spilled rows, the width is measured while streaming: string lengths exactly, number
      * width from digit count + format (incl. the large summary values). The final width is set only
-     * after all rows (always possible in SXSSF).
+     * after all rows (always possible in SXSSF) – on every part sheet, so a split keeps uniform
+     * widths.
      */
     private static final class ColumnWidthEstimator {
 

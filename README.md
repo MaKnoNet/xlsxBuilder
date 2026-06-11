@@ -24,6 +24,9 @@ external merge sort.
 - **Grouped headers** – an optional merged header row above the column headers (multi-row / joined
   headers) via `columnGroups(...)`.
 - **Automatic column widths** – content-based, so nothing shows up as `#####`.
+- **Row-limit handling** – Excel allows at most 1,048,576 rows per sheet; the builder either fails
+  fast with a `RowLimitExceededException` (default) or transparently continues on follow-up sheets
+  (`splitOnRowLimit(true)`).
 
 ## Requirements
 
@@ -70,6 +73,10 @@ WorkbookBuilder.create()
     .write(Path.of("report.xlsx"));   // or write(OutputStream)
 ```
 
+**Atomic write:** `write(Path)` first writes to a temp file (`*.part`) in the target directory and
+moves it onto the target path only after a successful write – a failed export never leaves a partial
+`.xlsx` behind and never clobbers a previously valid file.
+
 **Temp/junk files (location):** the sort temp files (external merge sort) can be directed centrally
 via `WorkbookBuilder.tempDir(Path)` for all sheets; a per-sheet `XlsxBuilder.sortTempDir(Path)` still
 overrides this default. Both affect only the library's **own** sort runs. Apache POI's SXSSF temp
@@ -101,6 +108,7 @@ WorkbookBuilder.create()
 | `sortChunkSize(int)` | rows per in-memory run of the external merge sort (default 100,000) |
 | `sortTempDir(Path)` | base directory for the sort temp files (default `java.io.tmpdir`) |
 | `columnHeaders(boolean)` | write the column-header row (default `true`) |
+| `splitOnRowLimit(boolean)` | behavior at the Excel row limit of 1,048,576 rows/sheet: `false` (default) = `RowLimitExceededException`, `true` = continue on follow-up sheets (`"Name (2)"`, …) |
 | `sumColumn(name)` | sum a numeric column (enables the summary row) |
 | `summaryLabel(name, text)` | label in the summary row (e.g. "Total") |
 | `summaryAsFormula(boolean)` | `true` = `=SUM(...)` formula, `false` (default) = pre-computed |
@@ -115,6 +123,15 @@ WorkbookBuilder.create()
 (e.g. a version number, a user name) `placeholderResolver(key -> ...)` adds a fallback that is
 consulted only when the static map does not know the key (`null` ⇒ the token stays); resolution
 happens at write time only for title/header/footer (out-of-core-neutral).
+
+**Excel row limit (`splitOnRowLimit`):** a worksheet holds at most **1,048,576 rows** (including
+title/group/column-header rows and the rows reserved for the summary row and footers). By default,
+exceeding the limit throws a `RowLimitExceededException` – and `write(Path)` leaves no partial file
+behind. With `splitOnRowLimit(true)` the table instead continues on follow-up sheets named after the
+base sheet (`Employees`, `Employees (2)`, …): title rows, group headers and column headers are
+repeated on every part sheet, while the summary row and the footers appear once on the last sheet
+with totals across **all** rows (`{rowCount}`/`{sum:…}`). With `summaryAsFormula(true)` the sum is
+written as a cross-sheet formula, e.g. `=SUM('Employees'!F3:F1048570,'Employees (2)'!F2:F123)`.
 
 **Pipeline parallelism (`parallel(true)`):** a background thread reads/sorts while the calling thread
 writes (a bounded queue → still out-of-core). Worth it only when the producer side (a slow remote DB,
