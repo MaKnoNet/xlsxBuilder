@@ -87,6 +87,7 @@ public final class XlsxBuilder<T> {
     private String defaultNullText; // sheet-wide placeholder for null; null = empty cell
     private boolean parallel; // pipeline parallelism (producer/consumer); off by default
     private boolean splitOnRowLimit; // false = RowLimitExceededException at the row limit
+    private SplitSheetNamer splitSheetNamer; // null = default follow-up names "Name (2)", "Name (3)", ...
     private int maxRowsPerSheet = SpreadsheetVersion.EXCEL2007.getMaxRows(); // lowered only by tests
     private boolean consumed; // single-use: not reusable after writing
     private DataProvider<T> dataProvider;
@@ -135,10 +136,17 @@ public final class XlsxBuilder<T> {
      * <pre>{@code
      * .column("Salary", Employee::salary).ofType(ColumnType.DECIMAL).formatForType("#,##0.00")
      * }</pre>
+     *
+     * <p>Excel allows at most 16,384 columns per sheet ({@code A..XFD}); defining more fails here
+     * immediately (fail-fast at configuration time, before any data is read or sorted).
      */
     public XlsxBuilder<T> column(String name, Function<? super T, ?> extractor) {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(extractor, "extractor");
+        if (columns.size() >= SpreadsheetVersion.EXCEL2007.getMaxColumns()) {
+            throw new IllegalStateException("Column '" + name + "' exceeds Excel's limit of "
+                    + SpreadsheetVersion.EXCEL2007.getMaxColumns() + " columns per sheet");
+        }
         columns.add(new Column<>(name, ColumnType.STRING, null, extractor));
         return this;
     }
@@ -265,6 +273,18 @@ public final class XlsxBuilder<T> {
      */
     public XlsxBuilder<T> splitOnRowLimit(boolean enabled) {
         this.splitOnRowLimit = enabled;
+        return this;
+    }
+
+    /**
+     * Optional naming of the follow-up sheets created by {@link #splitOnRowLimit(boolean)
+     * splitOnRowLimit(true)} – e.g. {@code (base, part) -> base + "-Teil" + part}. Without a namer
+     * the default scheme {@code "Name (2)"}, {@code "Name (3)"}, ... applies. The first sheet always
+     * keeps {@link #sheetName(String)}; see {@link SplitSheetNamer} for the exact contract (the
+     * returned name is made Excel-safe but must be unique in the workbook).
+     */
+    public XlsxBuilder<T> splitSheetNamer(SplitSheetNamer namer) {
+        this.splitSheetNamer = Objects.requireNonNull(namer, "namer");
         return this;
     }
 
@@ -477,6 +497,7 @@ public final class XlsxBuilder<T> {
                 showColumnHeaders,
                 defaultNullText,
                 splitOnRowLimit,
+                splitSheetNamer,
                 maxRowsPerSheet);
     }
 

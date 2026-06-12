@@ -17,6 +17,8 @@ import java.util.function.Function;
  * @param defaultNullText     sheet-wide placeholder for {@code null} values (or {@code null})
  * @param splitOnRowLimit     {@code true} = continue on follow-up sheets when the row limit is
  *                            reached; {@code false} = throw a {@link RowLimitExceededException}
+ * @param splitSheetNamer     optional naming of the follow-up sheets created by a split (or
+ *                            {@code null} = default scheme {@code "Name (2)"}, {@code "Name (3)"}, ...)
  * @param maxRowsPerSheet     maximum number of rows per sheet (Excel: 1,048,576; lowered only by tests)
  */
 record SheetWriteOptions(
@@ -28,4 +30,5 @@ record SheetWriteOptions(
         boolean showColumnHeaders,
         String defaultNullText,
         boolean splitOnRowLimit,
+        SplitSheetNamer splitSheetNamer,
         int maxRowsPerSheet) {}

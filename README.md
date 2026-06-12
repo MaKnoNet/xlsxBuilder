@@ -109,6 +109,7 @@ WorkbookBuilder.create()
 | `sortTempDir(Path)` | base directory for the sort temp files (default `java.io.tmpdir`) |
 | `columnHeaders(boolean)` | write the column-header row (default `true`) |
 | `splitOnRowLimit(boolean)` | behavior at the Excel row limit of 1,048,576 rows/sheet: `false` (default) = `RowLimitExceededException`, `true` = continue on follow-up sheets (`"Name (2)"`, …) |
+| `splitSheetNamer(SplitSheetNamer)` | optional naming of the follow-up sheets created by a split, e.g. `(base, part) -> base + "-Teil" + part`; default `"Name (2)"`, … |
 | `sumColumn(name)` | sum a numeric column (enables the summary row) |
 | `summaryLabel(name, text)` | label in the summary row (e.g. "Total") |
 | `summaryAsFormula(boolean)` | `true` = `=SUM(...)` formula, `false` (default) = pre-computed |
@@ -132,6 +133,14 @@ base sheet (`Employees`, `Employees (2)`, …): title rows, group headers and co
 repeated on every part sheet, while the summary row and the footers appear once on the last sheet
 with totals across **all** rows (`{rowCount}`/`{sum:…}`). With `summaryAsFormula(true)` the sum is
 written as a cross-sheet formula, e.g. `=SUM('Employees'!F3:F1048570,'Employees (2)'!F2:F123)`.
+The follow-up names can be customized via `splitSheetNamer((base, part) -> …)` – the result is made
+Excel-safe (31-character cap, invalid characters replaced) but must be unique in the workbook,
+otherwise writing fails with an `IllegalStateException`.
+
+**Excel column limit:** a worksheet holds at most **16,384 columns** (`A..XFD`). The 16,385th
+`column(...)` call fails immediately at configuration time (fail-fast), before any data is read or
+sorted – there is deliberately no "column split" across sheets, as that would smear records across
+sheets.
 
 **Pipeline parallelism (`parallel(true)`):** a background thread reads/sorts while the calling thread
 writes (a bounded queue → still out-of-core). Worth it only when the producer side (a slow remote DB,

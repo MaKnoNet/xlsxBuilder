@@ -151,10 +151,36 @@ final class XlsxWriter {
 
     /** Starts a (part) sheet: unique name, recalculation flag; registered for the final width pass. */
     private SXSSFSheet startSheet() {
-        SXSSFSheet sheet = wb.createSheet(uniqueSheetName(wb, baseSheetName));
+        int partNumber = sheets.size() + 1;
+        SXSSFSheet sheet = wb.createSheet(partSheetName(partNumber));
         sheets.add(sheet);
         enableFormulaRecalculationIfNeeded(sheet, columns, summary);
         return sheet;
+    }
+
+    /**
+     * Name of a part sheet: part 1 and the default scheme use {@link #uniqueSheetName} ("Name (2)",
+     * ...); a configured {@link SplitSheetNamer} names the follow-up sheets itself. Its result is
+     * made Excel-safe but deliberately <em>not</em> deduplicated – a duplicate fails with a clear
+     * exception, so the caller stays in control of the actual names.
+     */
+    private String partSheetName(int partNumber) {
+        SplitSheetNamer namer = layout.splitSheetNamer();
+        if (partNumber == 1 || namer == null) {
+            return uniqueSheetName(wb, baseSheetName);
+        }
+        String name = namer.partSheetName(baseSheetName, partNumber);
+        if (name == null || name.isBlank()) {
+            throw new IllegalStateException(
+                    "SplitSheetNamer returned no name for part " + partNumber + " of sheet '" + baseSheetName + "'");
+        }
+        String safeName = WorkbookUtil.createSafeSheetName(name);
+        if (wb.getSheet(safeName) != null) {
+            throw new IllegalStateException("SplitSheetNamer returned the name '" + safeName + "' for part "
+                    + partNumber + " of sheet '" + baseSheetName
+                    + "', but a sheet with that name already exists in the workbook");
+        }
+        return safeName;
     }
 
     /**

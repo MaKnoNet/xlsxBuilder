@@ -1771,4 +1771,79 @@ class XlsxBuilderTest {
             assertEquals(36.0, evaluator.evaluate(cell).getNumberValue(), 0.0001);
         }
     }
+
+    @Test
+    void splitUsesCustomSheetNames() throws Exception {
+        // seam limit 8: 1 header row + 1 reserved summary row -> 6 data rows per part sheet;
+        // 14 values -> 3 part sheets. The namer decides the follow-up names; the first sheet keeps
+        // sheetName(...), and the cross-sheet formula references the custom names.
+        record Item(String name, int wert) {}
+        List<Item> data = new ArrayList<>();
+        for (int i = 1; i <= 14; i++) {
+            data.add(new Item("I" + i, i));
+        }
+        Path out = tempDir.resolve("customNames.xlsx");
+
+        WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<Item>create()
+                        .sheetName("S")
+                        .column("Name", Item::name)
+                        .column("Value", Item::wert)
+                        .ofType(ColumnType.INTEGER)
+                        .sumColumn("Value")
+                        .summaryAsFormula(true)
+                        .maxRowsPerSheet(8)
+                        .splitOnRowLimit(true)
+                        .splitSheetNamer((base, part) -> base + "-Teil" + part)
+                        .data(DataProviders.ofIterable(data)))
+                .write(out);
+
+        assertEquals(List.of("S", "S-Teil2", "S-Teil3"), XlsxTestReader.sheetNames(out));
+        // data continues seamlessly: 6 + 6 + 2 values across the custom-named sheets.
+        assertEquals(1, XlsxTestReader.read(out, 0).number(1, 1));
+        assertEquals(7, XlsxTestReader.read(out, 1).number(1, 1));
+        Grid last = XlsxTestReader.read(out, 2);
+        assertEquals(13, last.number(1, 1));
+        assertEquals(14, last.number(2, 1));
+        // summary on the last part sheet references all custom sheet names.
+        assertEquals("SUM(S!B2:B7,'S-Teil2'!B2:B7,'S-Teil3'!B2:B3)", last.formula(3, 1));
+    }
+
+    @Test
+    void splitNamerDuplicateNameFails() {
+        // a namer that returns an already-used name (here: the base sheet's) must fail clearly
+        // instead of silently renaming - the caller asked for control over the names.
+        List<Integer> data = new ArrayList<>();
+        for (int i = 0; i < 15; i++) {
+            data.add(i);
+        }
+
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<Integer>create()
+                        .sheetName("S")
+                        .column("n", i -> i)
+                        .ofType(ColumnType.INTEGER)
+                        .maxRowsPerSheet(10)
+                        .splitOnRowLimit(true)
+                        .splitSheetNamer((base, part) -> base) // collides with the base sheet
+                        .data(DataProviders.ofIterable(data)))
+                .write(tempDir.resolve("dupeNamer.xlsx")));
+        assertTrue(e.getMessage().contains("already exists"), e.getMessage());
+    }
+
+    // ========== Excel column limit ==========
+
+    @Test
+    void rejectsMoreColumnsThanExcelAllows() {
+        // Excel allows 16,384 columns (A..XFD); the 16,385th column(...) call must fail immediately
+        // at configuration time - not later from deep inside POI after a possibly long sort run.
+        XlsxBuilder<Integer> sheet = XlsxBuilder.create();
+        for (int c = 0; c < 16_384; c++) {
+            sheet.column("C" + c, i -> i);
+        }
+
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> sheet.column("TooMany", i -> i));
+        assertTrue(e.getMessage().contains("TooMany"), "message must name the column: " + e.getMessage());
+        assertTrue(e.getMessage().contains("16384"), "message must name the limit: " + e.getMessage());
+    }
 }
