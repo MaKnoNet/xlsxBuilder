@@ -1892,4 +1892,53 @@ class XlsxBuilderTest {
         assertTrue(e.getMessage().contains("TooMany"), "message must name the column: " + e.getMessage());
         assertTrue(e.getMessage().contains("16384"), "message must name the limit: " + e.getMessage());
     }
+
+    // ========== Hardening (code-review fixes) ==========
+
+    @Test
+    void rowCodecRejectsNegativeByteLength() throws Exception {
+        // A corrupt run file claiming a negative byte length must fail with a clean IOException,
+        // not an unchecked NegativeArraySizeException from new byte[length].
+        byte[] corrupt = stringValueWithDeclaredLength(-1);
+        try (var in = new java.io.DataInputStream(new java.io.ByteArrayInputStream(corrupt))) {
+            IOException e = assertThrows(IOException.class, () -> RowCodec.readRow(in));
+            assertTrue(e.getMessage().contains("byte length"), e.getMessage());
+        }
+    }
+
+    @Test
+    void rowCodecRejectsOversizedByteLength() throws Exception {
+        // A corrupt/hostile run file declaring a huge length must be rejected BEFORE allocating the
+        // array - otherwise new byte[Integer.MAX_VALUE] triggers an OutOfMemoryError (a DoS vector).
+        byte[] corrupt = stringValueWithDeclaredLength(Integer.MAX_VALUE);
+        try (var in = new java.io.DataInputStream(new java.io.ByteArrayInputStream(corrupt))) {
+            IOException e = assertThrows(IOException.class, () -> RowCodec.readRow(in));
+            assertTrue(e.getMessage().contains("byte length"), e.getMessage());
+        }
+    }
+
+    /** Encodes a single-cell row whose STRING value declares the given (here: invalid) byte length. */
+    private static byte[] stringValueWithDeclaredLength(int declaredLength) throws IOException {
+        var buffer = new java.io.ByteArrayOutputStream();
+        try (var out = new java.io.DataOutputStream(buffer)) {
+            out.writeInt(1); // row size: one value
+            out.writeByte(1); // RowCodec STRING type tag
+            out.writeInt(declaredLength); // claimed UTF-8 byte length (corrupt)
+        }
+        return buffer.toByteArray();
+    }
+
+    @Test
+    void summarySpecCopiesSumFlagsDefensively() {
+        // SummarySpec is a value type: mutating the array passed in - or the one handed out - must
+        // not change the spec's state (project immutability convention).
+        boolean[] flags = {true, false, true};
+        SummarySpec spec = new SummarySpec(flags, 0, "Total", false);
+
+        flags[0] = false; // mutate the array passed into the constructor
+        assertTrue(spec.sum()[0], "construction must copy the sum flags defensively");
+
+        spec.sum()[1] = true; // mutate the array handed out by the accessor
+        assertFalse(spec.sum()[1], "the accessor must hand out a copy, not the internal array");
+    }
 }

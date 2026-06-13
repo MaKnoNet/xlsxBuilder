@@ -278,9 +278,10 @@ final class XlsxWriter {
         if (summary == null) {
             return null;
         }
+        boolean[] sumFlags = summary.sum();
         BigDecimal[] sums = new BigDecimal[columns.size()];
         for (int c = 0; c < columns.size(); c++) {
-            if (summary.sum()[c]) {
+            if (sumFlags[c]) {
                 sums[c] = BigDecimal.ZERO;
             }
         }

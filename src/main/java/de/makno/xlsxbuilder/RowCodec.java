@@ -54,6 +54,16 @@ final class RowCodec {
     private static final ObjectInputFilter DESERIALIZATION_LIMITS =
             ObjectInputFilter.Config.createFilter("maxbytes=16777216;maxdepth=64;maxrefs=100000;maxarray=1000000");
 
+    /**
+     * Upper bound for a single length-prefixed byte array (UTF-8 string, {@link BigDecimal} magnitude or
+     * Java-serialized blob). The length is read from the run file <em>before</em> the array is allocated;
+     * validating it first turns a corrupt or tampered length (e.g. a negative value or {@code
+     * Integer.MAX_VALUE}) into a clean {@link IOException} instead of a {@link NegativeArraySizeException}
+     * or an {@link OutOfMemoryError}. Kept consistent with the {@code maxbytes} cap of
+     * {@link #DESERIALIZATION_LIMITS} (16 MiB), which bounds the largest legitimate blob.
+     */
+    private static final int MAX_BYTE_ARRAY_LENGTH = 16 * 1024 * 1024;
+
     private RowCodec() {}
 
     static void writeRow(DataOutputStream out, Row row) throws IOException {
@@ -147,6 +157,9 @@ final class RowCodec {
     }
 
     private static byte[] readBytes(DataInputStream in, int length) throws IOException {
+        if (length < 0 || length > MAX_BYTE_ARRAY_LENGTH) {
+            throw new IOException("Invalid byte length in run file: " + length);
+        }
         byte[] bytes = new byte[length];
         in.readFully(bytes);
         return bytes;

@@ -9,4 +9,19 @@ package de.makno.xlsxbuilder;
  * @param useFormula       {@code true} = write as an Excel formula {@code =SUM(...)}; otherwise a
  *                         pre-computed value.
  */
-record SummarySpec(boolean[] sum, int labelColumnIndex, String labelText, boolean useFormula) {}
+record SummarySpec(boolean[] sum, int labelColumnIndex, String labelText, boolean useFormula) {
+
+    /**
+     * Defensive copy on construction: {@code sum} is a mutable array, so without this an array passed in
+     * (and still referenced by the caller) could mutate this value object after the fact.
+     */
+    SummarySpec {
+        sum = sum.clone();
+    }
+
+    /** Returns a copy so callers cannot mutate the spec's internal sum flags. */
+    @Override
+    public boolean[] sum() {
+        return sum.clone();
+    }
+}
