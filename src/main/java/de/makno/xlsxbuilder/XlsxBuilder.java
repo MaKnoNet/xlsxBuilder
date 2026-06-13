@@ -153,7 +153,7 @@ public final class XlsxBuilder<T> {
 
     /** Sets the type of the most recently defined column. */
     public XlsxBuilder<T> ofType(ColumnType type) {
-        lastColumn().setType(type);
+        replaceLastColumn(lastColumn().withType(type));
         return this;
     }
 
@@ -162,7 +162,7 @@ public final class XlsxBuilder<T> {
      * {@code "0.00%"}, {@code "dd.mm.yyyy"} or {@code "hh:mm:ss"}.
      */
     public XlsxBuilder<T> formatForType(String format) {
-        lastColumn().setFormat(format);
+        replaceLastColumn(lastColumn().withFormat(format));
         return this;
     }
 
@@ -172,7 +172,7 @@ public final class XlsxBuilder<T> {
      * applies. {@code ""} forces an empty text cell despite a configured default.
      */
     public XlsxBuilder<T> nullText(String text) {
-        lastColumn().setNullText(text);
+        replaceLastColumn(lastColumn().withNullText(text));
         return this;
     }
 
@@ -200,7 +200,7 @@ public final class XlsxBuilder<T> {
     @SuppressWarnings("unchecked")
     public <R> XlsxBuilder<T> convertToColumnType(Function<R, ?> converter) {
         Objects.requireNonNull(converter, "converter");
-        lastColumn().setConverter((Function<Object, Object>) converter);
+        replaceLastColumn(lastColumn().withConverter((Function<Object, Object>) converter));
         return this;
     }
 
@@ -209,6 +209,11 @@ public final class XlsxBuilder<T> {
             throw new IllegalStateException("ofType()/formatForType() requires a preceding column(...)");
         }
         return columns.get(columns.size() - 1);
+    }
+
+    /** Replaces the most recently defined column (copy-on-write target for the {@code with*} configurators). */
+    private void replaceLastColumn(Column<T> column) {
+        columns.set(columns.size() - 1, column);
     }
 
     /**

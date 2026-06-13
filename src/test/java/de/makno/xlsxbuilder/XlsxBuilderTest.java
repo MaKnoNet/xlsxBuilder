@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -1990,5 +1991,23 @@ class XlsxBuilderTest {
                 UnsupportedOperationException.class,
                 () -> opts.placeholders().put("z", "y"),
                 "the placeholders map handed out must be unmodifiable");
+    }
+
+    @Test
+    void columnIsImmutableViaCopyOnWrite() {
+        // Column is an immutable value type: the with*-methods return new instances and never mutate the
+        // original, so a sheet snapshot taken at renderInto stays isolated from later reconfiguration.
+        Column<String> base = new Column<>("V", ColumnType.STRING, s -> s);
+        Column<String> derived =
+                base.withType(ColumnType.INTEGER).withFormat("#,##0").withNullText("-");
+
+        assertEquals(ColumnType.STRING, base.type(), "original type must stay unchanged");
+        assertNull(base.format(), "original format must stay unchanged");
+        assertNull(base.nullText(), "original null text must stay unchanged");
+
+        assertEquals(ColumnType.INTEGER, derived.type());
+        assertEquals("#,##0", derived.format());
+        assertEquals("-", derived.nullText());
+        assertNotSame(base, derived, "with* must return a new instance");
     }
 }
