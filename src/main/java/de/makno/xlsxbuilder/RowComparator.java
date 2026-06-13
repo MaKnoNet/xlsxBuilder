@@ -58,7 +58,6 @@ final class RowComparator implements Comparator<Row> {
         return 0;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private static int compareValues(Object x, Object y, String columnName) {
         if (x == null && y == null) {
             return 0;
@@ -74,7 +73,11 @@ final class RowComparator implements Comparator<Row> {
                     + x.getClass().getSimpleName() + " and cannot be sorted (not Comparable)");
         }
         try {
-            return ((Comparable) x).compareTo(y);
+            // Raw Comparable: the element type is unknown at compile time; the ClassCastException below
+            // turns a genuinely incomparable pair into a clear IllegalArgumentException.
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            int result = ((Comparable) x).compareTo(y);
+            return result;
         } catch (ClassCastException e) {
             throw new IllegalArgumentException(
                     "Sort column '" + columnName + "' contains non-comparable value types ("

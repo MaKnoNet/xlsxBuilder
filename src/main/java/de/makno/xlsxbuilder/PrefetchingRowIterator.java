@@ -38,7 +38,9 @@ final class PrefetchingRowIterator implements CloseableIterator<Row> {
 
     private Row nextRow; // buffered next row or null
     private boolean finished; // END (sentinel) seen
-    private boolean failureSurfaced; // consumer-thread only: was the producer failure re-thrown?
+    // Consumer-thread only (never read/written by the producer) -> no volatile needed; tracks whether
+    // the producer failure was already re-thrown.
+    private boolean failureSurfaced;
 
     PrefetchingRowIterator(Iterator<Row> source) {
         this(source, DEFAULT_JOIN_TIMEOUT_MS);
