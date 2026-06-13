@@ -41,6 +41,7 @@ final class RowCodec {
     private static final byte LDATE = 7;
     private static final byte LDATETIME = 8;
     private static final byte LTIME = 9;
+    private static final byte FLOAT = 10;
     private static final byte JAVA = 99; // fallback: any Serializable
 
     /**
@@ -98,6 +99,9 @@ final class RowCodec {
         } else if (v instanceof Double d) {
             out.writeByte(DOUBLE);
             out.writeDouble(d);
+        } else if (v instanceof Float f) {
+            out.writeByte(FLOAT);
+            out.writeFloat(f);
         } else if (v instanceof Boolean b) {
             out.writeByte(BOOL);
             out.writeBoolean(b);
@@ -131,6 +135,7 @@ final class RowCodec {
             case INT -> in.readInt();
             case LONG -> in.readLong();
             case DOUBLE -> in.readDouble();
+            case FLOAT -> in.readFloat();
             case BOOL -> in.readBoolean();
             case BIGDEC -> {
                 int scale = in.readInt();

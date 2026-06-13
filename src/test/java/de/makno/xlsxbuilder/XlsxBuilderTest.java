@@ -1941,4 +1941,24 @@ class XlsxBuilderTest {
         spec.sum()[1] = true; // mutate the array handed out by the accessor
         assertFalse(spec.sum()[1], "the accessor must hand out a copy, not the internal array");
     }
+
+    @Test
+    void rowCodecEncodesFloatCompactly() throws Exception {
+        // A Float must use the compact 1-byte-tag encoding, not the bulky Java-serialization fallback
+        // (which would inflate run files and multi-pass merge I/O). Expected wire size: 4-byte row
+        // header + 1-byte tag + 4-byte float = 9 bytes (Java serialization would be dozens of bytes).
+        var buffer = new java.io.ByteArrayOutputStream();
+        try (var out = new java.io.DataOutputStream(buffer)) {
+            RowCodec.writeRow(out, new Row(new Object[] {3.5f}));
+        }
+        assertTrue(buffer.size() <= 9, "Float must be encoded compactly, was " + buffer.size() + " bytes");
+
+        // ...and it must round-trip as a Float - the exact runtime type is preserved, like Integer vs Long.
+        Row restored;
+        try (var in = new java.io.DataInputStream(new java.io.ByteArrayInputStream(buffer.toByteArray()))) {
+            restored = RowCodec.readRow(in);
+        }
+        assertTrue(restored.get(0) instanceof Float, "Float must stay Float, not become Double");
+        assertEquals(3.5f, (Float) restored.get(0), 0.0f);
+    }
 }
