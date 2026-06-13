@@ -1961,4 +1961,16 @@ class XlsxBuilderTest {
         assertTrue(restored.get(0) instanceof Float, "Float must stay Float, not become Double");
         assertEquals(3.5f, (Float) restored.get(0), 0.0f);
     }
+
+    @Test
+    void writeToFilesystemRootFailsClearly() {
+        // A filesystem root (C:\ or /) has no parent directory to hold the atomic .part temp file;
+        // this must fail fast with a clear IllegalArgumentException, not an obscure NullPointerException.
+        Path root = tempDir.getRoot();
+        WorkbookBuilder wb = WorkbookBuilder.create()
+                .sheet(XlsxBuilder.<String>create().column("V", s -> s).data(DataProviders.ofIterable(List.of("a"))));
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> wb.write(root));
+        assertTrue(e.getMessage().toLowerCase().contains("parent"), e.getMessage());
+    }
 }

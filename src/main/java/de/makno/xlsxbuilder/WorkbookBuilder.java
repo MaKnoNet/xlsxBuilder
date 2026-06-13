@@ -121,6 +121,11 @@ public final class WorkbookBuilder {
     public void write(Path out) throws IOException {
         Objects.requireNonNull(out, "out");
         Path dir = out.toAbsolutePath().getParent();
+        if (dir == null) {
+            throw new IllegalArgumentException(
+                    "Output path has no parent directory (must be a file inside a directory, not a filesystem"
+                            + " root): " + out);
+        }
         Path tmp = Files.createTempFile(dir, out.getFileName().toString() + ".", ".part");
         try {
             try (OutputStream os = Files.newOutputStream(tmp)) {
