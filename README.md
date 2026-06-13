@@ -202,6 +202,11 @@ are produced lazily on demand.
 > context, `hh:mm:ss` for time, `#`/`0` for numbers. Without one, sensible default formats apply to
 > date/time types; numbers appear as "General".
 
+> **Security:** `FORMULA` text is written verbatim as an Excel formula — never build it from
+> untrusted input (formula injection, e.g. `=cmd|'/C calc'!A1`, `HYPERLINK("file://…")`). Data that
+> merely *looks* like a formula belongs in `STRING`: text cells are **not** evaluated by Excel, so a
+> leading `=`/`+`/`-`/`@` is shown literally and is harmless.
+
 ### Value converters
 
 ```java
