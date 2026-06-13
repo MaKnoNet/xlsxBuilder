@@ -158,16 +158,19 @@ final class ExternalMergeSort implements Closeable {
             }
             writeRun(out, new MergingIterator(queue), total);
         } finally {
+            // Close the readers first (Windows refuses to delete a file that is still open), then free
+            // the input runs immediately - even on a write error, so a failing pass does not leave the
+            // whole group on disk until close() runs. The runs stay registered in runFiles, so close()
+            // still reclaims anything missed here.
             for (RunReader reader : readers) {
                 closeQuietly(reader);
             }
-        }
-        // The input runs are no longer needed -> free disk space immediately.
-        for (Path run : group) {
-            try {
-                Files.deleteIfExists(run);
-            } catch (IOException ignored) {
-                // best effort
+            for (Path run : group) {
+                try {
+                    Files.deleteIfExists(run);
+                } catch (IOException ignored) {
+                    // best effort
+                }
             }
         }
         return out;
