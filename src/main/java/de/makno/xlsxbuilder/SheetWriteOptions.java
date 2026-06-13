@@ -31,4 +31,19 @@ record SheetWriteOptions(
         String defaultNullText,
         boolean splitOnRowLimit,
         SplitSheetNamer splitSheetNamer,
-        int maxRowsPerSheet) {}
+        int maxRowsPerSheet) {
+
+    /**
+     * Defensive, unmodifiable copies of the collection components so the options are a true immutable
+     * value type: a caller that still holds the passed-in collections cannot mutate the layout, and the
+     * accessors hand out views that cannot be modified. {@code headerLines} stays {@code null} when
+     * absent (it is optional); {@code footerLines}, {@code columnGroups} and {@code placeholders} are
+     * required to be non-null per the contract.
+     */
+    SheetWriteOptions {
+        headerLines = headerLines == null ? null : List.copyOf(headerLines);
+        footerLines = List.copyOf(footerLines);
+        columnGroups = List.copyOf(columnGroups);
+        placeholders = Map.copyOf(placeholders);
+    }
+}

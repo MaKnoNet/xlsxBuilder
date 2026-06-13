@@ -1973,4 +1973,22 @@ class XlsxBuilderTest {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> wb.write(root));
         assertTrue(e.getMessage().toLowerCase().contains("parent"), e.getMessage());
     }
+
+    @Test
+    void sheetWriteOptionsCopiesPlaceholdersDefensively() {
+        // SheetWriteOptions is a value type: a placeholder map passed in (and still held by the caller)
+        // must neither leak into nor be mutable through the record (project immutability convention).
+        java.util.Map<String, String> placeholders = new java.util.LinkedHashMap<>();
+        placeholders.put("k", "v");
+        SheetWriteOptions opts =
+                new SheetWriteOptions(null, List.of(), List.of(), placeholders, null, true, null, false, null, 100);
+
+        placeholders.put("injected", "x"); // mutate the map passed into the constructor
+        assertFalse(opts.placeholders().containsKey("injected"), "construction must copy the placeholders map");
+
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> opts.placeholders().put("z", "y"),
+                "the placeholders map handed out must be unmodifiable");
+    }
 }
