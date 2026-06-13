@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.NotSerializableException;
+import java.io.ObjectInputFilter;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
@@ -41,6 +42,17 @@ final class RowCodec {
     private static final byte LDATETIME = 8;
     private static final byte LTIME = 9;
     private static final byte JAVA = 99; // fallback: any Serializable
+
+    /**
+     * Defense-in-depth resource limits for the Java-serialization fallback ({@link #JAVA}). The run
+     * files are written and read by the <em>same</em> process (its own sort temp directory), so this is
+     * not a primary trust boundary; the filter caps depth, references, array size and total bytes to
+     * blunt deserialization "bombs" should a temp file ever be tampered with. It deliberately does
+     * <em>not</em> allow-list classes – the fallback exists precisely to carry arbitrary user-supplied
+     * {@link java.io.Serializable} cell types.
+     */
+    private static final ObjectInputFilter DESERIALIZATION_LIMITS =
+            ObjectInputFilter.Config.createFilter("maxbytes=16777216;maxdepth=64;maxrefs=100000;maxarray=1000000");
 
     private RowCodec() {}
 
@@ -158,6 +170,7 @@ final class RowCodec {
     private static Object readJavaSerialized(DataInputStream in) throws IOException {
         byte[] bytes = readBytes(in, in.readInt());
         try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+            ois.setObjectInputFilter(DESERIALIZATION_LIMITS);
             return ois.readObject();
         } catch (ClassNotFoundException e) {
             throw new IOException("Deserialization failed", e);

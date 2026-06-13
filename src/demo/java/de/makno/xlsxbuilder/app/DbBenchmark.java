@@ -46,6 +46,9 @@ public final class DbBenchmark {
         Files.createDirectories(DB_DIR);
         Runtime runtime = Runtime.getRuntime();
 
+        // Intentional: H2's well-known default account ("sa"/"") for the file-based, throwaway local
+        // benchmark database. This is demo/benchmark code (own source set), not part of the published
+        // library jar, and accesses no real or remote system – so these are not secrets.
         try (Connection conn = DriverManager.getConnection(JDBC_URL, "sa", "")) {
             ensureSchema(conn);
 

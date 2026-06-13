@@ -1524,6 +1524,52 @@ class XlsxBuilderTest {
         };
     }
 
+    /** Data source that records whether {@code close()} was called – to verify resource cleanup. */
+    private static DataProvider<String> trackingProvider(List<String> values, Runnable onClose) {
+        var it = values.iterator();
+        return new DataProvider<>() {
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
+
+            @Override
+            public String next() {
+                return it.next();
+            }
+
+            @Override
+            public void close() {
+                onClose.run();
+            }
+        };
+    }
+
+    @Test
+    void failedWriteClosesProvidersOfUnrenderedSheets() {
+        // A failure on one sheet must not leak the data sources of sheets that were never rendered:
+        // write() has to close every supplied sheet's provider on the error path. Sheet 1 fails fast
+        // with a configuration error (unknown sort column) before its provider is touched; sheet 2 is
+        // never reached at all.
+        boolean[] closed = {false, false};
+        XlsxBuilder<String> failing = XlsxBuilder.<String>create()
+                .sheetName("Failing")
+                .column("V", s -> s)
+                .sortBy("Unknown", SortOrder.ASC) // configuration error -> renderInto throws
+                .data(trackingProvider(List.of("a"), () -> closed[0] = true));
+        XlsxBuilder<String> unreached = XlsxBuilder.<String>create()
+                .sheetName("Unreached")
+                .column("V", s -> s)
+                .data(trackingProvider(List.of("b"), () -> closed[1] = true));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> WorkbookBuilder.create().sheet(failing).sheet(unreached).write(tempDir.resolve("leak.xlsx")));
+
+        assertTrue(closed[0], "the failing sheet's data source must be closed");
+        assertTrue(closed[1], "the never-rendered sheet's data source must be closed");
+    }
+
     @Test
     void failedWriteLeavesExistingTargetIntact() throws Exception {
         Path out = tempDir.resolve("existing.xlsx");

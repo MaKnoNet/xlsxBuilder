@@ -481,6 +481,26 @@ public final class XlsxBuilder<T> {
         SheetRenderer.render(wb, job);
     }
 
+    /**
+     * Closes this sheet's data source if it was never consumed. Called by the {@link WorkbookBuilder}
+     * on the error path so that the providers of sheets which – because of an earlier failure – were
+     * never rendered (and thus never closed by the {@link SheetRenderer}) do not leak. No-op once
+     * rendering has started ({@code consumed}); the renderer closes the source itself in that case.
+     * Deliberately does <em>not</em> flip {@code consumed}: a pure configuration error must keep the
+     * sheet reusable in a fresh {@link WorkbookBuilder}. Best-effort – never masks an in-flight
+     * exception.
+     */
+    void closeUnconsumedProvider() {
+        if (consumed || dataProvider == null) {
+            return;
+        }
+        try {
+            dataProvider.close();
+        } catch (RuntimeException ignored) {
+            // best effort – do not overshadow a primary exception already in flight
+        }
+    }
+
     /** Builds the layout options incl. the statically resolvable placeholders ({@code {date}}/{@code {datetime}}). */
     private SheetWriteOptions buildLayout() {
         List<String> header = headerLines.isEmpty() ? null : List.copyOf(headerLines);

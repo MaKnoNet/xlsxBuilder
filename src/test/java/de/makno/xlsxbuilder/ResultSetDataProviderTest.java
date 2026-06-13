@@ -1,14 +1,19 @@
 package de.makno.xlsxbuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.makno.xlsxbuilder.XlsxTestReader.Grid;
+import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -51,5 +56,64 @@ class ResultSetDataProviderTest {
         assertEquals("Alpha", g.string(1, 1));
         assertEquals("Beta", g.string(2, 1));
         assertEquals("Gamma", g.string(3, 1));
+    }
+
+    @Test
+    void wrapsSqlExceptionFromResultSetNext() {
+        ResultSet rs = proxyResultSet(name -> name.equals("next"), false);
+        DataProvider<String> provider = DataProviders.ofResultSet(rs, r -> r.getString(1));
+
+        DataAccessException ex = assertThrows(DataAccessException.class, provider::hasNext);
+        assertInstanceOf(SQLException.class, ex.getCause(), "the original SQLException must be the cause");
+    }
+
+    @Test
+    void wrapsSqlExceptionFromMapper() {
+        ResultSet rs = proxyResultSet(name -> false, true); // next() -> true, nothing throws
+        DataProvider<String> provider = DataProviders.ofResultSet(rs, r -> {
+            throw new SQLException("mapping failed");
+        });
+
+        assertTrue(provider.hasNext());
+        DataAccessException ex = assertThrows(DataAccessException.class, provider::next);
+        assertInstanceOf(SQLException.class, ex.getCause());
+    }
+
+    @Test
+    void wrapsSqlExceptionFromResultSetClose() {
+        ResultSet rs = proxyResultSet(name -> name.equals("close"), false);
+        DataProvider<String> provider = DataProviders.ofResultSet(rs, r -> r.getString(1));
+
+        DataAccessException ex = assertThrows(DataAccessException.class, provider::close);
+        assertInstanceOf(SQLException.class, ex.getCause());
+    }
+
+    /**
+     * A minimal {@link ResultSet} proxy that throws a {@link SQLException} from the methods matched by
+     * {@code throwFrom} and returns {@code nextResult} from {@code next()}; all other methods return a
+     * type-appropriate default. Lets the SQLException-wrapping paths be exercised without a mock library.
+     */
+    private static ResultSet proxyResultSet(Predicate<String> throwFrom, boolean nextResult) {
+        return (ResultSet) Proxy.newProxyInstance(
+                ResultSet.class.getClassLoader(), new Class<?>[] {ResultSet.class}, (proxy, method, args) -> {
+                    String name = method.getName();
+                    if (throwFrom.test(name)) {
+                        throw new SQLException("simulated failure in " + name + "()");
+                    }
+                    if (name.equals("next")) {
+                        return nextResult;
+                    }
+                    Class<?> returnType = method.getReturnType();
+                    if (returnType == boolean.class) {
+                        return false;
+                    }
+                    if (returnType == int.class) {
+                        return 0;
+                    }
+                    if (returnType == long.class) {
+                        return 0L;
+                    }
+                    return null;
+                });
     }
 }

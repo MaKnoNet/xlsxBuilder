@@ -5,8 +5,12 @@ import java.util.List;
 
 /**
  * Builds a {@link Comparator} over projected {@link Row}s from the {@link SortKey}s. Compares the cell
- * values by their natural ordering ({@link Comparable}), null-safe (nulls last for ASC), and supports
- * multi-level sorting as well as DESC.
+ * values by their natural ordering ({@link Comparable}), null-safe, and supports multi-level sorting as
+ * well as DESC.
+ *
+ * <p><b>Null ordering:</b> nulls sort <em>last</em> for {@link SortOrder#ASC}. DESC negates the whole
+ * comparison (including the null handling), so under {@link SortOrder#DESC} nulls sort <em>first</em> –
+ * the conventional consequence of reversing a nulls-last comparator.
  */
 final class RowComparator implements Comparator<Row> {
 

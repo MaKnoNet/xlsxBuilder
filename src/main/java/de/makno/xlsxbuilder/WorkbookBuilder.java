@@ -151,6 +151,12 @@ public final class WorkbookBuilder {
         }
     }
 
+    /**
+     * Writes the workbook to {@code out} (the caller owns and closes the stream). Each sheet is
+     * rendered streamed, one after another. On failure (data source, validation or I/O) the data
+     * sources of all supplied sheets are closed – including those of sheets that were never reached –
+     * so that no {@link DataProvider} (e.g. an open JDBC {@code ResultSet} or {@code Stream}) leaks.
+     */
     public void write(OutputStream out) throws IOException {
         Objects.requireNonNull(out, "out");
         if (sheets.isEmpty()) {
@@ -168,6 +174,15 @@ public final class WorkbookBuilder {
                 sheet.renderInto(wb);
             }
             wb.write(out);
+        } catch (IOException | RuntimeException | Error e) {
+            // A sheet failed (configuration, data source or I/O): close the data sources of all sheets
+            // that were never rendered – the renderer only closes a sheet's source once it starts
+            // rendering it, so the failing and any subsequent sheets would otherwise leak (e.g. open
+            // JDBC ResultSets or Streams). Already-rendered sheets are no-ops.
+            for (XlsxBuilder<?> sheet : sheets) {
+                sheet.closeUnconsumedProvider();
+            }
+            throw e;
         }
         LOG.debug(
                 "Workbook: {} sheets written in {} ms (sxssfRowWindow={})",
