@@ -19,6 +19,12 @@ public enum ColumnType {
      * Excel formula. The extractor supplies the formula text without a leading {@code =} (e.g.
      * {@code "F{row}*0.1"}); the placeholder {@code {row}} is replaced with the actual row number.
      * Excel computes the values when the file is opened. Formulas are not sortable.
+     *
+     * <p><b>Security:</b> the formula text is written verbatim as an Excel formula – never assemble it
+     * from untrusted input (e.g. end-user data). Doing so allows formula injection
+     * ({@code =cmd|'/C calc'!A1}, {@code HYPERLINK("file://...")}, data exfiltration). For data that
+     * merely <em>looks</em> like a formula, use {@link #STRING}: text cells are not evaluated by Excel,
+     * so a leading {@code =}/{@code +}/{@code -}/{@code @} is shown literally and is harmless.
      */
     FORMULA(false);
 
