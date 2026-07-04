@@ -72,7 +72,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L1",
       "id": "app_dbbenchmark",
-      "community": 12,
+      "community": 5,
       "norm_label": "dbbenchmark.java"
     },
     {
@@ -81,7 +81,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L33",
       "id": "app_dbbenchmark_dbbenchmark",
-      "community": 12,
+      "community": 5,
       "norm_label": "dbbenchmark"
     },
     {
@@ -90,7 +90,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L39",
       "id": "app_dbbenchmark_dbbenchmark_dbbenchmark",
-      "community": 12,
+      "community": 5,
       "norm_label": ".dbbenchmark()"
     },
     {
@@ -99,7 +99,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L41",
       "id": "app_dbbenchmark_dbbenchmark_main",
-      "community": 12,
+      "community": 5,
       "norm_label": ".main()"
     },
     {
@@ -108,7 +108,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L41",
       "id": "src_demo_java_de_makno_xlsxbuilder_app_dbbenchmark_java_string",
-      "community": 12,
+      "community": 5,
       "norm_label": "string"
     },
     {
@@ -117,7 +117,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L84",
       "id": "app_dbbenchmark_dbbenchmark_ensureschema",
-      "community": 12,
+      "community": 5,
       "norm_label": ".ensureschema()"
     },
     {
@@ -126,7 +126,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L84",
       "id": "connection",
-      "community": 12,
+      "community": 5,
       "norm_label": "connection"
     },
     {
@@ -135,7 +135,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L103",
       "id": "app_dbbenchmark_dbbenchmark_rowcount",
-      "community": 12,
+      "community": 5,
       "norm_label": ".rowcount()"
     },
     {
@@ -144,7 +144,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L112",
       "id": "app_dbbenchmark_dbbenchmark_seed",
-      "community": 12,
+      "community": 5,
       "norm_label": ".seed()"
     },
     {
@@ -153,7 +153,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L148",
       "id": "app_dbbenchmark_dbbenchmark_export",
-      "community": 12,
+      "community": 5,
       "norm_label": ".export()"
     },
     {
@@ -162,7 +162,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/DbBenchmark.java",
       "source_location": "L148",
       "id": "src_demo_java_de_makno_xlsxbuilder_app_dbbenchmark_java_path",
-      "community": 12,
+      "community": 5,
       "norm_label": "path"
     },
     {
@@ -234,7 +234,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/EmployeeData.java",
       "source_location": "L65",
       "id": "app_employeedata_employeedata_sheet",
-      "community": 7,
+      "community": 0,
       "norm_label": ".sheet()"
     },
     {
@@ -243,7 +243,7 @@
       "source_file": "src/demo/java/de/makno/xlsxbuilder/app/EmployeeData.java",
       "source_location": "L65",
       "id": "src_demo_java_de_makno_xlsxbuilder_app_employeedata_java_string",
-      "community": 7,
+      "community": 0,
       "norm_label": "string"
     },
     {
@@ -468,7 +468,7 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/Column.java",
       "source_location": "L52",
       "id": "xlsxbuilder_column_column_name",
-      "community": 3,
+      "community": 10,
       "norm_label": ".name()"
     },
     {
@@ -1368,7 +1368,7 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/Row.java",
       "source_location": "L1",
       "id": "xlsxbuilder_row",
-      "community": 7,
+      "community": 3,
       "norm_label": "row.java"
     },
     {
@@ -1377,7 +1377,7 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/Row.java",
       "source_location": "L14",
       "id": "xlsxbuilder_row_row",
-      "community": 7,
+      "community": 3,
       "norm_label": "row"
     },
     {
@@ -1386,7 +1386,7 @@
       "source_file": "",
       "source_location": "",
       "id": "serializable",
-      "community": 7,
+      "community": 3,
       "norm_label": "serializable"
     },
     {
@@ -1395,7 +1395,7 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/Row.java",
       "source_location": "L20",
       "id": "xlsxbuilder_row_row_row",
-      "community": 7,
+      "community": 3,
       "norm_label": ".row()"
     },
     {
@@ -1404,7 +1404,7 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/Row.java",
       "source_location": "L20",
       "id": "src_main_java_de_makno_xlsxbuilder_row_java_object",
-      "community": 7,
+      "community": 3,
       "norm_label": "object"
     },
     {
@@ -1413,7 +1413,7 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/Row.java",
       "source_location": "L24",
       "id": "xlsxbuilder_row_row_get",
-      "community": 7,
+      "community": 3,
       "norm_label": ".get()"
     },
     {
@@ -1458,7 +1458,7 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/RowCodec.java",
       "source_location": "L70",
       "id": "xlsxbuilder_rowcodec_rowcodec_writerow",
-      "community": 7,
+      "community": 8,
       "norm_label": ".writerow()"
     },
     {
@@ -2322,7 +2322,7 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxBuilder.java",
       "source_location": "L251",
       "id": "xlsxbuilder_xlsxbuilder_xlsxbuilder_summaryasformula",
-      "community": 7,
+      "community": 0,
       "norm_label": ".summaryasformula()"
     },
     {
@@ -3609,7 +3609,7 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L969",
       "id": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecroundtripsallvaluetypes",
-      "community": 7,
+      "community": 3,
       "norm_label": ".rowcodecroundtripsallvaluetypes()"
     },
     {
@@ -4068,7 +4068,7 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1946",
       "id": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecencodesfloatcompactly",
-      "community": 7,
+      "community": 3,
       "norm_label": ".rowcodecencodesfloatcompactly()"
     },
     {
@@ -4756,6 +4756,33 @@
       "norm_label": "citations"
     },
     {
+      "label": "error-handling.md",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/architecture/error-handling.md",
+      "source_location": "L1",
+      "id": "architecture_error_handling",
+      "community": 47,
+      "norm_label": "error-handling.md"
+    },
+    {
+      "label": "\u00dcberblick",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/architecture/error-handling.md",
+      "source_location": "L10",
+      "id": "architecture_error_handling_\u00fcberblick",
+      "community": 47,
+      "norm_label": "uberblick"
+    },
+    {
+      "label": "Citations",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/architecture/error-handling.md",
+      "source_location": "L22",
+      "id": "architecture_error_handling_citations",
+      "community": 47,
+      "norm_label": "citations"
+    },
+    {
       "label": "index.md",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/architecture/index.md",
@@ -4792,10 +4819,28 @@
       "norm_label": "overview"
     },
     {
+      "label": "RowCodec: compact run-file serialization",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/architecture/out-of-core-pipeline.md",
+      "source_location": "L28",
+      "id": "architecture_out_of_core_pipeline_rowcodec_compact_run_file_serialization",
+      "community": 36,
+      "norm_label": "rowcodec: compact run-file serialization"
+    },
+    {
+      "label": "PrefetchingRowIterator: read/sort \u2225 write",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/architecture/out-of-core-pipeline.md",
+      "source_location": "L36",
+      "id": "architecture_out_of_core_pipeline_prefetchingrowiterator_read_sort_write",
+      "community": 36,
+      "norm_label": "prefetchingrowiterator: read/sort \u2225 write"
+    },
+    {
       "label": "Operational notes",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/architecture/out-of-core-pipeline.md",
-      "source_location": "L26",
+      "source_location": "L46",
       "id": "architecture_out_of_core_pipeline_operational_notes",
       "community": 36,
       "norm_label": "operational notes"
@@ -4804,9 +4849,45 @@
       "label": "Citations",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/architecture/out-of-core-pipeline.md",
-      "source_location": "L35",
+      "source_location": "L55",
       "id": "architecture_out_of_core_pipeline_citations",
       "community": 36,
+      "norm_label": "citations"
+    },
+    {
+      "label": "configuration-models.md",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/components/configuration-models.md",
+      "source_location": "L1",
+      "id": "components_configuration_models",
+      "community": 46,
+      "norm_label": "configuration-models.md"
+    },
+    {
+      "label": "\u00dcberblick",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/components/configuration-models.md",
+      "source_location": "L10",
+      "id": "components_configuration_models_\u00fcberblick",
+      "community": 46,
+      "norm_label": "uberblick"
+    },
+    {
+      "label": "Schema",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/components/configuration-models.md",
+      "source_location": "L17",
+      "id": "components_configuration_models_schema",
+      "community": 46,
+      "norm_label": "schema"
+    },
+    {
+      "label": "Citations",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/components/configuration-models.md",
+      "source_location": "L28",
+      "id": "components_configuration_models_citations",
+      "community": 46,
       "norm_label": "citations"
     },
     {
@@ -4837,10 +4918,19 @@
       "norm_label": "contract"
     },
     {
-      "label": "Citations",
+      "label": "Supporting types",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/components/data-provider.md",
       "source_location": "L28",
+      "id": "components_data_provider_supporting_types",
+      "community": 37,
+      "norm_label": "supporting types"
+    },
+    {
+      "label": "Citations",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/components/data-provider.md",
+      "source_location": "L37",
       "id": "components_data_provider_citations",
       "community": 37,
       "norm_label": "citations"
@@ -4885,7 +4975,7 @@
       "label": "Examples",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/components/workbook-builder.md",
-      "source_location": "L18",
+      "source_location": "L24",
       "id": "components_workbook_builder_examples",
       "community": 34,
       "norm_label": "examples"
@@ -4894,7 +4984,7 @@
       "label": "Contract",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/components/workbook-builder.md",
-      "source_location": "L27",
+      "source_location": "L33",
       "id": "components_workbook_builder_contract",
       "community": 34,
       "norm_label": "contract"
@@ -4903,7 +4993,7 @@
       "label": "Citations",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/components/workbook-builder.md",
-      "source_location": "L33",
+      "source_location": "L39",
       "id": "components_workbook_builder_citations",
       "community": 34,
       "norm_label": "citations"
@@ -4939,7 +5029,7 @@
       "label": "Examples",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/components/xlsx-builder.md",
-      "source_location": "L31",
+      "source_location": "L37",
       "id": "components_xlsx_builder_examples",
       "community": 32,
       "norm_label": "examples"
@@ -4948,7 +5038,7 @@
       "label": "Contract",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/components/xlsx-builder.md",
-      "source_location": "L46",
+      "source_location": "L52",
       "id": "components_xlsx_builder_contract",
       "community": 32,
       "norm_label": "contract"
@@ -4957,7 +5047,7 @@
       "label": "Citations",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/components/xlsx-builder.md",
-      "source_location": "L51",
+      "source_location": "L57",
       "id": "components_xlsx_builder_citations",
       "community": 32,
       "norm_label": "citations"
@@ -5062,10 +5152,19 @@
       "norm_label": "update log"
     },
     {
-      "label": "2026-07-04",
+      "label": "2026-07-05",
       "file_type": "document",
       "source_file": "docs/okf/xlsxbuilder/log.md",
       "source_location": "L3",
+      "id": "xlsxbuilder_log_2026_07_05",
+      "community": 42,
+      "norm_label": "2026-07-05"
+    },
+    {
+      "label": "2026-07-04",
+      "file_type": "document",
+      "source_file": "docs/okf/xlsxbuilder/log.md",
+      "source_location": "L17",
       "id": "xlsxbuilder_log_2026_07_04",
       "community": 42,
       "norm_label": "2026-07-04"
@@ -6457,9 +6556,9 @@
       "source_location": "L86",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withconverter",
-      "target": "xlsxbuilder_column_column",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_column_column"
     },
     {
       "relation": "references",
@@ -6468,9 +6567,9 @@
       "source_location": "L76",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withformat",
-      "target": "xlsxbuilder_column_column",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_column_column"
     },
     {
       "relation": "references",
@@ -6479,9 +6578,9 @@
       "source_location": "L81",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withnulltext",
-      "target": "xlsxbuilder_column_column",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_column_column"
     },
     {
       "relation": "references",
@@ -6490,9 +6589,9 @@
       "source_location": "L71",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withtype",
-      "target": "xlsxbuilder_column_column",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_column_column"
     },
     {
       "relation": "references",
@@ -6523,9 +6622,9 @@
       "source_location": "L37",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_column",
-      "target": "src_main_java_de_makno_xlsxbuilder_column_java_object",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_column_java_object"
     },
     {
       "relation": "references",
@@ -6611,9 +6710,9 @@
       "source_location": "L76",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withformat",
-      "target": "src_main_java_de_makno_xlsxbuilder_column_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_column_java_string"
     },
     {
       "relation": "references",
@@ -6622,9 +6721,9 @@
       "source_location": "L81",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withnulltext",
-      "target": "src_main_java_de_makno_xlsxbuilder_column_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_column_java_string"
     },
     {
       "relation": "references",
@@ -6655,9 +6754,9 @@
       "source_location": "L71",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withtype",
-      "target": "src_main_java_de_makno_xlsxbuilder_column_java_columntype",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_column_java_columntype"
     },
     {
       "relation": "references",
@@ -6677,9 +6776,9 @@
       "source_location": "L86",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withconverter",
-      "target": "src_main_java_de_makno_xlsxbuilder_column_java_function",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_column_java_function"
     },
     {
       "relation": "references",
@@ -6699,9 +6798,9 @@
       "source_location": "L86",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withconverter",
-      "target": "src_main_java_de_makno_xlsxbuilder_column_java_t",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_column_java_t"
     },
     {
       "relation": "references",
@@ -6710,9 +6809,9 @@
       "source_location": "L76",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withformat",
-      "target": "src_main_java_de_makno_xlsxbuilder_column_java_t",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_column_java_t"
     },
     {
       "relation": "references",
@@ -6721,9 +6820,9 @@
       "source_location": "L81",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withnulltext",
-      "target": "src_main_java_de_makno_xlsxbuilder_column_java_t",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_column_java_t"
     },
     {
       "relation": "references",
@@ -6732,9 +6831,9 @@
       "source_location": "L71",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withtype",
-      "target": "src_main_java_de_makno_xlsxbuilder_column_java_t",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_column_java_t"
     },
     {
       "relation": "references",
@@ -6765,9 +6864,9 @@
       "source_location": "L86",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_column_column_withconverter",
-      "target": "src_main_java_de_makno_xlsxbuilder_column_java_object",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_column_java_object"
     },
     {
       "relation": "calls",
@@ -11794,9 +11893,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/RowLimitExceededException.java",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_rowlimitexceededexception",
-      "target": "xlsxbuilder_rowlimitexceededexception_rowlimitexceededexception",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_rowlimitexceededexception_rowlimitexceededexception"
     },
     {
       "relation": "inherits",
@@ -11804,9 +11903,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/RowLimitExceededException.java",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_rowlimitexceededexception_rowlimitexceededexception",
-      "target": "illegalstateexception",
-      "confidence_score": 1.0
+      "target": "illegalstateexception"
     },
     {
       "relation": "method",
@@ -11814,9 +11913,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/RowLimitExceededException.java",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_rowlimitexceededexception_rowlimitexceededexception",
-      "target": "xlsxbuilder_rowlimitexceededexception_rowlimitexceededexception_rowlimitexceededexception",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_rowlimitexceededexception_rowlimitexceededexception_rowlimitexceededexception"
     },
     {
       "relation": "references",
@@ -11825,9 +11924,9 @@
       "source_location": "L15",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_rowlimitexceededexception_rowlimitexceededexception_rowlimitexceededexception",
-      "target": "src_main_java_de_makno_xlsxbuilder_rowlimitexceededexception_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_rowlimitexceededexception_java_string"
     },
     {
       "relation": "imports",
@@ -12192,9 +12291,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/SplitSheetNamer.java",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_splitsheetnamer",
-      "target": "xlsxbuilder_splitsheetnamer_splitsheetnamer",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_splitsheetnamer_splitsheetnamer"
     },
     {
       "relation": "method",
@@ -12202,9 +12301,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/SplitSheetNamer.java",
       "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_splitsheetnamer_splitsheetnamer",
-      "target": "xlsxbuilder_splitsheetnamer_splitsheetnamer_partsheetname",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_splitsheetnamer_splitsheetnamer_partsheetname"
     },
     {
       "relation": "references",
@@ -12213,9 +12312,9 @@
       "source_location": "L27",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_splitsheetnamer_splitsheetnamer_partsheetname",
-      "target": "src_main_java_de_makno_xlsxbuilder_splitsheetnamer_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_splitsheetnamer_java_string"
     },
     {
       "relation": "contains",
@@ -12223,9 +12322,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/SummarySpec.java",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_summaryspec",
-      "target": "xlsxbuilder_summaryspec_sum",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_summaryspec_sum"
     },
     {
       "relation": "references",
@@ -12234,9 +12333,9 @@
       "source_location": "L23",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_summaryspec_sum",
-      "target": "src_main_java_de_makno_xlsxbuilder_summaryspec_java_override",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_summaryspec_java_override"
     },
     {
       "relation": "imports",
@@ -12287,9 +12386,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/WorkbookBuilder.java",
       "source_location": "L151",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_workbookbuilder_workbookbuilder",
-      "target": "xlsxbuilder_workbookbuilder_workbookbuilder_deletequietly",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_workbookbuilder_workbookbuilder_deletequietly"
     },
     {
       "relation": "method",
@@ -12297,9 +12396,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/WorkbookBuilder.java",
       "source_location": "L142",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_workbookbuilder_workbookbuilder",
-      "target": "xlsxbuilder_workbookbuilder_workbookbuilder_moveinplace",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_workbookbuilder_workbookbuilder_moveinplace"
     },
     {
       "relation": "references",
@@ -12394,9 +12493,9 @@
       "source_location": "L151",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_workbookbuilder_workbookbuilder_deletequietly",
-      "target": "src_main_java_de_makno_xlsxbuilder_workbookbuilder_java_path",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_workbookbuilder_java_path"
     },
     {
       "relation": "references",
@@ -12405,9 +12504,9 @@
       "source_location": "L142",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_workbookbuilder_workbookbuilder_moveinplace",
-      "target": "src_main_java_de_makno_xlsxbuilder_workbookbuilder_java_path",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_workbookbuilder_java_path"
     },
     {
       "relation": "references",
@@ -12460,9 +12559,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/WorkbookBuilder.java",
       "source_location": "L136",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_workbookbuilder_workbookbuilder_write",
-      "target": "xlsxbuilder_workbookbuilder_workbookbuilder_deletequietly",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_workbookbuilder_workbookbuilder_deletequietly"
     },
     {
       "relation": "calls",
@@ -12471,9 +12570,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/WorkbookBuilder.java",
       "source_location": "L134",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_workbookbuilder_workbookbuilder_write",
-      "target": "xlsxbuilder_workbookbuilder_workbookbuilder_moveinplace",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_workbookbuilder_workbookbuilder_moveinplace"
     },
     {
       "relation": "calls",
@@ -13362,9 +13461,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxBuilder.java",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_predicate",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_predicate"
     },
     {
       "relation": "imports",
@@ -13423,9 +13522,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxBuilder.java",
       "source_location": "L498",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder",
-      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_closeunconsumedprovider",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_closeunconsumedprovider"
     },
     {
       "relation": "references",
@@ -13585,9 +13684,9 @@
       "source_location": "L301",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_maxrowspersheet",
-      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder"
     },
     {
       "relation": "references",
@@ -13671,9 +13770,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxBuilder.java",
       "source_location": "L215",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder",
-      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn"
     },
     {
       "relation": "references",
@@ -13726,9 +13825,9 @@
       "source_location": "L279",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_splitonrowlimit",
-      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder"
     },
     {
       "relation": "references",
@@ -13737,9 +13836,9 @@
       "source_location": "L291",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_splitsheetnamer",
-      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder"
     },
     {
       "relation": "references",
@@ -13933,9 +14032,9 @@
       "source_location": "L301",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_maxrowspersheet",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_t",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_t"
     },
     {
       "relation": "references",
@@ -14010,9 +14109,9 @@
       "source_location": "L215",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_t",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_t"
     },
     {
       "relation": "references",
@@ -14065,9 +14164,9 @@
       "source_location": "L279",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_splitonrowlimit",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_t",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_t"
     },
     {
       "relation": "references",
@@ -14076,9 +14175,9 @@
       "source_location": "L291",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_splitsheetnamer",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_t",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_t"
     },
     {
       "relation": "references",
@@ -14340,9 +14439,9 @@
       "source_location": "L124",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_columngroups",
-      "target": "columngroup",
-      "confidence_score": 1.0
+      "target": "columngroup"
     },
     {
       "relation": "references",
@@ -14450,9 +14549,9 @@
       "source_location": "L530",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_validatedcolumngroups",
-      "target": "columngroup",
-      "confidence_score": 1.0
+      "target": "columngroup"
     },
     {
       "relation": "references",
@@ -14538,9 +14637,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxBuilder.java",
       "source_location": "L156",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_oftype",
-      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn"
     },
     {
       "relation": "calls",
@@ -15110,9 +15209,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxBuilder.java",
       "source_location": "L165",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_formatfortype",
-      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn"
     },
     {
       "relation": "calls",
@@ -15187,9 +15286,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxBuilder.java",
       "source_location": "L175",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_nulltext",
-      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn"
     },
     {
       "relation": "references",
@@ -15220,9 +15319,9 @@
       "source_location": "L200",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_converttocolumntype",
-      "target": "suppresswarnings",
-      "confidence_score": 1.0
+      "target": "suppresswarnings"
     },
     {
       "relation": "calls",
@@ -15253,9 +15352,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxBuilder.java",
       "source_location": "L203",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_converttocolumntype",
-      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn"
     },
     {
       "relation": "calls",
@@ -15286,9 +15385,9 @@
       "source_location": "L215",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_replacelastcolumn",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_column",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_column"
     },
     {
       "relation": "references",
@@ -15902,9 +16001,9 @@
       "source_location": "L291",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_splitsheetnamer",
-      "target": "splitsheetnamer",
-      "confidence_score": 1.0
+      "target": "splitsheetnamer"
     },
     {
       "relation": "calls",
@@ -16155,9 +16254,9 @@
       "source_location": "L345",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuilder_xlsxbuilder_filter",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_predicate",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxbuilder_java_predicate"
     },
     {
       "relation": "calls",
@@ -17502,9 +17601,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L167",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_partsheetname",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_partsheetname"
     },
     {
       "relation": "method",
@@ -17532,9 +17631,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L153",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_startsheet",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_startsheet"
     },
     {
       "relation": "method",
@@ -17552,9 +17651,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L356",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_sumformula",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_sumformula"
     },
     {
       "relation": "method",
@@ -17622,9 +17721,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L292",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writedatarow",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writedatarow"
     },
     {
       "relation": "method",
@@ -17652,9 +17751,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L191",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writeprelude",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writeprelude"
     },
     {
       "relation": "method",
@@ -17662,9 +17761,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L119",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets"
     },
     {
       "relation": "method",
@@ -17703,9 +17802,9 @@
       "source_location": "L80",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_xlsxwriter",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_column",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_column"
     },
     {
       "relation": "references",
@@ -17714,9 +17813,9 @@
       "source_location": "L80",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_xlsxwriter",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_list",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_list"
     },
     {
       "relation": "references",
@@ -17725,9 +17824,9 @@
       "source_location": "L80",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_xlsxwriter",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_sheetwriteoptions",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_sheetwriteoptions"
     },
     {
       "relation": "references",
@@ -17736,9 +17835,9 @@
       "source_location": "L80",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_xlsxwriter",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_string"
     },
     {
       "relation": "references",
@@ -17747,9 +17846,9 @@
       "source_location": "L80",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_xlsxwriter",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_summaryspec",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_summaryspec"
     },
     {
       "relation": "references",
@@ -17758,9 +17857,9 @@
       "source_location": "L80",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_xlsxwriter",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_sxssfworkbook",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_sxssfworkbook"
     },
     {
       "relation": "calls",
@@ -17769,9 +17868,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L91",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_xlsxwriter",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_buildcolumnstyles",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_buildcolumnstyles"
     },
     {
       "relation": "calls",
@@ -17780,9 +17879,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L93",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_xlsxwriter",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_buildfooterstyle",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_buildfooterstyle"
     },
     {
       "relation": "calls",
@@ -17791,9 +17890,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L92",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_xlsxwriter",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_buildtitlestyle",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_buildtitlestyle"
     },
     {
       "relation": "calls",
@@ -17802,9 +17901,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L95",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_xlsxwriter",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_initsums",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_initsums"
     },
     {
       "relation": "references",
@@ -17934,9 +18033,9 @@
       "source_location": "L167",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_partsheetname",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_string"
     },
     {
       "relation": "references",
@@ -17956,9 +18055,9 @@
       "source_location": "L356",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_sumformula",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_string"
     },
     {
       "relation": "references",
@@ -18429,9 +18528,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L115",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_addsheet",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets"
     },
     {
       "relation": "calls",
@@ -18473,9 +18572,9 @@
       "source_location": "L119",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_iterator",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_iterator"
     },
     {
       "relation": "references",
@@ -18495,9 +18594,9 @@
       "source_location": "L292",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writedatarow",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_row",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_row"
     },
     {
       "relation": "references",
@@ -18517,9 +18616,9 @@
       "source_location": "L119",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets",
-      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_row",
-      "confidence_score": 1.0
+      "target": "src_main_java_de_makno_xlsxbuilder_xlsxwriter_java_row"
     },
     {
       "relation": "calls",
@@ -18528,9 +18627,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L147",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets",
-      "target": "xlsxbuilder_xlsxwriter_columnwidthestimator_applyto",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_columnwidthestimator_applyto"
     },
     {
       "relation": "calls",
@@ -18539,9 +18638,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L120",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_startsheet",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_startsheet"
     },
     {
       "relation": "calls",
@@ -18550,9 +18649,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L140",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writedatarow",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writedatarow"
     },
     {
       "relation": "calls",
@@ -18561,9 +18660,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L145",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writefooterrows",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writefooterrows"
     },
     {
       "relation": "calls",
@@ -18572,9 +18671,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L121",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writeprelude",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writeprelude"
     },
     {
       "relation": "calls",
@@ -18583,9 +18682,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L144",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writesheets",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writesummaryrow",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writesummaryrow"
     },
     {
       "relation": "references",
@@ -18594,9 +18693,9 @@
       "source_location": "L153",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_startsheet",
-      "target": "sxssfsheet",
-      "confidence_score": 1.0
+      "target": "sxssfsheet"
     },
     {
       "relation": "calls",
@@ -18605,9 +18704,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L157",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_startsheet",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_enableformularecalculationifneeded",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_enableformularecalculationifneeded"
     },
     {
       "relation": "calls",
@@ -18616,9 +18715,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L155",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_startsheet",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_partsheetname",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_partsheetname"
     },
     {
       "relation": "references",
@@ -18671,9 +18770,9 @@
       "source_location": "L292",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writedatarow",
-      "target": "sxssfsheet",
-      "confidence_score": 1.0
+      "target": "sxssfsheet"
     },
     {
       "relation": "references",
@@ -18704,9 +18803,9 @@
       "source_location": "L191",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writeprelude",
-      "target": "sxssfsheet",
-      "confidence_score": 1.0
+      "target": "sxssfsheet"
     },
     {
       "relation": "references",
@@ -18737,9 +18836,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L170",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_partsheetname",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_uniquesheetname",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_uniquesheetname"
     },
     {
       "relation": "calls",
@@ -18748,9 +18847,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L193",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writeprelude",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writecolumngroups",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writecolumngroups"
     },
     {
       "relation": "calls",
@@ -18759,9 +18858,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L194",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writeprelude",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writecolumnheaders",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writecolumnheaders"
     },
     {
       "relation": "calls",
@@ -18770,9 +18869,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L192",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writeprelude",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writetitlerows",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writetitlerows"
     },
     {
       "relation": "references",
@@ -18924,9 +19023,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L302",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writedatarow",
-      "target": "xlsxbuilder_xlsxwriter_columnwidthestimator_ensureatleast",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_columnwidthestimator_ensureatleast"
     },
     {
       "relation": "calls",
@@ -18935,9 +19034,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L311",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writedatarow",
-      "target": "xlsxbuilder_xlsxwriter_columnwidthestimator_track",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_columnwidthestimator_track"
     },
     {
       "relation": "calls",
@@ -18946,9 +19045,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L313",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writedatarow",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_tobigdecimal",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_tobigdecimal"
     },
     {
       "relation": "calls",
@@ -18957,9 +19056,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L310",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writedatarow",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writecell",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_writecell"
     },
     {
       "relation": "references",
@@ -19012,9 +19111,9 @@
       "source_file": "src/main/java/de/makno/xlsxbuilder/XlsxWriter.java",
       "source_location": "L335",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxwriter_xlsxwriter_writesummaryrow",
-      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_sumformula",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxwriter_xlsxwriter_sumformula"
     },
     {
       "relation": "calls",
@@ -19536,9 +19635,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/ResultSetDataProviderTest.java",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest",
-      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_predicate",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_predicate"
     },
     {
       "relation": "imports",
@@ -19547,9 +19646,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/ResultSetDataProviderTest.java",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest",
-      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_resultset",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_resultset"
     },
     {
       "relation": "imports",
@@ -19588,9 +19687,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/ResultSetDataProviderTest.java",
       "source_location": "L96",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest",
-      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset"
     },
     {
       "relation": "method",
@@ -19598,9 +19697,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/ResultSetDataProviderTest.java",
       "source_location": "L70",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest",
-      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfrommapper",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfrommapper"
     },
     {
       "relation": "method",
@@ -19608,9 +19707,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/ResultSetDataProviderTest.java",
       "source_location": "L82",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest",
-      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfromresultsetclose",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfromresultsetclose"
     },
     {
       "relation": "method",
@@ -19618,9 +19717,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/ResultSetDataProviderTest.java",
       "source_location": "L61",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest",
-      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfromresultsetnext",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfromresultsetnext"
     },
     {
       "relation": "references",
@@ -19662,9 +19761,9 @@
       "source_location": "L70",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfrommapper",
-      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_test"
     },
     {
       "relation": "references",
@@ -19673,9 +19772,9 @@
       "source_location": "L82",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfromresultsetclose",
-      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_test"
     },
     {
       "relation": "references",
@@ -19684,9 +19783,9 @@
       "source_location": "L61",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfromresultsetnext",
-      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_test"
     },
     {
       "relation": "calls",
@@ -19695,9 +19794,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/ResultSetDataProviderTest.java",
       "source_location": "L63",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfromresultsetnext",
-      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset"
     },
     {
       "relation": "calls",
@@ -19706,9 +19805,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/ResultSetDataProviderTest.java",
       "source_location": "L72",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfrommapper",
-      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset"
     },
     {
       "relation": "calls",
@@ -19717,9 +19816,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/ResultSetDataProviderTest.java",
       "source_location": "L84",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_wrapssqlexceptionfromresultsetclose",
-      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset"
     },
     {
       "relation": "references",
@@ -19728,9 +19827,9 @@
       "source_location": "L96",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset",
-      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_predicate",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_predicate"
     },
     {
       "relation": "references",
@@ -19739,9 +19838,9 @@
       "source_location": "L96",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset",
-      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_resultset",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_resultset"
     },
     {
       "relation": "references",
@@ -19750,9 +19849,9 @@
       "source_location": "L96",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_resultsetdataprovidertest_resultsetdataprovidertest_proxyresultset",
-      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_string",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_resultsetdataprovidertest_java_string"
     },
     {
       "relation": "imports",
@@ -19865,9 +19964,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1599",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_assertnopartfiles",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_assertnopartfiles"
     },
     {
       "relation": "method",
@@ -19875,9 +19974,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1996",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_columnisimmutableviacopyonwrite",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_columnisimmutableviacopyonwrite"
     },
     {
       "relation": "method",
@@ -20005,9 +20104,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1549",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwriteclosesprovidersofunrenderedsheets",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwriteclosesprovidersofunrenderedsheets"
     },
     {
       "relation": "method",
@@ -20015,9 +20114,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1587",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwritecreatesnotargetfile",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwritecreatesnotargetfile"
     },
     {
       "relation": "method",
@@ -20025,9 +20124,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1574",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwriteleavesexistingtargetintact",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwriteleavesexistingtargetintact"
     },
     {
       "relation": "method",
@@ -20035,9 +20134,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1514",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failingprovider",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failingprovider"
     },
     {
       "relation": "method",
@@ -20175,9 +20274,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1883",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rejectsmorecolumnsthanexcelallows",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rejectsmorecolumnsthanexcelallows"
     },
     {
       "relation": "method",
@@ -20185,9 +20284,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1610",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rejectsnullargumentsinadaptersandplaceholders",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rejectsnullargumentsinadaptersandplaceholders"
     },
     {
       "relation": "method",
@@ -20235,9 +20334,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1946",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecencodesfloatcompactly",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecencodesfloatcompactly"
     },
     {
       "relation": "method",
@@ -20245,9 +20344,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1899",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecrejectsnegativebytelength",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecrejectsnegativebytelength"
     },
     {
       "relation": "method",
@@ -20255,9 +20354,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1910",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecrejectsoversizedbytelength",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecrejectsoversizedbytelength"
     },
     {
       "relation": "method",
@@ -20275,9 +20374,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1706",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowlimitsplitsintomultiplesheets",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowlimitsplitsintomultiplesheets"
     },
     {
       "relation": "method",
@@ -20285,9 +20384,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1686",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowlimitthrowsbydefault",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowlimitthrowsbydefault"
     },
     {
       "relation": "method",
@@ -20305,9 +20404,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1978",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_sheetwriteoptionscopiesplaceholdersdefensively",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_sheetwriteoptionscopiesplaceholdersdefensively"
     },
     {
       "relation": "method",
@@ -20325,9 +20424,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1635",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_sortingnonserializablevaluefailswithhelpfulmessage",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_sortingnonserializablevaluefailswithhelpfulmessage"
     },
     {
       "relation": "method",
@@ -20365,9 +20464,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1859",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitnamerduplicatenamefails",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitnamerduplicatenamefails"
     },
     {
       "relation": "method",
@@ -20375,9 +20474,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1786",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitsummaryformulaspanssheets",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitsummaryformulaspanssheets"
     },
     {
       "relation": "method",
@@ -20385,9 +20484,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1822",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitusescustomsheetnames",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitusescustomsheetnames"
     },
     {
       "relation": "method",
@@ -20395,9 +20494,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1748",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitwritessummaryandfooteronlyonlastsheet",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitwritessummaryandfooteronlyonlastsheet"
     },
     {
       "relation": "method",
@@ -20425,9 +20524,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1922",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_stringvaluewithdeclaredlength",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_stringvaluewithdeclaredlength"
     },
     {
       "relation": "method",
@@ -20445,9 +20544,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1619",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_summaryoverflowfailsexplicitly",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_summaryoverflowfailsexplicitly"
     },
     {
       "relation": "method",
@@ -20475,9 +20574,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1932",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_summaryspeccopiessumflagsdefensively",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_summaryspeccopiessumflagsdefensively"
     },
     {
       "relation": "method",
@@ -20555,9 +20654,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1529",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_trackingprovider",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_trackingprovider"
     },
     {
       "relation": "method",
@@ -20585,9 +20684,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1664",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_validationfailuredoesnotmarkbuilderconsumed",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_validationfailuredoesnotmarkbuilderconsumed"
     },
     {
       "relation": "method",
@@ -20725,9 +20824,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1966",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_writetofilesystemrootfailsclearly",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_writetofilesystemrootfailsclearly"
     },
     {
       "relation": "references",
@@ -20813,9 +20912,9 @@
       "source_location": "L1996",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_columnisimmutableviacopyonwrite",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -20956,9 +21055,9 @@
       "source_location": "L1549",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwriteclosesprovidersofunrenderedsheets",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -20967,9 +21066,9 @@
       "source_location": "L1587",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwritecreatesnotargetfile",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -20978,9 +21077,9 @@
       "source_location": "L1574",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwriteleavesexistingtargetintact",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21132,9 +21231,9 @@
       "source_location": "L1883",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rejectsmorecolumnsthanexcelallows",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21143,9 +21242,9 @@
       "source_location": "L1610",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rejectsnullargumentsinadaptersandplaceholders",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21198,9 +21297,9 @@
       "source_location": "L1946",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecencodesfloatcompactly",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21209,9 +21308,9 @@
       "source_location": "L1899",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecrejectsnegativebytelength",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21220,9 +21319,9 @@
       "source_location": "L1910",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecrejectsoversizedbytelength",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21242,9 +21341,9 @@
       "source_location": "L1706",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowlimitsplitsintomultiplesheets",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21253,9 +21352,9 @@
       "source_location": "L1686",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowlimitthrowsbydefault",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21275,9 +21374,9 @@
       "source_location": "L1978",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_sheetwriteoptionscopiesplaceholdersdefensively",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21286,9 +21385,9 @@
       "source_location": "L1635",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_sortingnonserializablevaluefailswithhelpfulmessage",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21330,9 +21429,9 @@
       "source_location": "L1859",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitnamerduplicatenamefails",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21341,9 +21440,9 @@
       "source_location": "L1786",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitsummaryformulaspanssheets",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21352,9 +21451,9 @@
       "source_location": "L1822",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitusescustomsheetnames",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21363,9 +21462,9 @@
       "source_location": "L1748",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_splitwritessummaryandfooteronlyonlastsheet",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21407,9 +21506,9 @@
       "source_location": "L1619",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_summaryoverflowfailsexplicitly",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21440,9 +21539,9 @@
       "source_location": "L1932",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_summaryspeccopiessumflagsdefensively",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21550,9 +21649,9 @@
       "source_location": "L1664",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_validationfailuredoesnotmarkbuilderconsumed",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "references",
@@ -21682,9 +21781,9 @@
       "source_location": "L1966",
       "weight": 1.0,
       "context": "attribute",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_writetofilesystemrootfailsclearly",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_test"
     },
     {
       "relation": "calls",
@@ -22628,9 +22727,9 @@
       "source_location": "L1529",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_trackingprovider",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_list",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_list"
     },
     {
       "relation": "references",
@@ -22639,9 +22738,9 @@
       "source_location": "L1514",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failingprovider",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_string",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_string"
     },
     {
       "relation": "references",
@@ -22650,9 +22749,9 @@
       "source_location": "L1529",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_trackingprovider",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_string",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_string"
     },
     {
       "relation": "calls",
@@ -22771,9 +22870,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1592",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwritecreatesnotargetfile",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failingprovider",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failingprovider"
     },
     {
       "relation": "calls",
@@ -22782,9 +22881,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1580",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwriteleavesexistingtargetintact",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failingprovider",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failingprovider"
     },
     {
       "relation": "references",
@@ -22793,9 +22892,9 @@
       "source_location": "L1514",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failingprovider",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_dataprovider",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_dataprovider"
     },
     {
       "relation": "references",
@@ -22804,9 +22903,9 @@
       "source_location": "L1529",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_trackingprovider",
-      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_dataprovider",
-      "confidence_score": 1.0
+      "target": "src_test_java_de_makno_xlsxbuilder_xlsxbuildertest_java_dataprovider"
     },
     {
       "relation": "calls",
@@ -22815,9 +22914,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1560",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwriteclosesprovidersofunrenderedsheets",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_trackingprovider",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_trackingprovider"
     },
     {
       "relation": "references",
@@ -22826,9 +22925,9 @@
       "source_location": "L1529",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_trackingprovider",
-      "target": "runnable",
-      "confidence_score": 1.0
+      "target": "runnable"
     },
     {
       "relation": "calls",
@@ -22837,9 +22936,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1584",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwriteleavesexistingtargetintact",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_assertnopartfiles",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_assertnopartfiles"
     },
     {
       "relation": "calls",
@@ -22848,9 +22947,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1596",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_failedwritecreatesnotargetfile",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_assertnopartfiles",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_assertnopartfiles"
     },
     {
       "relation": "calls",
@@ -23013,9 +23112,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1903",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecrejectsnegativebytelength",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_stringvaluewithdeclaredlength",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_stringvaluewithdeclaredlength"
     },
     {
       "relation": "calls",
@@ -23024,9 +23123,9 @@
       "source_file": "src/test/java/de/makno/xlsxbuilder/XlsxBuilderTest.java",
       "source_location": "L1914",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_rowcodecrejectsoversizedbytelength",
-      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_stringvaluewithdeclaredlength",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_xlsxbuildertest_xlsxbuildertest_stringvaluewithdeclaredlength"
     },
     {
       "relation": "imports",
@@ -23946,9 +24045,9 @@
       "source_file": "CLAUDE.md",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude",
-      "target": "claude_knowledge_base_graphify_okf",
-      "confidence_score": 1.0
+      "target": "claude_knowledge_base_graphify_okf"
     },
     {
       "relation": "contains",
@@ -23956,9 +24055,9 @@
       "source_file": "CLAUDE.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude",
-      "target": "claude_projekt_konventionen_xlsxbuilder",
-      "confidence_score": 1.0
+      "target": "claude_projekt_konventionen_xlsxbuilder"
     },
     {
       "relation": "contains",
@@ -23966,9 +24065,9 @@
       "source_file": "CLAUDE.md",
       "source_location": "L24",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_knowledge_base_graphify_okf",
-      "target": "claude_end_of_session_routine_pflicht_bei_code_architektur\u00e4nderungen",
-      "confidence_score": 1.0
+      "target": "claude_end_of_session_routine_pflicht_bei_code_architektur\u00e4nderungen"
     },
     {
       "relation": "contains",
@@ -23976,9 +24075,9 @@
       "source_file": "CLAUDE.md",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "claude_knowledge_base_graphify_okf",
-      "target": "claude_graph_first_regel",
-      "confidence_score": 1.0
+      "target": "claude_graph_first_regel"
     },
     {
       "relation": "contains",
@@ -24056,9 +24155,9 @@
       "source_file": "README.md",
       "source_location": "L327",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "readme_xlsxbuilder",
-      "target": "readme_knowledge_base",
-      "confidence_score": 1.0
+      "target": "readme_knowledge_base"
     },
     {
       "relation": "contains",
@@ -24186,9 +24285,9 @@
       "source_file": "docs/okf/xlsxbuilder/architecture/concurrency-contract.md",
       "source_location": "L28",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "architecture_concurrency_contract",
-      "target": "architecture_concurrency_contract_citations",
-      "confidence_score": 1.0
+      "target": "architecture_concurrency_contract_citations"
     },
     {
       "relation": "contains",
@@ -24196,8 +24295,28 @@
       "source_file": "docs/okf/xlsxbuilder/architecture/concurrency-contract.md",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "architecture_concurrency_contract",
-      "target": "architecture_concurrency_contract_contract",
+      "target": "architecture_concurrency_contract_contract"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/okf/xlsxbuilder/architecture/error-handling.md",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "architecture_error_handling",
+      "target": "architecture_error_handling_citations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/okf/xlsxbuilder/architecture/error-handling.md",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "architecture_error_handling",
+      "target": "architecture_error_handling_\u00fcberblick",
       "confidence_score": 1.0
     },
     {
@@ -24206,9 +24325,9 @@
       "source_file": "docs/okf/xlsxbuilder/architecture/index.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "architecture_index",
-      "target": "architecture_index_konzepte",
-      "confidence_score": 1.0
+      "target": "architecture_index_konzepte"
     },
     {
       "relation": "contains",
@@ -24216,9 +24335,9 @@
       "source_file": "docs/okf/xlsxbuilder/architecture/out-of-core-pipeline.md",
       "source_location": "L35",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "architecture_out_of_core_pipeline",
-      "target": "architecture_out_of_core_pipeline_citations",
-      "confidence_score": 1.0
+      "target": "architecture_out_of_core_pipeline_citations"
     },
     {
       "relation": "contains",
@@ -24226,9 +24345,9 @@
       "source_file": "docs/okf/xlsxbuilder/architecture/out-of-core-pipeline.md",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "architecture_out_of_core_pipeline",
-      "target": "architecture_out_of_core_pipeline_operational_notes",
-      "confidence_score": 1.0
+      "target": "architecture_out_of_core_pipeline_operational_notes"
     },
     {
       "relation": "contains",
@@ -24236,8 +24355,58 @@
       "source_file": "docs/okf/xlsxbuilder/architecture/out-of-core-pipeline.md",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "architecture_out_of_core_pipeline",
-      "target": "architecture_out_of_core_pipeline_overview",
+      "target": "architecture_out_of_core_pipeline_overview"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/okf/xlsxbuilder/architecture/out-of-core-pipeline.md",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "architecture_out_of_core_pipeline_overview",
+      "target": "architecture_out_of_core_pipeline_prefetchingrowiterator_read_sort_write",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/okf/xlsxbuilder/architecture/out-of-core-pipeline.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "architecture_out_of_core_pipeline_overview",
+      "target": "architecture_out_of_core_pipeline_rowcodec_compact_run_file_serialization",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/okf/xlsxbuilder/components/configuration-models.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "components_configuration_models",
+      "target": "components_configuration_models_citations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/okf/xlsxbuilder/components/configuration-models.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "components_configuration_models",
+      "target": "components_configuration_models_schema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/okf/xlsxbuilder/components/configuration-models.md",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "components_configuration_models",
+      "target": "components_configuration_models_\u00fcberblick",
       "confidence_score": 1.0
     },
     {
@@ -24246,9 +24415,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/data-provider.md",
       "source_location": "L28",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_data_provider",
-      "target": "components_data_provider_citations",
-      "confidence_score": 1.0
+      "target": "components_data_provider_citations"
     },
     {
       "relation": "contains",
@@ -24256,9 +24425,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/data-provider.md",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_data_provider",
-      "target": "components_data_provider_contract",
-      "confidence_score": 1.0
+      "target": "components_data_provider_contract"
     },
     {
       "relation": "contains",
@@ -24266,8 +24435,18 @@
       "source_file": "docs/okf/xlsxbuilder/components/data-provider.md",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_data_provider",
-      "target": "components_data_provider_overview",
+      "target": "components_data_provider_overview"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/okf/xlsxbuilder/components/data-provider.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "components_data_provider",
+      "target": "components_data_provider_supporting_types",
       "confidence_score": 1.0
     },
     {
@@ -24276,9 +24455,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/index.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_index",
-      "target": "components_index_konzepte",
-      "confidence_score": 1.0
+      "target": "components_index_konzepte"
     },
     {
       "relation": "contains",
@@ -24286,9 +24465,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/workbook-builder.md",
       "source_location": "L33",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_workbook_builder",
-      "target": "components_workbook_builder_citations",
-      "confidence_score": 1.0
+      "target": "components_workbook_builder_citations"
     },
     {
       "relation": "contains",
@@ -24296,9 +24475,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/workbook-builder.md",
       "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_workbook_builder",
-      "target": "components_workbook_builder_contract",
-      "confidence_score": 1.0
+      "target": "components_workbook_builder_contract"
     },
     {
       "relation": "contains",
@@ -24306,9 +24485,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/workbook-builder.md",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_workbook_builder",
-      "target": "components_workbook_builder_examples",
-      "confidence_score": 1.0
+      "target": "components_workbook_builder_examples"
     },
     {
       "relation": "contains",
@@ -24316,9 +24495,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/workbook-builder.md",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_workbook_builder",
-      "target": "components_workbook_builder_overview",
-      "confidence_score": 1.0
+      "target": "components_workbook_builder_overview"
     },
     {
       "relation": "contains",
@@ -24326,9 +24505,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/xlsx-builder.md",
       "source_location": "L51",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_xlsx_builder",
-      "target": "components_xlsx_builder_citations",
-      "confidence_score": 1.0
+      "target": "components_xlsx_builder_citations"
     },
     {
       "relation": "contains",
@@ -24336,9 +24515,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/xlsx-builder.md",
       "source_location": "L46",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_xlsx_builder",
-      "target": "components_xlsx_builder_contract",
-      "confidence_score": 1.0
+      "target": "components_xlsx_builder_contract"
     },
     {
       "relation": "contains",
@@ -24346,9 +24525,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/xlsx-builder.md",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_xlsx_builder",
-      "target": "components_xlsx_builder_examples",
-      "confidence_score": 1.0
+      "target": "components_xlsx_builder_examples"
     },
     {
       "relation": "contains",
@@ -24356,9 +24535,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/xlsx-builder.md",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_xlsx_builder",
-      "target": "components_xlsx_builder_overview",
-      "confidence_score": 1.0
+      "target": "components_xlsx_builder_overview"
     },
     {
       "relation": "contains",
@@ -24366,9 +24545,9 @@
       "source_file": "docs/okf/xlsxbuilder/components/xlsx-builder.md",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_xlsx_builder",
-      "target": "components_xlsx_builder_schema",
-      "confidence_score": 1.0
+      "target": "components_xlsx_builder_schema"
     },
     {
       "relation": "contains",
@@ -24376,9 +24555,9 @@
       "source_file": "docs/okf/xlsxbuilder/conventions/build-and-release.md",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "conventions_build_and_release",
-      "target": "conventions_build_and_release_citations",
-      "confidence_score": 1.0
+      "target": "conventions_build_and_release_citations"
     },
     {
       "relation": "contains",
@@ -24386,9 +24565,9 @@
       "source_file": "docs/okf/xlsxbuilder/conventions/build-and-release.md",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "conventions_build_and_release",
-      "target": "conventions_build_and_release_commands",
-      "confidence_score": 1.0
+      "target": "conventions_build_and_release_commands"
     },
     {
       "relation": "contains",
@@ -24396,9 +24575,9 @@
       "source_file": "docs/okf/xlsxbuilder/conventions/build-and-release.md",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "conventions_build_and_release",
-      "target": "conventions_build_and_release_rules",
-      "confidence_score": 1.0
+      "target": "conventions_build_and_release_rules"
     },
     {
       "relation": "contains",
@@ -24406,9 +24585,9 @@
       "source_file": "docs/okf/xlsxbuilder/conventions/index.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "conventions_index",
-      "target": "conventions_index_konzepte",
-      "confidence_score": 1.0
+      "target": "conventions_index_konzepte"
     },
     {
       "relation": "contains",
@@ -24416,9 +24595,9 @@
       "source_file": "docs/okf/xlsxbuilder/index.md",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_index",
-      "target": "xlsxbuilder_index_historie",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_index_historie"
     },
     {
       "relation": "contains",
@@ -24426,9 +24605,9 @@
       "source_file": "docs/okf/xlsxbuilder/index.md",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_index",
-      "target": "xlsxbuilder_index_unterbereiche",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_index_unterbereiche"
     },
     {
       "relation": "contains",
@@ -24436,9 +24615,19 @@
       "source_file": "docs/okf/xlsxbuilder/log.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "xlsxbuilder_log",
-      "target": "xlsxbuilder_log_update_log",
-      "confidence_score": 1.0
+      "target": "xlsxbuilder_log_update_log"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/okf/xlsxbuilder/log.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "xlsxbuilder_log_update_log",
+      "target": "xlsxbuilder_log_2026_07_04"
     },
     {
       "relation": "contains",
@@ -24447,7 +24636,7 @@
       "source_location": "L3",
       "weight": 1.0,
       "source": "xlsxbuilder_log_update_log",
-      "target": "xlsxbuilder_log_2026_07_04",
+      "target": "xlsxbuilder_log_2026_07_05",
       "confidence_score": 1.0
     },
     {
@@ -24646,5 +24835,5 @@
       "source_file": "README.md"
     }
   ],
-  "built_at_commit": "3850bc35560e2e9d2302f3a80ea0f4b7d72185ae"
+  "built_at_commit": "5554e8cc0bf0a2db63245a3bb8fa08f97acf5fc0"
 }

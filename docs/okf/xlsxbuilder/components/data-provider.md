@@ -25,6 +25,15 @@ itself; the caller keeps `Statement`/`Connection` in a `try-with-resources`.
 JDBC `Connection` from the pool). See
 [Concurrency contract](/architecture/concurrency-contract.md).
 
+# Supporting types
+
+| Type | Role |
+|---|---|
+| `ResultSetRowMapper<T>` | `@FunctionalInterface` used by `DataProviders.ofResultSet`; maps only the columns of the *current* row (`rs.getString(...)` etc.) — the adapter itself calls `rs.next()` |
+| `Row` | package-private projected row (already-extracted cell values, one per column); `Serializable` so `ExternalMergeSort` can spill whole runs to temp files; not copied — created once per record on the hot path |
+| `CloseableIterator<T>` | `Iterator<T> & Closeable` that closes without a checked exception; holds resources such as open run files |
+| `RenderJob<T>` | immutable execution job for one sheet — all building blocks compiled by `XlsxBuilder` (columns, filter, `dataProvider`, `sort`, `summary`, `layout`, `parallel`) that `SheetRenderer` needs to write; separates fluent configuration from execution |
+
 # Citations
 
 [1] [README - Concepts: DataProvider / DataProviders](https://github.com/MaKnoNet/xlsxBuilder/blob/main/README.md)

@@ -17,11 +17,31 @@ DataProvider<T> -> projection to Row(Object[]) -> [optional] external merge sort
 |---|---|
 | `RowComparator` | compares projected rows (multi-level, null-safe) |
 | `ExternalMergeSort` | sorted runs on temp files + k-way merge |
+| `RowCodec` | compact, type-tagged (de)serialization of a `Row` for the EMS run files |
+| `PrefetchingRowIterator` | overlaps read/sort with write via a bounded `BlockingQueue` |
 | `XlsxWriter` | writes a sheet via Apache POI SXSSF (streaming) |
 
 Memory usage depends on `sortChunkSize` + the SXSSF window, **not** on the row or sheet
 count. Benchmark: 1,000,000 rows x 2 sheets with `-Xmx128m` -> ~140 MB output file, used heap
 ~17 MB. More sheets/rows cost mainly time and disk space (temp files), barely more heap.
+
+## RowCodec: compact run-file serialization
+
+Plain Java serialization of a `Row` would be wasteful for the millions of rows an
+external merge sort spills to disk. `RowCodec` instead writes each value with an
+explicit type tag (avoiding Java serialization's per-object overhead) — notably
+floats are encoded compactly rather than boxed/serialized, which matters at EMS scale
+where run files are read and written many times during the k-way merge.
+
+## PrefetchingRowIterator: read/sort ∥ write
+
+When `parallel` is enabled (see [RenderJob](/components/data-provider.md)), a single
+daemon background thread pulls rows (projection/DB read + k-way merge) into a bounded
+`ArrayBlockingQueue` while the consuming (writing) thread drains it — read/sort I/O and
+POI writing overlap instead of running strictly sequentially. Only one extra thread per
+sheet; the queue stays bounded so this remains out-of-core. `close()` interrupts the
+producer and joins with a timeout, called via try-with-resources **before** the
+sorter/data provider so nothing leaks.
 
 # Operational notes
 

@@ -1,5 +1,19 @@
 # Update Log
 
+## 2026-07-05
+
+* **Update**: semantic gap-fill against graphify-out/GRAPH_REPORT.md —
+  [out-of-core-pipeline.md](/architecture/out-of-core-pipeline.md) extended with
+  `RowCodec` (compact run-file serialization) and `PrefetchingRowIterator`
+  (read/sort ∥ write); [data-provider.md](/components/data-provider.md) extended with
+  `ResultSetRowMapper`, `Row`, `CloseableIterator`, `RenderJob`.
+* **Creation**: new concept
+  [configuration-models.md](/components/configuration-models.md) — the immutable
+  value-object group `SheetWriteOptions`/`SortSpec`/`SummarySpec`/`ColumnGroup`/
+  `SplitSheetNamer`/`Placeholders`.
+* **Creation**: new concept [error-handling.md](/architecture/error-handling.md) —
+  `RowLimitExceededException`/`DataAccessException`, tied back to the atomic write.
+
 ## 2026-07-04
 
 * **Update**: Rebased onto current `main`; concepts refreshed for the new features —

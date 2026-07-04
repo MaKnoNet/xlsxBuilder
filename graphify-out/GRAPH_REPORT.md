@@ -1,16 +1,16 @@
 # Graph Report - XLSBuilder  (2026-07-04)
 
 ## Corpus Check
-- 51 files · ~30,005 words
+- 53 files · ~30,886 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 591 nodes · 1775 edges · 46 communities (35 shown, 11 thin omitted)
+- 602 nodes · 1784 edges · 48 communities (37 shown, 11 thin omitted)
 - Extraction: 62% EXTRACTED · 38% INFERRED · 0% AMBIGUOUS · INFERRED: 676 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3850bc35`
+- Built from commit: `5554e8cc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -54,6 +54,8 @@
 - [[_COMMUNITY_Community 43|Community 43]]
 - [[_COMMUNITY_Community 44|Community 44]]
 - [[_COMMUNITY_Community 45|Community 45]]
+- [[_COMMUNITY_Community 46|Community 46]]
+- [[_COMMUNITY_Community 47|Community 47]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `XlsxBuilderTest` - 92 edges
@@ -78,11 +80,11 @@
 - **Multi-level sort metadata** — readme_rowcomparator, readme_sortkey, readme_sortorder, builder_externalmergesort_externalmergesort [INFERRED 0.75]
 - **Sheet configuration model** — builder_excelbuilder_excelbuilder, readme_column, builder_columntype_columntype, builder_dataprovider_dataprovider [EXTRACTED 0.85]
 
-## Communities (46 total, 11 thin omitted)
+## Communities (48 total, 11 thin omitted)
 
 ### Community 0 - "Builder Test Suite"
 Cohesion: 0.12
-Nodes (7): Iterable, String, DataProvider, Test, XlsxBuilder, TempItem, XlsxBuilderTest
+Nodes (8): Iterable, String, String, DataProvider, Test, XlsxBuilder, TempItem, XlsxBuilderTest
 
 ### Community 1 - "Fluent ExcelBuilder API"
 Cohesion: 0.18
@@ -93,24 +95,24 @@ Cohesion: 0.09
 Nodes (19): Closeable, CloseableIterator, Comparator, Node, PriorityQueue, Override, Override, T (+11 more)
 
 ### Community 3 - "XLSX Writer (POI/SXSSF)"
-Cohesion: 0.12
-Nodes (21): BigDecimal, CellStyle, ColumnWidthEstimator, CreationHelper, Cell, Column, ColumnGroup, ColumnType (+13 more)
+Cohesion: 0.10
+Nodes (24): BigDecimal, CellStyle, ColumnWidthEstimator, CreationHelper, Serializable, Object, Cell, Column (+16 more)
 
 ### Community 4 - "XLSX Test Reader / Grid"
 Cohesion: 0.10
 Nodes (14): CellData, LocalDateTime, Runnable, DataProvider, List, Path, String, Cell (+6 more)
 
 ### Community 5 - "JDBC Adapter & DB Benchmark"
-Cohesion: 0.14
-Nodes (12): ResultSetRowMapper, DataProvider, Iterator, ResultSet, T, Predicate, ResultSet, String (+4 more)
+Cohesion: 0.10
+Nodes (16): DbBenchmark, Connection, ResultSetRowMapper, Path, String, DataProvider, Iterator, ResultSet (+8 more)
 
 ### Community 6 - "Row Comparator & Summary"
 Cohesion: 0.19
 Nodes (9): SortKey, Column, List, Object, Override, Row, String, SuppressWarnings (+1 more)
 
 ### Community 7 - "Demo & Employee Data"
-Cohesion: 0.06
-Nodes (25): ColumnGroup, Predicate, R, Serializable, SplitSheetNamer, String, Object, Column (+17 more)
+Cohesion: 0.08
+Nodes (21): ColumnGroup, Predicate, R, SplitSheetNamer, Column, ColumnGroup, ColumnType, Function (+13 more)
 
 ### Community 8 - "Row Codec (Serialization)"
 Cohesion: 0.23
@@ -121,7 +123,7 @@ Cohesion: 0.10
 Nodes (20): API documentation, Architecture (overview), Build & run, Column types & formats, Concepts, Concurrency / server operation, `DataProvider<T>` / `DataProviders`, Eclipse (+12 more)
 
 ### Community 10 - "Prefetching Pipeline (Parallel)"
-Cohesion: 0.20
+Cohesion: 0.19
 Nodes (6): ColumnType, Function, Object, String, T, Column
 
 ### Community 11 - "Data Access Exception"
@@ -129,8 +131,8 @@ Cohesion: 0.33
 Nodes (4): RuntimeException, String, Throwable, DataAccessException
 
 ### Community 12 - "Placeholder Resolution"
-Cohesion: 0.16
-Nodes (11): DbBenchmark, Connection, RenderJob, Path, String, DataProvider, Iterator, Row (+3 more)
+Cohesion: 0.31
+Nodes (7): RenderJob, DataProvider, Iterator, Row, SXSSFWorkbook, T, SheetRenderer
 
 ### Community 13 - "ResultSet Row Mapper"
 Cohesion: 0.28
@@ -181,36 +183,44 @@ Cohesion: 0.40
 Nodes (3): IllegalStateException, String, RowLimitExceededException
 
 ### Community 36 - "Community 36"
-Cohesion: 0.50
-Nodes (3): Citations, Operational notes, Overview
+Cohesion: 0.33
+Nodes (5): Citations, Operational notes, Overview, PrefetchingRowIterator: read/sort ∥ write, RowCodec: compact run-file serialization
 
 ### Community 37 - "Community 37"
-Cohesion: 0.50
-Nodes (3): Citations, Contract, Overview
+Cohesion: 0.40
+Nodes (4): Citations, Contract, Overview, Supporting types
 
 ### Community 38 - "Community 38"
 Cohesion: 0.50
 Nodes (3): Citations, Commands, Rules
 
+### Community 42 - "Community 42"
+Cohesion: 0.50
+Nodes (3): 2026-07-04, 2026-07-05, Update Log
+
+### Community 46 - "Community 46"
+Cohesion: 0.50
+Nodes (3): Citations, Schema, Überblick
+
 ## Knowledge Gaps
-- **92 isolated node(s):** `String`, `String`, `String`, `Info`, `Override` (+87 more)
+- **100 isolated node(s):** `String`, `String`, `String`, `Info`, `Override` (+95 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `XlsxBuilderTest` connect `Builder Test Suite` to `XLSX Test Reader / Grid`, `JDBC Adapter & DB Benchmark`, `Row Comparator & Summary`, `Demo & Employee Data`, `Row Codec (Serialization)`, `Prefetching Pipeline (Parallel)`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
+- **Why does `XlsxBuilderTest` connect `Builder Test Suite` to `XLSX Writer (POI/SXSSF)`, `XLSX Test Reader / Grid`, `JDBC Adapter & DB Benchmark`, `Row Comparator & Summary`, `Row Codec (Serialization)`, `Prefetching Pipeline (Parallel)`?**
+  _High betweenness centrality (0.039) - this node is a cross-community bridge._
 - **Why does `XlsxBuilder` connect `Demo & Employee Data` to `Builder Test Suite`, `Placeholder Resolution`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+  _High betweenness centrality (0.036) - this node is a cross-community bridge._
 - **What connects `String`, `String`, `String` to the rest of the system?**
-  _99 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _107 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Builder Test Suite` be split into smaller, more focused modules?**
-  _Cohesion score 0.12191807416035721 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1173992673992674 - nodes in this community are weakly interconnected._
 - **Should `External Merge Sort` be split into smaller, more focused modules?**
   _Cohesion score 0.09158186864014801 - nodes in this community are weakly interconnected._
 - **Should `XLSX Writer (POI/SXSSF)` be split into smaller, more focused modules?**
-  _Cohesion score 0.12109994711792703 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10485933503836317 - nodes in this community are weakly interconnected._
 - **Should `XLSX Test Reader / Grid` be split into smaller, more focused modules?**
   _Cohesion score 0.10158730158730159 - nodes in this community are weakly interconnected._
