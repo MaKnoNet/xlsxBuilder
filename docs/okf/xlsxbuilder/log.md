@@ -1,5 +1,12 @@
 # Update Log
 
+## 2026-07-06 (2)
+
+* **Update**: project conventions migrated from `CLAUDE.md` to `AGENTS.md` (vendor-neutral
+  standard, keeps instructions portable across different AI coding tools). `CLAUDE.md` is
+  now just a thin `@AGENTS.md` import. Affects the "single source of truth" references in
+  this [developer guide](/conventions/okf-entwicklerdoku.md).
+
 ## 2026-07-06
 
 * **Update**: `CLAUDE.md` routine tightened from "end-of-session" to "pre-commit" —

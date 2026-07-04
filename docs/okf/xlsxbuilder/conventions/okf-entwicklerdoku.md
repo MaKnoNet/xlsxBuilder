@@ -110,11 +110,13 @@ wo möglich, kuratiert wo Semantik gefragt ist.
 
 # Pre-Commit-Routine
 
-Die verbindliche Routine steht in **`CLAUDE.md`** unter „Knowledge Base (graphify + OKF)"
+Die verbindliche Routine steht in **`AGENTS.md`** unter „Knowledge Base (graphify + OKF)"
 — dort ist sie die Single Source of Truth, hier nur der Verweis, um Redundanz zu
-vermeiden. Kurzfassung: **vor jedem einzelnen Commit** mit Code-/Architekturänderungen
-(nicht erst am Sitzungsende) berührte Konzepte aktualisieren → `log.md`-Eintrag →
-`graphify update .` zur Kontrolle → erst dann committen, Doku und Code im selben Commit.
+vermeiden. (`CLAUDE.md` importiert `AGENTS.md` per `@AGENTS.md` — Claude Code liest die
+Routine also automatisch mit.) Kurzfassung: **vor jedem einzelnen Commit** mit
+Code-/Architekturänderungen (nicht erst am Sitzungsende) berührte Konzepte aktualisieren →
+`log.md`-Eintrag → `graphify update .` zur Kontrolle → erst dann committen, Doku und Code
+im selben Commit.
 
 # Bekannte Stolpersteine
 
