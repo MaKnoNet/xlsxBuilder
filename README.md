@@ -356,7 +356,7 @@ git worktree add ../xlsxbuilder-v1.0.0 v1.0.0
 ```
 
 **Before tagging a release:** refresh the OKF concepts + `docs/okf/xlsxbuilder/log.md`
-and run `graphify update .` (details: CLAUDE.md, section "Knowledge Base").
+and run `graphify update .` (details: AGENTS.md, section "Knowledge Base").
 For agents an MCP server is available: `python -m graphify.serve graphify-out/graph.json`.
 
 ## Eclipse
