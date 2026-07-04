@@ -18,3 +18,6 @@ gradlew   text eol=lf
 *.jar     binary
 *.zip     binary
 *.xlsx    binary
+
+# Team-Git-Hooks: immer LF, sonst scheitert sh unter Git fuer Windows
+.githooks/* text eol=lf

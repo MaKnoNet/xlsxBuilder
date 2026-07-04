@@ -324,6 +324,41 @@ DataProvider<T> → projection to Row(Object[]) → [optional] external merge so
 | `XlsxWriter` | writes a sheet via Apache POI SXSSF (streaming) |
 | `DataProvider` / `DataProviders` | data source + adapters |
 
+## Knowledge Base
+
+The repo carries an **automatically updated knowledge base**:
+
+| What | Where | Maintenance |
+|---|---|---|
+| Knowledge graph (code structure) | `graphify-out/graph.json`, report `GRAPH_REPORT.md`, interactive view **`graphify-out/graph.html`** (open in a browser) | automatic via pre-commit hook |
+| OKF bundle (curated concepts: architecture, components, conventions) | `docs/okf/xlsxbuilder/` (markdown + YAML frontmatter, [Open Knowledge Format v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)) | prose manually / via Claude sessions; `index.md` files are generated |
+
+**One-time activation after cloning** (also runs automatically with the first build):
+
+```bash
+./gradlew installGitHooks     # or manually: git config core.hooksPath .githooks
+```
+
+The hook updates the knowledge graph on every commit containing Java changes (deterministic,
+no LLM) and regenerates the `index.md` files on OKF changes. **It never blocks a commit** —
+if a tool is missing you only get a notice. Optional tooling:
+
+```bash
+uv tool install graphifyy     # graphify CLI (knowledge graph); Python 3 for index generation
+```
+
+**Inspect the knowledge state of a release** — the KB is ordinary repo content, every
+tag/branch carries its matching state:
+
+```bash
+git worktree add ../xlsxbuilder-v1.0.0 v1.0.0
+# then open ../xlsxbuilder-v1.0.0/graphify-out/graph.html or read docs/okf/
+```
+
+**Before tagging a release:** refresh the OKF concepts + `docs/okf/xlsxbuilder/log.md`
+and run `graphify update .` (details: CLAUDE.md, section "Knowledge Base").
+For agents an MCP server is available: `python -m graphify.serve graphify-out/graph.json`.
+
 ## Eclipse
 
 Import as an **Existing Gradle Project** (Buildship). Encoding and Java 21 compliance are preconfigured

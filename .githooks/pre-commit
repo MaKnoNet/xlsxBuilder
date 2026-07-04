@@ -1,0 +1,44 @@
+#!/bin/sh
+# Knowledge-Base-Hook (Team, versioniert; aktiviert via: ./gradlew installGitHooks).
+# Blockiert NIE einen Commit: jeder Fehler fuehrt zu einer Warnung, dann exit 0.
+#
+# 1) .java im Commit      -> graphify update (deterministischer AST-Rebuild, kein LLM)
+# 2) docs/okf/ im Commit  -> index.md-Dateien deterministisch regenerieren
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACMRD)
+
+# --- Wissensgraph: nur wenn Java-Dateien im Commit sind ---
+if printf '%s\n' "$STAGED" | grep -q '\.java$'; then
+    if command -v graphify >/dev/null 2>&1; then
+        echo "[kb] graphify update (AST-Rebuild) ..."
+        if graphify update . >/dev/null 2>&1; then
+            git add graphify-out/graph.json graphify-out/GRAPH_REPORT.md graphify-out/graph.html 2>/dev/null
+        else
+            echo "[kb] WARNUNG: graphify update fehlgeschlagen - Commit laeuft trotzdem durch."
+        fi
+    else
+        echo "[kb] Hinweis: graphify nicht installiert - Wissensgraph wird nicht aktualisiert."
+        echo "[kb] Installation: uv tool install graphifyy  (siehe README, Abschnitt Knowledge Base)"
+    fi
+fi
+
+# --- OKF-Indizes: nur wenn Bundle-Dateien im Commit sind ---
+if printf '%s\n' "$STAGED" | grep -q '^docs/okf/'; then
+    # Interpreter validieren statt nur finden: der Windows-Store-Alias-Stub
+    # (python3.exe in WindowsApps) besteht command -v, ist aber kein Python.
+    PY=""
+    for CANDIDATE in python3 python "py -3"; do
+        if $CANDIDATE -c "import sys" >/dev/null 2>&1; then PY=$CANDIDATE; break; fi
+    done
+    if [ -n "$PY" ]; then
+        if $PY tools/kb/generate_okf_index.py; then
+            git add docs/okf 2>/dev/null
+        else
+            echo "[kb] WARNUNG: OKF-Index-Generierung fehlgeschlagen - Commit laeuft trotzdem durch."
+        fi
+    else
+        echo "[kb] Hinweis: Python nicht gefunden - OKF-Indizes nicht regeneriert."
+    fi
+fi
+
+exit 0

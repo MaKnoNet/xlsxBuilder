@@ -24,3 +24,10 @@ employees.xlsx
 # Betriebssystem
 Thumbs.db
 .DS_Store
+
+# Knowledge Base (graphify): graph.json/GRAPH_REPORT.md/graph.html werden versioniert (Team-Wissen),
+# aber Zustands-/Cache-Dateien sind maschinenlokal (absolute Pfade, mtimes) und bleiben draußen.
+graphify-out/.graphify_*
+graphify-out/cache/
+graphify-out/manifest.json
+graphify-out/needs_update
