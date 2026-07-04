@@ -15,6 +15,12 @@ timestamp: '2026-07-04T17:45:00+02:00'
 external-merge-sort temp files for all sheets (per-sheet override:
 `XlsxBuilder.sortTempDir(Path)`).
 
+**Atomic write:** `write(Path)` first writes to a temp file (`*.part`) in the target directory
+and moves it onto the target path only after a successful write — a failed export never leaves
+a partial `.xlsx` behind and never clobbers a previously valid file. Note: POI's SXSSF row
+spill lives process-wide under `java.io.tmpdir`; only the library's own sort runs are
+relocatable via `tempDir`/`sortTempDir`.
+
 # Examples
 
 ```java

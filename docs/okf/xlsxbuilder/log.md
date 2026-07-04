@@ -2,6 +2,12 @@
 
 ## 2026-07-04
 
+* **Update**: Rebased onto current `main`; concepts refreshed for the new features —
+  atomic `write(Path)` (temp file + move) in
+  [WorkbookBuilder](/components/workbook-builder.md), Excel row-limit handling
+  (`RowLimitExceededException` / `splitOnRowLimit`) in
+  [XlsxBuilder](/components/xlsx-builder.md); knowledge graph rebuilt
+  (591 nodes, 1775 edges, 46 communities).
 * **Initialization**: OKF bundle created — components
   ([XlsxBuilder](/components/xlsx-builder.md),
   [WorkbookBuilder](/components/workbook-builder.md),

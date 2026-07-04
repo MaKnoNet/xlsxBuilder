@@ -28,6 +28,12 @@ headers via `columnGroups(...)`. Execution (projection/sort/write) is delegated 
 Supported `ColumnType`s: `STRING, INTEGER, LONG, DOUBLE, DECIMAL, BOOLEAN, DATE, DATETIME,
 TIME, FORMULA`.
 
+**Excel row limit:** a worksheet holds at most 1,048,576 rows. By default exceeding the limit
+throws a `RowLimitExceededException` (fail fast, no partial file thanks to the atomic write in
+[WorkbookBuilder](/components/workbook-builder.md)); with `splitOnRowLimit(true)` the table
+transparently continues on follow-up sheets (`"Name (2)"`, ... — customizable via
+`splitSheetNamer`).
+
 # Examples
 
 ```java
