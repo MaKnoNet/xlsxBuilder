@@ -584,4 +584,3 @@ public final class XlsxBuilder<T> {
         };
     }
 }
-// KB-Verifikationstest (wird revertiert)
