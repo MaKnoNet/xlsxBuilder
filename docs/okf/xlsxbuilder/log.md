@@ -2,6 +2,10 @@
 
 ## 2026-07-06
 
+* **Update**: `CLAUDE.md` routine tightened from "end-of-session" to "pre-commit" —
+  affected OKF concepts are now updated before every single commit with code/
+  architecture changes instead of batched at session end;
+  [developer guide](/conventions/okf-entwicklerdoku.md) adjusted accordingly.
 * **Creation**: new concept
   [Entwicklerdoku – OKF-Wissensdatenbank pflegen](/conventions/okf-entwicklerdoku.md) —
   bundle structure, frontmatter convention, step-by-step "add a new concept",

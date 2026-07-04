@@ -93,7 +93,7 @@ eine Warnung, der Commit läuft trotzdem durch.
 **Was der Hook bewusst NICHT macht:** die eigentliche Konzept-**Prosa**
 (Architekturbeschreibung, Sicherheitshinweise, Beispiele) schreiben. Das ist und bleibt
 Handarbeit — durch euch oder durch eine Claude-Code-Session (siehe
-End-of-Session-Routine unten). Das ist die bewusste **Hybrid-Strategie**: deterministisch
+Pre-Commit-Routine unten). Das ist die bewusste **Hybrid-Strategie**: deterministisch
 wo möglich, kuratiert wo Semantik gefragt ist.
 
 # Graphify-Zusammenspiel
@@ -108,13 +108,13 @@ wo möglich, kuratiert wo Semantik gefragt ist.
 - Der aktuelle Graph lässt sich auch direkt im Browser ansehen:
   `graphify-out/graph.html`.
 
-# End-of-Session-Routine
+# Pre-Commit-Routine
 
-Die verbindliche Routine (Pflicht bei Code-/Architekturänderungen) steht in
-**`CLAUDE.md`** unter „Knowledge Base (graphify + OKF)" — dort ist sie die
-Single Source of Truth, hier nur der Verweis, um Redundanz zu vermeiden. Kurzfassung:
-berührte Konzepte aktualisieren → `log.md`-Eintrag → `graphify update .` zur Kontrolle →
-zusammen mit den Code-Änderungen committen.
+Die verbindliche Routine steht in **`CLAUDE.md`** unter „Knowledge Base (graphify + OKF)"
+— dort ist sie die Single Source of Truth, hier nur der Verweis, um Redundanz zu
+vermeiden. Kurzfassung: **vor jedem einzelnen Commit** mit Code-/Architekturänderungen
+(nicht erst am Sitzungsende) berührte Konzepte aktualisieren → `log.md`-Eintrag →
+`graphify update .` zur Kontrolle → erst dann committen, Doku und Code im selben Commit.
 
 # Bekannte Stolpersteine
 

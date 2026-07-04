@@ -21,19 +21,24 @@ Bei Fragen zur Codebasis (Struktur, Abhängigkeiten, „wo ist X?", „was nutzt
 Wissensgraphen befragen (`graphify query "<Frage>"` bzw. `GRAPH_REPORT.md`), dann erst frei
 suchen.
 
-## End-of-Session-Routine (Pflicht bei Code-/Architekturänderungen)
+## Pre-Commit-Routine (Pflicht vor JEDEM Commit mit Code-/Architekturänderungen)
 
-Vor Abschluss einer Session, die Code oder Architektur geändert hat:
+Nicht erst am Sitzungsende bündeln – vor **jedem einzelnen** Commit, der Code oder
+Architektur ändert:
 
 1. **OKF-Konzepte aktualisieren:** alle Konzepte unter `docs/okf/xlsxbuilder/`, die von den
-   Änderungen berührt sind (neue Komponente → neues Konzept mit `type`-Frontmatter;
-   API-Änderung → `# Schema` anpassen; Muster-/Konventionsänderung → `architecture/` bzw.
-   `conventions/`).
+   Änderungen dieses Commits berührt sind (neue Komponente → neues Konzept mit
+   `type`-Frontmatter; API-Änderung → `# Schema` anpassen; Muster-/Konventionsänderung →
+   `architecture/` bzw. `conventions/`).
 2. **`docs/okf/xlsxbuilder/log.md`:** Eintrag unter dem heutigen ISO-Datum ergänzen
    (neueste zuerst).
 3. **`graphify update .`** ausführen (deterministisch, kein LLM nötig – Kontrolle vor dem
    Commit; der Hook macht es sonst beim Commit).
-4. Alles zusammen mit den Code-Änderungen committen.
+4. **Erst dann committen** – Doku-Änderung und Code-Änderung landen im selben Commit,
+   nie in getrennten "Doku hinterher"-Commits.
+
+Trivial-Commits ohne Code-/Architekturrelevanz (Formatierung, reine Kommentar-Tippfehler
+o. Ä.) sind von dieser Routine ausgenommen.
 
 Frontmatter-Minimum je Konzeptdatei: `type` (Pflicht), `title`, `description`, `resource`
 (repo-relativer Pfad), `tags`, `timestamp`. Querverweise bundle-root-absolut,
