@@ -1,5 +1,21 @@
 # Update Log
 
+## 2026-07-08
+
+* **Restructure**: `api-reference/` von einer flachen Datei pro Klasse auf **einen
+  Ordner pro Klasse mit einer Datei pro Methode** umgestellt (26 Klassen-Ordner). Jede
+  Methoden-Überladung (gleicher Name, andere Signatur, z. B. `Placeholders.resolve(...)`,
+  `WorkbookBuilder.write(...)`) landet zusammen in einer Datei. Alle Konstruktoren einer
+  Klasse in `constructor.md` gebündelt. Vier neue Pflichtabschnitte je Klassen-
+  Übersichtsdatei ergänzt: `# Felder` (jedes Feld mit Bedeutung/null-Verhalten),
+  `# Thread-Safety`, `# Serialisierung` (`serialVersionUID` bei `Row`,
+  `DataAccessException`, `RowLimitExceededException` — alle `1L`) und
+  `# equals/hashCode/toString` (Records komponentenbasiert, sonst Identitätssemantik von
+  `Object` explizit festgehalten). Dabei entdeckt und nachgetragen: die
+  paketinterne Test-Seam-Methode `maxRowsPerSheet(int)` fehlte komplett in der alten
+  `xlsx-builder.md`. Alle Cross-Links im Bundle auf die neuen Pfade migriert, teils
+  methodengenau statt nur auf die Klassen-Übersicht verlinkt.
+
 ## 2026-07-07 (2)
 
 * **Update**: alle 26 `api-reference/*.md`-Dateien um einen verifizierten
