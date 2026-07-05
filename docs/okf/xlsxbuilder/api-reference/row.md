@@ -19,6 +19,20 @@ werden intern einmal pro Datensatz auf dem Hot Path erzeugt und nie geteilt (kei
 Aliasing-Risiko in der aktuellen Nutzung, aber auch keine defensive Kopie beim Konstruieren
 oder Lesen).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `final class Row implements Serializable` — implementiert das
+JDK-Marker-Interface `java.io.Serializable` direkt; keine eigene Oberklasse außer
+`java.lang.Object`.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; `final`, daher nicht
+erweiterbar. Wird als Feld-/Rückgabetyp u. a. in
+[RowComparator](/api-reference/row-comparator.md) (`Comparator<Row>`),
+[CloseableIterator](/api-reference/closeable-iterator.md)`<Row>`,
+[RowCodec](/api-reference/row-codec.md) und
+[PrefetchingRowIterator](/api-reference/prefetching-row-iterator.md) verwendet — reine
+Typparameter-/Feldverwendung, keine Vererbungsbeziehung.
+
 # Konstruktoren
 
 ## `Row(Object[] values)`

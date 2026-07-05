@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-07-07 (2)
+
+* **Update**: alle 26 `api-reference/*.md`-Dateien um einen verifizierten
+  Abschnitt `# Vererbungshierarchie` ergänzt (Superklasse/Interfaces vorwärts,
+  bekannte Implementierer/Subklassen rückwärts, per Grep über den gesamten
+  Quellbaum geprüft). Bemerkenswerteste Befunde: `DataProvider` — zentrales
+  Interface der Bibliothek — hat **keine** benannte Implementierung, nur
+  anonyme Klassen in `DataProviders`; `ResultSetRowMapper`/`SplitSheetNamer`
+  haben ebenfalls null Implementierer (nur Lambda-Nutzung); `ExternalMergeSort`
+  enthält drei private verschachtelte Klassen mit eigenen `implements`-Klauseln.
+
 ## 2026-07-07
 
 * **Creation**: new `api-reference/` category (26 files, one per class in

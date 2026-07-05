@@ -18,6 +18,17 @@ isoliert von einer späteren Rekonfiguration des Builders (relevant für den
 Multi-User-/Multi-Thread-Zielbetrieb, siehe
 [Concurrency contract](/architecture/concurrency-contract.md)).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `final class Column<T>` — keine `extends`-/`implements`-Klausel
+im Quelltext; erweitert implizit nur `java.lang.Object` und implementiert keine Interfaces (kein
+`Comparable`, kein `Serializable`).
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts — `final`, daher grundsätzlich
+nicht erweiterbar, und kein anderer Typ implementiert `Column` (es ist keine Schnittstelle). Wird
+in `XlsxWriter`, `RowComparator`, `XlsxBuilder` u. a. lediglich als **Feld-/Parametertyp**
+verwendet — das ist Verwendung, keine Vererbungsbeziehung, und daher hier nicht aufgeführt.
+
 # Konstruktoren
 
 ## `Column(String name, ColumnType type, Function<? super T, ?> extractor)`

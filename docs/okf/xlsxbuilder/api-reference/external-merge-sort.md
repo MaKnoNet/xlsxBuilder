@@ -24,6 +24,22 @@ veränderlichen Zustand (`runFiles`, `tempDir`, Zähler) und ist für einmalige,
 Nutzung durch einen Aufrufer gedacht (kein `synchronized`, keine defensiven Kopien für
 Nebenläufigkeit) — passend zum Single-Use-Charakter der Bibliothek.
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `final class ExternalMergeSort implements Closeable` —
+implementiert das JDK-Interface `java.io.Closeable` direkt; keine eigene Oberklasse außer
+`java.lang.Object`.
+
+Diese Datei/Klasse enthält außerdem drei private statische Nested Classes mit eigenen
+Vererbungsbeziehungen (nicht separat in `api-reference/` dokumentiert, da paketprivat/nested):
+- `private static final class RunReader implements Closeable`
+- `private static final class MergingIterator implements java.util.Iterator<Row>`
+- `private static final class MergeIterator implements CloseableIterator<Row>` — siehe
+  [CloseableIterator](/api-reference/closeable-iterator.md) für dessen Implementierer-Liste.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts für `ExternalMergeSort` selbst
+(`final`, kein anderer Typ implementiert oder erweitert sie — verifiziert per Grep).
+
 # Konstruktoren
 
 ## `ExternalMergeSort(Comparator<Row> comparator, int chunkSize)`

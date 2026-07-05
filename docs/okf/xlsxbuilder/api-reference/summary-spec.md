@@ -13,6 +13,16 @@ timestamp: '2026-07-07T10:00:00+02:00'
 useFormula)` - paketintern. Konfiguration der optionalen Summenzeile. Naeher beschrieben in
 [Konfigurationsobjekte](/components/configuration-models.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `record SummarySpec(boolean[] sum, int labelColumnIndex,
+String labelText, boolean useFormula) {...}` — erweitert implizit `java.lang.Record`; keine
+`implements`-Klausel im Quelltext.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; Records sind implizit `final`.
+Wird als Feld-/Parametertyp in [RenderJob](/api-reference/render-job.md) und
+[XlsxWriter](/api-reference/xlsx-writer.md) verwendet — Komposition, keine Vererbung.
+
 # Konstruktoren
 
 ## Kompakter Konstruktor `SummarySpec { sum = sum.clone(); }`

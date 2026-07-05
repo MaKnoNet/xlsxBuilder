@@ -13,6 +13,16 @@ timestamp: '2026-07-07T10:00:00+02:00'
 eines Sheets (`.xlsx`) und hält die Writer-Signaturen schlank. Näher beschrieben in
 [Konfigurationsobjekte](/components/configuration-models.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `record SheetWriteOptions(...)` — erweitert implizit
+`java.lang.Record`; keine `implements`-Klausel im Quelltext.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; Records sind implizit `final`.
+Referenziert selbst [ColumnGroup](/api-reference/column-group.md) und
+[SplitSheetNamer](/api-reference/split-sheet-namer.md) als Komponenten-Typen — das ist
+Komposition (Feldtyp), keine Vererbung.
+
 # Konstruktoren
 
 ## Kompakter Konstruktor `SheetWriteOptions { ... }`

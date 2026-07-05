@@ -23,6 +23,17 @@ aber bewusst **nicht** dedupliziert: ein bereits existierender Name schlägt mit
 behält. Näher beschrieben in
 [Konfigurationsobjekte](/components/configuration-models.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `@FunctionalInterface public interface SplitSheetNamer` —
+keine `extends`-Klausel, keine Oberklasse.
+
+**Rückwärts:** Keine Klasse im Projekt implementiert dieses Interface namentlich (verifiziert per
+Grep: keine Treffer für `implements.*SplitSheetNamer`). Wird als Feld-/Parametertyp in
+[SheetWriteOptions](/api-reference/sheet-write-options.md) und
+`XlsxBuilder.splitSheetNamer(SplitSheetNamer)` verwendet; Aufrufer übergeben typischerweise eine
+Lambda ohne benannte Implementierungsklasse.
+
 # Konstruktoren
 
 Keine — funktionales Interface ohne Konstruktor.

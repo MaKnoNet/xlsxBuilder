@@ -15,6 +15,14 @@ unverändert **sichtbar** stehen statt still verschluckt zu werden — bewusste 
 siehe [Konfigurationsobjekte](/components/configuration-models.md). Zustandslos bis auf das
 statische, unveränderliche `Pattern TOKEN` — thread-sicher aufrufbar.
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `final class Placeholders` — keine
+`extends`-/`implements`-Klausel; erweitert implizit nur `java.lang.Object`.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; `final`, nicht instanziierbar
+(privater Konstruktor), daher auch praktisch keine Unterklasse möglich.
+
 # Konstruktoren
 
 ## `private Placeholders()`

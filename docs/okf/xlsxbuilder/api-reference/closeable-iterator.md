@@ -20,6 +20,23 @@ Konkrete Implementierungen: `ExternalMergeSort.MergeIterator`,
 Kein eigener Thread-Safety-Vertrag dokumentiert; wie die meisten Iteratoren dieser Bibliothek
 ist von Single-Thread-, Single-Use-Gebrauch auszugehen (ein Durchlauf, ein Thread).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `public interface CloseableIterator<T> extends Iterator<T>, Closeable`
+— erweitert zwei JDK-Interfaces: `java.util.Iterator<T>` und `java.io.Closeable`; keine eigene
+Oberklasse (Interfaces haben keine Superklasse).
+
+**Rückwärts (Implementierer innerhalb dieses Projekts, verifiziert per Grep):**
+- [PrefetchingRowIterator](/api-reference/prefetching-row-iterator.md) — `final class
+  PrefetchingRowIterator implements CloseableIterator<Row>`.
+- `ExternalMergeSort.MergeIterator` (private statische Nested Class innerhalb von
+  [ExternalMergeSort](/api-reference/external-merge-sort.md)) — `private static final class
+  MergeIterator implements CloseableIterator<Row>`. Keine eigene `api-reference/`-Datei, da
+  paketprivat und nicht separat dokumentiert.
+
+Keine weiteren Implementierer gefunden (grep über `src/main/java/de/makno/xlsxbuilder/**/*.java`
+nach `implements.*CloseableIterator`).
+
 # Methoden
 
 ## `void close()`

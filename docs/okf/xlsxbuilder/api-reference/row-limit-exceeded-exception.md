@@ -17,6 +17,18 @@ und das Sheet nicht auf Split konfiguriert ist. Mit
 Folge-Sheets fortgesetzt. Besitzt eine explizite `serialVersionUID = 1L`. Siehe
 [Fehlerbehandlung](/architecture/error-handling.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `public class RowLimitExceededException extends
+IllegalStateException` (JDK-Klasse `java.lang.IllegalStateException`, selbst eine Unterklasse von
+`RuntimeException`) — implementiert keine zusätzlichen Interfaces selbst.
+
+**Rückwärts:** Keine Unterklassen innerhalb dieses Projekts (verifiziert: `grep -rn "extends
+RowLimitExceededException"` über den gesamten Quellbaum liefert keinen Treffer). Wird von
+[XlsxWriter](/api-reference/xlsx-writer.md) geworfen, wenn ein Sheet das Excel-Zeilenlimit
+überschreitet und kein Split konfiguriert ist — das ist Verwendung (Werfen einer Exception-Instanz),
+keine Vererbungsbeziehung.
+
 # Konstruktoren
 
 ## `RowLimitExceededException(String message)`

@@ -15,6 +15,15 @@ timestamp: '2026-07-07T10:00:00+02:00'
 inklusive Null-Behandlung negiert). Enum-Konstanten sind implizit unveränderlich und
 thread-sicher.
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `public enum SortOrder { ASC, DESC }` — erweitert implizit
+`java.lang.Enum<SortOrder>`; keine explizit implementierten Interfaces im Quelltext.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts — Enum-Typen sind implizit
+`final`. Wird als Komponente von [SortKey](/api-reference/sort-key.md) und als Parameter in
+`XlsxBuilder.sortBy(String, SortOrder)` verwendet — keine Vererbungsbeziehung.
+
 # Konstruktoren
 
 Keine öffentlichen Konstruktoren (Enum ohne eigenen Enum-Konstruktor — anders als

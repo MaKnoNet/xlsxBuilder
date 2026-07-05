@@ -21,6 +21,17 @@ Der Formeltext wird wörtlich als Excel-Formel geschrieben (siehe
 aus nicht vertrauenswürdiger Eingabe zusammensetzen (Formel-Injection). Für Text, der nur wie
 eine Formel aussieht, `STRING` verwenden.
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `public enum ColumnType` — Enums erweitern implizit
+`java.lang.Enum<ColumnType>`; keine explizit implementierten Interfaces im Quelltext (über
+`Enum` werden `Comparable<ColumnType>` und `Serializable` transitiv mitgebracht, aber nicht selbst
+deklariert).
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts — Enum-Typen sind implizit
+`final` und nicht erweiterbar. Wird u. a. in `Column`, `XlsxWriter` als Feld-/Parametertyp
+verwendet — keine Vererbungsbeziehung.
+
 # Konstruktoren
 
 Kein öffentlicher Konstruktor (Enum). Der private Enum-Konstruktor `ColumnType(boolean

@@ -16,6 +16,17 @@ thread-sicher aufrufbar; die zurückgegebenen `DataProvider`-Instanzen sind jedo
 gesamte `DataProvider`-Vertrag — vorwärts-lesbar/single-use und **nicht** thread-sicher (siehe
 [Concurrency contract](/architecture/concurrency-contract.md)).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `public final class DataProviders` — keine
+`extends`-/`implements`-Klausel; erweitert implizit nur `java.lang.Object`.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; `final`, daher nicht
+erweiterbar. Die Klasse selbst **erzeugt** anonyme
+[DataProvider](/api-reference/data-provider.md)-Implementierungen (siehe dortige
+Vererbungssektion) — das ist jedoch eine Fabrik-Beziehung (Objekterzeugung), keine
+Vererbungsbeziehung von `DataProviders` selbst.
+
 # Konstruktoren
 
 ## `private DataProviders()`

@@ -15,6 +15,19 @@ Spalten der **aktuellen** Zeile (z. B. `rs.getString(...)`) und ruft **nicht** `
 ([DataProviders.ofResultSet](/api-reference/data-providers.md)). Siehe auch
 [DataProvider (Komponente) – Supporting types](/components/data-provider.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `@FunctionalInterface public interface
+ResultSetRowMapper<T>` — keine `extends`-Klausel, keine Oberklasse (reines funktionales
+Top-Level-Interface).
+
+**Rückwärts:** Keine Klasse im Projekt implementiert dieses Interface namentlich; es wird
+ausschließlich als **Lambda-/Parametertyp** in
+[DataProviders](/api-reference/data-providers.md)`.ofResultSet(ResultSet,
+ResultSetRowMapper<? extends T>)` konsumiert — Aufrufer übergeben typischerweise eine Lambda oder
+Methodenreferenz, keine benannte Implementierungsklasse existiert im Quellbaum (verifiziert per
+Grep nach `implements.*ResultSetRowMapper`, keine Treffer).
+
 # Konstruktoren
 
 Keine — funktionales Interface ohne Konstruktor.

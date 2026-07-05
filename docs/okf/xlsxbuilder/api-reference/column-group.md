@@ -15,6 +15,16 @@ Zelle verschmolzen). Siehe [XlsxBuilder.columnGroups(List)](/api-reference/xlsx-
 die Verwendung. Näher beschrieben in
 [Konfigurationsobjekte](/components/configuration-models.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `public record ColumnGroup(String label, int span)` — Records
+erweitern implizit `java.lang.Record` (nicht `Object` direkt) und implementieren keine
+Interfaces im Quelltext dieser Deklaration.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; Records sind implizit `final`
+und können nicht weiter abgeleitet werden. Wird in `XlsxBuilder.columnGroups(List<ColumnGroup>)`
+nur als **Parametertyp** verwendet — keine Vererbungsbeziehung.
+
 # Konstruktoren
 
 ## Kompakter Konstruktor `ColumnGroup(String label, int span)`

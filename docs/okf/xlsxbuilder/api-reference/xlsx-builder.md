@@ -21,6 +21,16 @@ Render-/Schreibversuch (`renderInto`, intern über `WorkbookBuilder.write`) wirf
 `IllegalStateException`, weil die Datenquelle vorwärts-lesbar/single-use ist. Siehe
 [Concurrency contract](/architecture/concurrency-contract.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `public final class XlsxBuilder<T>` — keine
+`extends`-/`implements`-Klausel; erweitert implizit nur `java.lang.Object`.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; `final`, daher nicht
+erweiterbar. Wird von [WorkbookBuilder](/api-reference/workbook-builder.md)`.sheet(XlsxBuilder<?>)`
+als Feldtyp (`List<XlsxBuilder<?>>`) referenziert — Komposition/Aggregation, keine
+Vererbungsbeziehung.
+
 # Konstruktoren
 
 ## `private XlsxBuilder()`

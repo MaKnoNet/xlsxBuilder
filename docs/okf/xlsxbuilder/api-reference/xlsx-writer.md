@@ -25,6 +25,21 @@ inklusive Titel-/Gruppen-/Kopfzeilen sowie der für Summenzeile/Fußzeilen reser
 den Zustand, der sich über Teil-Sheets erstreckt (Styles, Breiten, Summen, Datenbereiche) —
 nicht wiederverwendbar für ein zweites logisches Sheet.
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `final class XlsxWriter` — keine
+`extends`-/`implements`-Klausel; erweitert implizit nur `java.lang.Object`.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; `final`, daher nicht
+erweiterbar. Die private Nested Class `ColumnWidthEstimator` ist ein eigenständiges Hilfsobjekt
+ohne `extends`/`implements`-Klausel (keine eigene Vererbungsbeziehung, kein separates
+`api-reference/`-Dokument, da paketprivat/nested). `XlsxWriter` referenziert
+[Column](/api-reference/column.md), [Row](/api-reference/row.md),
+[SummarySpec](/api-reference/summary-spec.md), [SheetWriteOptions](/api-reference/sheet-write-options.md)
+und [SplitSheetNamer](/api-reference/split-sheet-namer.md) als Feld-/Parametertypen — reine
+Verwendung, keine Vererbung. Wirft [RowLimitExceededException](/api-reference/row-limit-exceeded-exception.md),
+das ist ebenfalls Verwendung, keine Vererbungsbeziehung.
+
 # Konstruktoren
 
 ## `private XlsxWriter(SXSSFWorkbook wb, String sheetName, List<? extends Column<?>> columns, SummarySpec summary, SheetWriteOptions layout)`

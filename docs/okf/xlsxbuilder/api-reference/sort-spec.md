@@ -13,6 +13,16 @@ timestamp: '2026-07-07T10:00:00+02:00'
 Unveränderliche Sortier-Konfiguration: leere `sortKeys` bedeutet "nicht sortieren". Näher
 beschrieben in [Konfigurationsobjekte](/components/configuration-models.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `record SortSpec(List<SortKey> sortKeys, int sortChunkSize,
+Path sortTempDir) {}` — erweitert implizit `java.lang.Record`; keine `implements`-Klausel im
+Quelltext.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; Records sind implizit `final`.
+Referenziert [SortKey](/api-reference/sort-key.md) als Komponenten-Typ (Komposition, keine
+Vererbung).
+
 # Konstruktoren
 
 ## Kanonischer Record-Konstruktor (kein kompakter Validierungs-Konstruktor im Quelltext)

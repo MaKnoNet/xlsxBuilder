@@ -23,6 +23,19 @@ Thread-Interrupts respektieren. `close()` unterbricht den Producer und wartet bi
 länger, liest der Producer die Quelle unter Umständen weiter, während der Aufrufer sie bereits
 schließt — in diesem Fall wird eine Warnung geloggt (best-effort-Stop statt stillem Versagen).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `final class PrefetchingRowIterator implements
+CloseableIterator<Row>` — implementiert das projekteigene Interface
+[CloseableIterator](/api-reference/closeable-iterator.md) (das seinerseits `Iterator<T>` und
+`Closeable` erweitert); keine eigene Oberklasse außer `java.lang.Object`.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; `final`, daher nicht
+erweiterbar, und kein anderer Typ implementiert `PrefetchingRowIterator` (es ist keine
+Schnittstelle). Siehe [CloseableIterator](/api-reference/closeable-iterator.md) für die
+vollständige Implementierer-Liste dieses gemeinsamen Interfaces (u. a. auch
+`ExternalMergeSort.MergeIterator`).
+
 # Konstruktoren
 
 ## `PrefetchingRowIterator(Iterator<Row> source)`

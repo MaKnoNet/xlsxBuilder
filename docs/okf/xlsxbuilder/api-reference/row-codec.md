@@ -29,6 +29,14 @@ Byte-Array (String/BigDecimal-Betrag/Java-Blob) **vor** der Allokation — eine 
 manipulierte Länge (negativ oder `Integer.MAX_VALUE`) wird dadurch zu einer sauberen
 `IOException` statt zu `NegativeArraySizeException`/`OutOfMemoryError`.
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `final class RowCodec` — keine
+`extends`-/`implements`-Klausel; erweitert implizit nur `java.lang.Object`.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; `final`, nicht instanziierbar
+(privater Konstruktor).
+
 # Konstruktoren
 
 ## `private RowCodec()`

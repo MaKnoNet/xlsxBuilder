@@ -21,6 +21,14 @@ zur Konfigurationsseite ([XlsxBuilder](/api-reference/xlsx-builder.md)).
 einmal konsumiert und vom Renderer selbst geschlossen (`try (DataProvider<T> provider =
 job.dataProvider())`).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `final class SheetRenderer` — keine
+`extends`-/`implements`-Klausel; erweitert implizit nur `java.lang.Object`.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; `final`, nicht instanziierbar
+(privater Konstruktor).
+
 # Konstruktoren
 
 ## `private SheetRenderer()`

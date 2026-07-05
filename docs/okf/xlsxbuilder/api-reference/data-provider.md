@@ -17,6 +17,19 @@ vollständig in den Speicher passende Datenmengen verarbeitet werden können (z.
 teilen** — eigene Quelle pro Request. Fabrikmethoden dafür: siehe
 [DataProviders](/api-reference/data-providers.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `public interface DataProvider<T> extends Closeable` —
+erweitert das JDK-Interface `java.io.Closeable`; keine eigene Oberklasse.
+
+**Rückwärts (Implementierer innerhalb dieses Projekts, verifiziert per Grep über
+`implements.*DataProvider`/`extends.*DataProvider`):** Es gibt **keine benannte** Klasse, die
+`DataProvider` implementiert — alle Implementierungen sind **anonyme Klassen** innerhalb von
+[DataProviders](/api-reference/data-providers.md) (`ofIterator`, `ofIterable`, `ofStream`,
+`ofResultSet` geben jeweils `new DataProvider<T>() { ... }` zurück). Diese anonymen
+Implementierungen haben keine eigene `api-reference/`-Datei, da sie nicht separat benannt/exportiert
+sind. Kein anderer Produktionscode im Projekt implementiert dieses Interface direkt.
+
 # Konstruktoren
 
 Keine — Interface ohne Konstruktor.

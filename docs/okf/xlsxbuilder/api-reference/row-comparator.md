@@ -19,6 +19,17 @@ einsortiert. `DESC` negiert den gesamten Vergleich (inklusive der Null-Behandlun
 `SortOrder.DESC` `null`-Werte **zuerst** erscheinen — die konventionelle Konsequenz der
 Umkehrung eines "nulls-last"-Comparators.
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `final class RowComparator implements Comparator<Row>` —
+implementiert das JDK-Funktionsinterface `java.util.Comparator<Row>` direkt; keine eigene
+Oberklasse außer `java.lang.Object`.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; `final`, daher nicht
+erweiterbar, und kein anderer Typ implementiert `RowComparator` (es ist keine Schnittstelle). Wird
+in [ExternalMergeSort](/api-reference/external-merge-sort.md) als `Comparator<Row>`-Parameter
+verwendet — Verwendung, keine Vererbung.
+
 # Konstruktoren
 
 ## `RowComparator(List<? extends Column<?>> columns, List<SortKey> sortKeys)`

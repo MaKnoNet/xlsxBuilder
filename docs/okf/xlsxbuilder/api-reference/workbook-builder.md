@@ -22,6 +22,15 @@ niemals dieselbe Datei nebenlaeufig beschreiben. Ein zweiter `write(...)`-Aufruf
 Instanz wirft `IllegalStateException` (Flag `written`, siehe unten). Siehe
 [Concurrency contract](/architecture/concurrency-contract.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `public final class WorkbookBuilder` — keine
+`extends`-/`implements`-Klausel; erweitert implizit nur `java.lang.Object`.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; `final`, daher nicht
+erweiterbar. Referenziert [XlsxBuilder](/api-reference/xlsx-builder.md) als Feldtyp (`List<
+XlsxBuilder<?>>`) — Komposition/Aggregation, keine Vererbungsbeziehung.
+
 # Konstruktoren
 
 ## `private WorkbookBuilder()`

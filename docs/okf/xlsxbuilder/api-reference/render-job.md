@@ -14,6 +14,15 @@ timestamp: '2026-07-07T10:00:00+02:00'
 ([SheetRenderer](/api-reference/sheet-renderer.md)). Siehe auch
 [DataProvider (Komponente) – Supporting types](/components/data-provider.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `record RenderJob<T>(...)` — erweitert implizit
+`java.lang.Record`; keine `implements`-Klausel im Quelltext.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; Records sind implizit `final`.
+Wird nur als Rückgabe-/Parametertyp zwischen `XlsxBuilder` und `SheetRenderer` verwendet — keine
+Vererbungsbeziehung.
+
 # Konstruktoren
 
 ## Kanonischer Record-Konstruktor `RenderJob(String sheetName, List<Column<T>> columns, Predicate<? super T> filter, DataProvider<T> dataProvider, SortSpec sort, SummarySpec summary, SheetWriteOptions layout, boolean parallel)`

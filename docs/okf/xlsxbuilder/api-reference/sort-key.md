@@ -14,6 +14,16 @@ in einer Liste (siehe [XlsxBuilder.sortBy](/api-reference/xlsx-builder.md)) erge
 mehrstufige Sortierung, ausgewertet von
 [RowComparator](/api-reference/row-comparator.md).
 
+# Vererbungshierarchie
+
+**Vorwärts (eigene Deklaration):** `public record SortKey(String columnName, SortOrder order)` —
+erweitert implizit `java.lang.Record`; keine `implements`-Klausel im Quelltext.
+
+**Rückwärts:** Keine Ober-/Unterklassen innerhalb dieses Projekts; Records sind implizit `final`.
+Referenziert [SortOrder](/api-reference/sort-order.md) als Komponenten-Typ (Komposition, keine
+Vererbung). Wird als Element-/Parametertyp in `XlsxBuilder.sortBy(...)` und
+[RowComparator](/api-reference/row-comparator.md) verwendet — ebenfalls reine Verwendung.
+
 # Konstruktoren
 
 ## Kompakter Konstruktor `SortKey { ... }`
