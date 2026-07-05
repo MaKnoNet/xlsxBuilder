@@ -1,5 +1,22 @@
 # Update Log
 
+## 2026-07-07
+
+* **Creation**: new `api-reference/` category (26 files, one per class in
+  `src/main/java/de/makno/xlsxbuilder/`) — exhaustive, code-verified constructor/method
+  reference (parameters, null-handling, return semantics, actually-thrown exceptions),
+  complementing the narrative `components/`/`architecture/` docs. Cross-checked against
+  the real implementation rather than trusting Javadoc comments blindly; found and
+  corrected 10 discrepancies between Javadoc claims and actual behavior, e.g. missing
+  `Objects.requireNonNull` checks in `ExternalMergeSort`/`Placeholders`/`RowComparator`,
+  an undocumented fallback in `XlsxWriter.writeSummaryRow` (formula mode silently
+  precomputes when there are zero data rows), and a misleading shared error message
+  across `XlsxBuilder.ofType`/`formatForType`/`nullText`/`convertToColumnType`. Full
+  details in the respective `api-reference/*.md` files.
+* **Update**: [Entwicklerdoku](/conventions/okf-entwicklerdoku.md) und `AGENTS.md`
+  um die `api-reference/`-Konvention (Zweck, Abgrenzung zu `components/`, Pflicht zur
+  Code-Verifikation) ergänzt.
+
 ## 2026-07-06 (2)
 
 * **Update**: project conventions migrated from `CLAUDE.md` to `AGENTS.md` (vendor-neutral

@@ -28,8 +28,11 @@ Architektur ändert:
 
 1. **OKF-Konzepte aktualisieren:** alle Konzepte unter `docs/okf/xlsxbuilder/`, die von den
    Änderungen dieses Commits berührt sind (neue Komponente → neues Konzept mit
-   `type`-Frontmatter; API-Änderung → `# Schema` anpassen; Muster-/Konventionsänderung →
-   `architecture/` bzw. `conventions/`).
+   `type`-Frontmatter; Muster-/Konventionsänderung → `architecture/` bzw. `conventions/`).
+   **Bei jeder Änderung an einer Methoden-Signatur, einem Null-Check oder einer geworfenen
+   Exception:** die zugehörige `api-reference/<klasse>.md`-Datei aktualisieren — gegen den
+   tatsächlichen Code verifizieren, nicht nur den Javadoc-Kommentar übernehmen (siehe
+   [Entwicklerdoku](/conventions/okf-entwicklerdoku.md)).
 2. **`docs/okf/xlsxbuilder/log.md`:** Eintrag unter dem heutigen ISO-Datum ergänzen
    (neueste zuerst).
 3. **`graphify update .`** ausführen (deterministisch, kein LLM nötig – Kontrolle vor dem
