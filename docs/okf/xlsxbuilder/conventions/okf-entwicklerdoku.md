@@ -128,11 +128,14 @@ timestamp: '<ISO 8601>'
 Der versionierte Hook `.githooks/pre-commit` läuft bei jedem Commit und macht
 **automatisch, ohne LLM** (deterministisch, kein API-Key nötig):
 
-- **`.java`-Dateien im Commit** → `graphify update .` (AST-Rebuild) →
-  `graphify-out/graph.json`/`GRAPH_REPORT.md`/`graph.html` werden neu erzeugt und
-  mit ins Commit aufgenommen.
-- **`docs/okf/`-Dateien im Commit** → `tools/kb/generate_okf_index.py` → alle
-  betroffenen `index.md`-Dateien werden neu geschrieben und mitcommittet.
+- **`.java`- ODER `docs/okf/`-Dateien im Commit** → `graphify update .`
+  (AST-Rebuild) → `graphify-out/graph.json`/`GRAPH_REPORT.md`/`graph.html` werden
+  neu erzeugt und mit ins Commit aufgenommen. Graphify indiziert nicht nur Java-Code,
+  sondern auch die OKF-Markdown-Dateien selbst (als `"document"`-Knoten, überschriften-
+  granular) — deshalb läuft dieser Schritt bei **beiden** Änderungsarten, nicht nur
+  bei `.java`.
+- **`docs/okf/`-Dateien im Commit** → zusätzlich `tools/kb/generate_okf_index.py` →
+  alle betroffenen `index.md`-Dateien werden neu geschrieben und mitcommittet.
 
 **Der Hook blockiert nie einen Commit** — fehlt `graphify` oder Python, erscheint nur
 eine Warnung, der Commit läuft trotzdem durch.

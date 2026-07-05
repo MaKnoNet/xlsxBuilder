@@ -2,13 +2,15 @@
 # Knowledge-Base-Hook (Team, versioniert; aktiviert via: ./gradlew installGitHooks).
 # Blockiert NIE einen Commit: jeder Fehler fuehrt zu einer Warnung, dann exit 0.
 #
-# 1) .java im Commit      -> graphify update (deterministischer AST-Rebuild, kein LLM)
-# 2) docs/okf/ im Commit  -> index.md-Dateien deterministisch regenerieren
+# 1) .java ODER docs/okf/ im Commit -> graphify update (deterministischer
+#    AST-Rebuild, kein LLM; graphify indiziert auch die OKF-Markdown-Dateien
+#    als "document"-Knoten, nicht nur Java-Code - daher beide Trigger)
+# 2) docs/okf/ im Commit             -> index.md-Dateien deterministisch regenerieren
 
 STAGED=$(git diff --cached --name-only --diff-filter=ACMRD)
 
-# --- Wissensgraph: nur wenn Java-Dateien im Commit sind ---
-if printf '%s\n' "$STAGED" | grep -q '\.java$'; then
+# --- Wissensgraph: bei Java- ODER OKF-Doku-Aenderungen im Commit ---
+if printf '%s\n' "$STAGED" | grep -qE '\.java$|^docs/okf/'; then
     if command -v graphify >/dev/null 2>&1; then
         echo "[kb] graphify update (AST-Rebuild) ..."
         if graphify update . >/dev/null 2>&1; then
