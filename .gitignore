@@ -33,3 +33,7 @@ graphify-out/manifest.json
 graphify-out/needs_update
 graphify-out/cost.json
 graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+
+# OKF: lokal generierte PDF-Exporte der Doku (Ad-hoc-Ausgabe, kein Team-Wissen-Artefakt) -
+# nie committen, damit sie nicht versehentlich per "git add docs/okf" ins Repo gelangen.
+docs/okf/**/*.pdf
