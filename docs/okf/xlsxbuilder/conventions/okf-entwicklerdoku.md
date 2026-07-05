@@ -60,6 +60,15 @@ Javadoc-Text stillschweigend voraussetzt). Bei jeder Änderung an einer Methode-
 einem Null-Check oder einer geworfenen Exception **muss** die zugehörige
 `api-reference/`-Datei aktualisiert werden — Teil der Pre-Commit-Routine (siehe unten).
 
+**Jede `api-reference/`-Datei enthält direkt nach `# Überblick` einen Pflichtabschnitt
+`# Vererbungshierarchie`:** die eigene `extends`/`implements`-Deklaration (vorwärts) sowie
+— per Grep über den gesamten Quellbaum verifiziert — welche anderen Klassen/Interfaces im
+Projekt diesen Typ erweitern/implementieren (rückwärts), bundle-root-absolut verlinkt.
+Fehlende Implementierer sind ein genauso relevanter, explizit festzuhaltender Befund wie
+vorhandene (z. B. `DataProvider` — zentrales Interface der Bibliothek — hat keine benannte
+Implementierung). Bei jeder neuen Ober-/Unterklassen-Beziehung im Code **muss** dieser
+Abschnitt aktualisiert werden — ebenfalls Teil der Pre-Commit-Routine.
+
 # Frontmatter-Konvention
 
 ```yaml
